@@ -68,31 +68,46 @@ struct PomodoroView: View {
     }
 
     private var ringView: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.white.opacity(0.08), lineWidth: 5)
+        // TimelineView drives a per-frame redraw so the AngularGradient
+        // stops can rotate smoothly while the trim (visible progress)
+        // stays anchored. Result: the colored arc looks alive — like
+        // a slow comet — without ever distorting the actual progress.
+        TimelineView(.animation) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            // 12s full revolution while running, frozen when paused
+            let cycle: Double = 12
+            let rot = service.running
+                ? (t.truncatingRemainder(dividingBy: cycle) / cycle) * 360
+                : 0
 
-            Circle()
-                .trim(from: 0, to: service.progress)
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            Color(red: 1.00, green: 0.24, blue: 0.67),
-                            Color(red: 0.47, green: 0.29, blue: 0.63),
-                            Color(red: 0.17, green: 0.52, blue: 0.77),
-                            Color(red: 1.00, green: 0.24, blue: 0.67),
-                        ],
-                        center: .center
-                    ),
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 0.5), value: service.progress)
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.08), lineWidth: 5)
 
-            Text(service.formattedTime)
-                .font(.system(size: 15, weight: .heavy, design: .rounded))
-                .foregroundColor(.white)
-                .monospacedDigit()
+                Circle()
+                    .trim(from: 0, to: service.progress)
+                    .stroke(
+                        AngularGradient(
+                            colors: [
+                                Color(red: 1.00, green: 0.24, blue: 0.67),
+                                Color(red: 0.47, green: 0.29, blue: 0.63),
+                                Color(red: 0.17, green: 0.52, blue: 0.77),
+                                Color(red: 1.00, green: 0.24, blue: 0.67),
+                            ],
+                            center: .center,
+                            startAngle: .degrees(rot),
+                            endAngle: .degrees(rot + 360)
+                        ),
+                        style: StrokeStyle(lineWidth: 5, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 0.5), value: service.progress)
+
+                Text(service.formattedTime)
+                    .font(.system(size: 15, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                    .monospacedDigit()
+            }
         }
     }
 
@@ -106,15 +121,31 @@ struct PomodoroView: View {
                 .foregroundColor(primary ? .white : .white.opacity(0.8))
                 .frame(width: 28, height: 24)
                 .background(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(primary
-                              ? AnyShapeStyle(
-                                  LinearGradient(colors: [
-                                      Color(red: 1.00, green: 0.24, blue: 0.67),
-                                      Color(red: 0.17, green: 0.52, blue: 0.77)
-                                  ], startPoint: .leading, endPoint: .trailing))
-                              : AnyShapeStyle(Color.white.opacity(0.10))
-                        )
+                    Group {
+                        if primary {
+                            // Pulses when running; freezes mid-cycle when paused
+                            TimelineView(.animation) { context in
+                                let t = context.date.timeIntervalSinceReferenceDate
+                                let phase = service.running
+                                    ? (t.truncatingRemainder(dividingBy: 4)) / 4
+                                    : 0.25
+                                let angle = phase * 2 * .pi
+                                let start = UnitPoint(x: 0.5 + 0.5 * cos(angle),
+                                                      y: 0.5 + 0.5 * sin(angle))
+                                let end   = UnitPoint(x: 0.5 - 0.5 * cos(angle),
+                                                      y: 0.5 - 0.5 * sin(angle))
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(LinearGradient(colors: [
+                                        Color(red: 1.00, green: 0.24, blue: 0.67),
+                                        Color(red: 0.47, green: 0.29, blue: 0.63),
+                                        Color(red: 0.17, green: 0.52, blue: 0.77),
+                                    ], startPoint: start, endPoint: end))
+                            }
+                        } else {
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .fill(Color.white.opacity(0.10))
+                        }
+                    }
                 )
                 .opacity(disabled ? 0.35 : 1.0)
         }
