@@ -15,11 +15,12 @@ struct NotchPopApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        // Empty scene — AppDelegate owns the real window. SwiftUI's
-        // App protocol requires *some* Scene, so we give it a settings
-        // scene that's never opened in v1.
+        // The notch itself is rendered by AppDelegate's NotchWindow.
+        // The Settings scene is what Cmd+, opens (and what the menubar
+        // 'Settings…' item triggers). We pass the live viewModel so
+        // the customization toggles affect the running notch.
         Settings {
-            SettingsView()
+            SettingsView(viewModel: appDelegate.viewModel)
         }
     }
 }

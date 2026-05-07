@@ -101,7 +101,7 @@ struct NotchView: View {
 
     private var tabBar: some View {
         HStack(spacing: 4) {
-            ForEach(NotchTab.allCases) { tab in
+            ForEach(viewModel.visibleTabs) { tab in
                 tabButton(tab)
             }
             Spacer()
@@ -139,6 +139,8 @@ struct NotchView: View {
             FileShelfView(shelf: viewModel.shelf)
         case .nowPlaying:
             NowPlayingView(service: viewModel.nowPlaying)
+        case .pomodoro:
+            PomodoroView(service: viewModel.pomodoro)
         case .battery:
             ChargingView(monitor: viewModel.charging)
         }

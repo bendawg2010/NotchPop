@@ -486,12 +486,28 @@ main { position: relative; z-index: 1; }
 .install-after {
   text-align: center;
   margin: 22px auto 0;
-  max-width: 540px;
+  max-width: 580px;
   font-size: 13.5px;
   color: var(--text-muted);
   font-weight: 500;
   line-height: 1.55;
 }
+.install-after strong { color: var(--text); }
+.install-troubleshoot {
+  margin: 22px auto 0;
+  max-width: 580px;
+  padding: 14px 18px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+  font-weight: 500;
+}
+.install-troubleshoot strong { color: var(--text); font-weight: 700; }
+.install-troubleshoot a { color: #ff7ad0; text-decoration: underline; }
 
 .install-source {
   margin: 36px auto 0;

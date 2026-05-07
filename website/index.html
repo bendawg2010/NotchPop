@@ -41,8 +41,8 @@
       <div class="gatekeeper-note" role="note">
         <span class="gatekeeper-note-icon" aria-hidden="true">ⓘ</span>
         <div>
-          <strong>The first time you open it</strong>, macOS shows a warning because this app is free (paid developer accounts cost $99/year).
-          Just <strong>right-click → Open → Open</strong>. You'll never see the warning again. <a href="#install">Step-by-step ↓</a>
+          <strong>The first time you open it</strong>, macOS shows a warning because this app is free (paid Apple developer accounts cost $99/year).
+          On macOS Sequoia: open <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>. <a href="#install">Step-by-step ↓</a>
         </div>
       </div>
     </section>
@@ -56,7 +56,8 @@
           <div class="notch-expanded">
             <div class="ne-tabs">
               <span class="ne-tab is-on">📥 Shelf</span>
-              <span class="ne-tab">🎵 Now Playing</span>
+              <span class="ne-tab">🎵 Music</span>
+              <span class="ne-tab">🍅 Pomodoro</span>
               <span class="ne-tab">🔋 Battery</span>
             </div>
             <div class="ne-shelf">
@@ -74,23 +75,31 @@
     <section class="features">
       <div class="feature">
         <h3>📥 File shelf</h3>
-        <p>Drop any file onto the notch — it sits there. Drag it out into Finder, an email, Slack, anywhere. No copies, no syncing, no upload.</p>
+        <p>Drop any file onto the notch — it sits there. Drag it out into Finder, email, Slack, anywhere. No copies, no syncing, no upload.</p>
       </div>
       <div class="feature">
-        <h3>🎵 Now Playing</h3>
-        <p>Album art and track info from Music, Spotify, YouTube, anything with media controls. Reads the system Now-Playing center, no logins.</p>
+        <h3>🎵 Music controls</h3>
+        <p>Play / pause / skip directly from the notch. Album art + track info from <strong>Apple Music, Spotify, YouTube, podcasts</strong> — anything with media keys.</p>
+      </div>
+      <div class="feature">
+        <h3>🍅 Pomodoro timer</h3>
+        <p>Built-in 25/5 focus timer with a glowing progress ring. Customize durations, count daily sessions, get a notification when each phase ends.</p>
       </div>
       <div class="feature">
         <h3>⚡ Charging peek</h3>
         <p>Plug in your MacBook — the notch briefly expands with a battery cheer. Auto-collapses after 4 seconds. Like AirPods, but for power.</p>
       </div>
       <div class="feature">
+        <h3>⚙️ Customizable</h3>
+        <p>Show / hide / reorder tabs from Settings. Don't want Pomodoro? Hide it. Want Music first? Drag it up. Your notch, your call.</p>
+      </div>
+      <div class="feature">
         <h3>🪞 Hover to expand</h3>
-        <p>Mouse into the notch, it pops. Mouse out, it goes back to being a notch. No keyboard shortcut, no menu — just instinct.</p>
+        <p>Mouse into the notch, it pops. Mouse out, it goes back to being a notch. No shortcut to remember — just instinct.</p>
       </div>
       <div class="feature">
         <h3>🚀 Native &amp; tiny</h3>
-        <p>SwiftUI + AppKit. ~10MB binary. No Electron, no JavaScript. Boots before your menubar finishes painting.</p>
+        <p>SwiftUI + AppKit. ~1MB binary, ~410KB zipped. No Electron, no JavaScript. Boots before your menu bar finishes painting.</p>
       </div>
       <div class="feature">
         <h3>🔓 Free forever</h3>
@@ -126,16 +135,28 @@
           <div class="cmp-meh">Limited</div>
         </div>
         <div class="cmp-row">
-          <div>Now Playing</div>
+          <div>Music controls (play/skip)</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
+          <div class="cmp-meh">Read-only</div>
+        </div>
+        <div class="cmp-row">
+          <div>Pomodoro timer</div>
           <div class="cmp-good">✓</div>
+          <div class="cmp-bad">No</div>
+          <div class="cmp-bad">No</div>
         </div>
         <div class="cmp-row">
           <div>Charging peek</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
+        </div>
+        <div class="cmp-row">
+          <div>Customizable tabs</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-meh">Partial</div>
+          <div class="cmp-meh">Partial</div>
         </div>
         <div class="cmp-row">
           <div>Login required</div>
@@ -171,13 +192,23 @@
           <div class="install-card-num">3</div>
           <div class="install-card-name">Open it <em>(the first time)</em></div>
           <p>
-            macOS shows a one-time security warning because this app is free (paid Apple developer accounts cost $99/year). Just <strong>right-click NotchPop.app → Open → Open</strong>. After this you can launch it normally — double-click it from now on.
+            <strong>Double-click NotchPop.app</strong> — macOS shows a security warning saying it can't verify the app. <strong>Click "Done"</strong> in that dialog (don't move it to Trash).
+          </p>
+          <p>
+            Then open <strong>System Settings → Privacy &amp; Security</strong>. Scroll down — you'll see a message <em>"NotchPop was blocked"</em>. Click <strong>"Open Anyway"</strong>, then <strong>"Open"</strong> in the next dialog.
+          </p>
+          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+            <strong>After this, double-click works normally.</strong> macOS adds the app to its allow-list permanently.
           </p>
         </div>
       </div>
 
       <div class="install-after">
-        Once it's open, the notch starts popping on hover automatically. Look for the little rectangle icon in your menu bar (top-right of your screen) to quit or change settings.
+        Once it's open, the notch <strong>auto-expands for 5 seconds with a welcome card</strong> so you can see what it does. Hover the notch any time to use it. Look for the rectangle icon in your menu bar (top-right) for Settings, Pomodoro reset, and Quit.
+      </div>
+
+      <div class="install-troubleshoot" role="note">
+        <strong>Why is this so annoying?</strong> Apple charges $99/year for a Developer ID that lets unsigned apps open with a single click. NotchPop is free and open-source, so we skip that fee — at the cost of one extra click on first launch. Same friction as <a href="https://github.com/HandBrake/HandBrake" target="_blank" rel="noopener">HandBrake</a>, <a href="https://obsproject.com/" target="_blank" rel="noopener">OBS</a>, and most other free Mac apps.
       </div>
 
       <details class="install-source">

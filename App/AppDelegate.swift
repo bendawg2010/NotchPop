@@ -36,15 +36,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.toolTip = "NotchPop"
 
         let menu = NSMenu()
-        menu.addItem(withTitle: "About NotchPop", action: #selector(openAbout), keyEquivalent: "")
+        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
             .target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Toggle Now-Playing widget",
-                     action: #selector(toggleNowPlaying), keyEquivalent: "n").target = self
-        menu.addItem(withTitle: "Toggle Charging effect",
-                     action: #selector(toggleCharging), keyEquivalent: "c").target = self
         menu.addItem(withTitle: "Clear file shelf",
                      action: #selector(clearShelf), keyEquivalent: "")
+            .target = self
+        menu.addItem(withTitle: "Reset Pomodoro",
+                     action: #selector(resetPomodoro), keyEquivalent: "")
+            .target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "About NotchPop",
+                     action: #selector(openAbout), keyEquivalent: "")
             .target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit NotchPop", action: #selector(NSApplication.terminate(_:)),
@@ -77,15 +80,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 
-    @objc private func toggleNowPlaying() {
-        viewModel.nowPlayingEnabled.toggle()
-    }
-
-    @objc private func toggleCharging() {
-        viewModel.chargingEnabled.toggle()
+    @objc private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        // SwiftUI's Settings scene responds to this selector; on macOS
+        // 14+ the API is `showSettingsWindow:` while older calls used
+        // `showPreferencesWindow:`. Try both.
+        if NSApp.responds(to: Selector(("showSettingsWindow:"))) {
+            NSApp.perform(Selector(("showSettingsWindow:")), with: nil)
+        } else if NSApp.responds(to: Selector(("showPreferencesWindow:"))) {
+            NSApp.perform(Selector(("showPreferencesWindow:")), with: nil)
+        }
     }
 
     @objc private func clearShelf() {
         viewModel.shelf.clear()
+    }
+
+    @objc private func resetPomodoro() {
+        viewModel.pomodoro.reset()
     }
 }

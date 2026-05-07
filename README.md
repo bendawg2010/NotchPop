@@ -2,26 +2,33 @@
 
 > Your MacBook notch, but useful. Free, open-source competitor to NotchNook / NotchBox.
 
-NotchPop is a tiny native macOS app that turns the notch on 14" / 16" MacBook Pros into a hover-to-expand utility surface:
+NotchPop is a tiny native macOS app that turns the notch into a hover-to-expand utility surface:
 
-- **📥 File shelf** — drag any file onto the notch, drag it out anywhere later. No copies, no syncing, no upload.
-- **🎵 Now Playing** — album art + track info from Music, Spotify, YouTube, anything with media controls.
+- **📥 File shelf** — drag any file onto the notch, drag it back out anywhere. No copies, no syncing, no upload.
+- **🎵 Music controls** — play / pause / skip Apple Music, Spotify, YouTube, podcasts. Album art + track info.
+- **🍅 Pomodoro timer** — built-in 25/5 focus timer with a glowing progress ring. Custom durations, daily session count, end-of-phase notifications.
 - **⚡ Charging peek** — plug in your MacBook and the notch briefly expands with a battery cheer.
+- **⚙️ Customizable** — show / hide / reorder tabs from Settings. Your notch, your call.
 
 Works on non-notch Macs too — the UI just pins to the top-center of your main display.
 
 ## Install (no Xcode, no Homebrew, no Terminal)
 
-**[⬇ Download NotchPop.zip from the latest release](https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.zip)** (248 KB, universal binary, macOS 14+)
+**[⬇ Download NotchPop.zip from the latest release](https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.zip)** (~410 KB, universal binary, macOS 14+)
 
-1. Click the link above. Your browser saves `NotchPop.zip`.
-2. Open the zip — you'll get `NotchPop.app`.
+1. Click the link above — your browser saves `NotchPop.zip`.
+2. Double-click the zip — you get `NotchPop.app`.
 3. Drag `NotchPop.app` into `/Applications`.
-4. **First-time launch:** macOS will say *"Apple cannot check it for malicious software."* This is because the app isn't signed by a paid Apple Developer ID (this is free and open source). To allow it:
-   - **Right-click** `NotchPop.app` → **Open** → click **Open** in the dialog.
-   - You only need to do this once.
+4. **First-time launch:**
+   1. Double-click NotchPop.app — macOS shows a security dialog ("can't verify the app"). Click **Done**.
+   2. Open **System Settings → Privacy & Security**. Scroll down — you'll see *"NotchPop was blocked"*.
+   3. Click **Open Anyway** → confirm with **Open**.
 
-That's it. The notch starts expanding on hover immediately. Quit / settings live in the menubar (the rectangle icon, top-right of your screen).
+   This is a one-time thing. After this, double-click works normally — macOS adds NotchPop to its allow-list permanently.
+
+   *Why? Apple charges $99/year for a Developer ID that lets unsigned apps open with a single click. NotchPop is free and open source, so we skip the fee — at the cost of one extra click on first launch. Same friction as HandBrake, OBS, and most other free Mac apps.*
+
+That's it. The notch auto-expands for 5 seconds on first launch with a welcome card so you can see what it does. After that, hover any time to expand. Settings, Pomodoro reset, and Quit live in the menu-bar item (the rectangle icon, top-right of your screen).
 
 ### Requirements
 - macOS 14 (Sonoma) or later

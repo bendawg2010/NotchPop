@@ -22,16 +22,35 @@ struct NowPlayingView: View {
                     .foregroundColor(.white)
                     .lineLimit(1)
                 Text(service.track.artist.isEmpty
-                     ? "Open Music, Spotify, or any app with media controls"
+                     ? "Open Apple Music, Spotify, YouTube — anything with media controls"
                      : service.track.artist)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white.opacity(0.62))
                     .lineLimit(1)
                 progressBar
                     .frame(height: 3)
-                    .padding(.top, 6)
+                    .padding(.top, 4)
             }
-            Spacer()
+            Spacer(minLength: 4)
+
+            // Transport controls — always rendered, even when nothing
+            // is playing, since the user can hit Play to resume the
+            // last queued track in Music/Spotify.
+            HStack(spacing: 4) {
+                controlButton(icon: "backward.fill", label: "Previous") {
+                    service.previousTrack()
+                }
+                controlButton(
+                    icon: service.track.isPlaying ? "pause.fill" : "play.fill",
+                    label: service.track.isPlaying ? "Pause" : "Play",
+                    primary: true
+                ) {
+                    service.togglePlayPause()
+                }
+                controlButton(icon: "forward.fill", label: "Next") {
+                    service.nextTrack()
+                }
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -45,6 +64,32 @@ struct NowPlayingView: View {
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
+    }
+
+    private func controlButton(icon: String, label: String,
+                               primary: Bool = false,
+                               action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: primary ? 13 : 11, weight: .heavy))
+                .foregroundColor(.white)
+                .frame(width: primary ? 32 : 26, height: primary ? 32 : 26)
+                .background(
+                    Circle()
+                        .fill(primary
+                              ? AnyShapeStyle(LinearGradient(
+                                  colors: [
+                                      Color(red: 1.00, green: 0.24, blue: 0.67),
+                                      Color(red: 0.17, green: 0.52, blue: 0.77)
+                                  ],
+                                  startPoint: .topLeading,
+                                  endPoint: .bottomTrailing))
+                              : AnyShapeStyle(Color.white.opacity(0.10))
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .help(label)
     }
 
     @ViewBuilder

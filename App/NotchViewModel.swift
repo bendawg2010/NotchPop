@@ -8,10 +8,13 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Tabs / panes shown when the notch is expanded.
-enum NotchTab: String, CaseIterable, Identifiable {
+/// Tabs / panes shown when the notch is expanded. The user can hide
+/// any of these from Settings — `visibleTabs` in NotchViewModel filters
+/// the list at render time.
+enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case shelf = "Shelf"
-    case nowPlaying = "Now Playing"
+    case nowPlaying = "Music"
+    case pomodoro = "Pomodoro"
     case battery = "Battery"
 
     var id: String { rawValue }
@@ -19,7 +22,17 @@ enum NotchTab: String, CaseIterable, Identifiable {
         switch self {
         case .shelf:      return "tray.full.fill"
         case .nowPlaying: return "music.note"
+        case .pomodoro:   return "timer"
         case .battery:    return "battery.100"
+        }
+    }
+    /// Friendly description shown in Settings checkbox rows.
+    var blurb: String {
+        switch self {
+        case .shelf:      return "Drag any file onto the notch — drag it back out anywhere."
+        case .nowPlaying: return "Now-playing controls for Apple Music, Spotify, YouTube, and more."
+        case .pomodoro:   return "Built-in 25/5 focus timer with running progress on the notch."
+        case .battery:    return "Plug-in peek + battery readout."
         }
     }
 }
@@ -50,6 +63,20 @@ final class NotchViewModel: ObservableObject {
     let shelf = FileShelf()
     let nowPlaying = NowPlayingService()
     let charging = ChargingMonitor()
+    let pomodoro = PomodoroService()
+
+    /// User-configurable order + visibility of tabs. Persisted via
+    /// UserDefaults so reordering / hiding sticks across launches.
+    @Published var visibleTabs: [NotchTab] = NotchTab.allCases {
+        didSet {
+            let raw = visibleTabs.map { $0.rawValue }
+            UserDefaults.standard.set(raw, forKey: "np.visibleTabs")
+            // Snap activeTab back into the visible set if needed
+            if !visibleTabs.contains(activeTab), let first = visibleTabs.first {
+                activeTab = first
+            }
+        }
+    }
 
     // MARK: - Notify window controller of size changes
     var onSizeChange: (() -> Void)?
@@ -67,6 +94,14 @@ final class NotchViewModel: ObservableObject {
         }
         if d.object(forKey: "np.persistShelf") != nil {
             self.persistShelfBetweenLaunches = d.bool(forKey: "np.persistShelf")
+        }
+        // Restore tab order/visibility, falling back to defaults if any
+        // raw value is unrecognized (e.g. someone downgrading).
+        if let saved = d.array(forKey: "np.visibleTabs") as? [String] {
+            let restored = saved.compactMap { NotchTab(rawValue: $0) }
+            if !restored.isEmpty {
+                self.visibleTabs = restored
+            }
         }
 
         // Re-broadcast: any expanded toggle must notify the window

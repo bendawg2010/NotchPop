@@ -42,9 +42,28 @@ final class NowPlayingService: ObservableObject {
     private var dylib: UnsafeMutableRawPointer?
     private var nowPlayingInfoFn: MRGetNowPlayingInfo?
     private var registerForNotificationsFn: MRRegister?
+    private var sendCommandFn: MRSendCommand?
 
     typealias MRGetNowPlayingInfo = @convention(c) (DispatchQueue, @escaping ([String: Any]) -> Void) -> Void
     typealias MRRegister = @convention(c) (Bool) -> Void
+    /// `MRMediaRemoteSendCommand(commandID, options)` — returns a Bool
+    /// success but we don't use the return value.
+    typealias MRSendCommand = @convention(c) (Int32, AnyObject?) -> Bool
+
+    /// MediaRemote command IDs — these are stable across macOS versions
+    /// because Apple's own Control Center uses them too. Sourcing:
+    /// https://github.com/PrivateFrameworks/MediaRemote (community-
+    /// reverse-engineered headers).
+    private struct Cmd {
+        static let play: Int32 = 0
+        static let pause: Int32 = 1
+        static let togglePlayPause: Int32 = 2
+        static let stop: Int32 = 3
+        static let nextTrack: Int32 = 4
+        static let previousTrack: Int32 = 5
+        static let toggleShuffle: Int32 = 26
+        static let toggleRepeat: Int32 = 27
+    }
 
     func start() {
         let path = "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote"
@@ -59,6 +78,9 @@ final class NowPlayingService: ObservableObject {
         }
         if let sym = dlsym(h, "MRMediaRemoteRegisterForNowPlayingNotifications") {
             self.registerForNotificationsFn = unsafeBitCast(sym, to: MRRegister.self)
+        }
+        if let sym = dlsym(h, "MRMediaRemoteSendCommand") {
+            self.sendCommandFn = unsafeBitCast(sym, to: MRSendCommand.self)
         }
 
         registerForNotificationsFn?(true)
@@ -92,6 +114,14 @@ final class NowPlayingService: ObservableObject {
             self.track = t
         }
     }
+
+    // MARK: - Transport controls (work with Apple Music, Spotify,
+    // YouTube, podcasts, anything that registers with the system
+    // Now-Playing center). These all forward to MRMediaRemoteSendCommand.
+
+    func togglePlayPause() { _ = sendCommandFn?(Cmd.togglePlayPause, nil) }
+    func nextTrack()       { _ = sendCommandFn?(Cmd.nextTrack, nil) }
+    func previousTrack()   { _ = sendCommandFn?(Cmd.previousTrack, nil) }
 
     deinit {
         if let h = dylib { dlclose(h) }
