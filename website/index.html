@@ -34,17 +34,18 @@
       <h1>Your MacBook notch,<br/><span class="grad">but useful.</span></h1>
       <p class="lead">Hover the notch — it pops open. Drop a file in, it sits there. Drag it out anywhere. Music shows up. Plug in, it cheers. Free. Open source.</p>
       <div class="ctas">
-        <a class="btn primary" href="#install">↓ Build for macOS</a>
+        <a class="btn primary" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.zip">↓ Download for macOS</a>
         <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View source on GitHub</a>
       </div>
-      <div class="release-warning" role="note">
-        <span class="release-warning-icon" aria-hidden="true">⚠</span>
+      <div class="release-meta">macOS 14+ · Universal (Apple Silicon &amp; Intel) · 248 KB · Free · MIT</div>
+      <div class="gatekeeper-note" role="note">
+        <span class="gatekeeper-note-icon" aria-hidden="true">ⓘ</span>
         <div>
-          <strong>No prebuilt binary yet.</strong>
-          You'll need to build from source — it's a one-line script. <a href="#install">Skip down to the install steps ↓</a>
+          <strong>First-time launch:</strong>
+          macOS will say <em>"Apple cannot check it for malicious software"</em> — that's because the app isn't signed with a $99/yr Apple Developer ID (it's free).
+          <strong>Right-click → Open</strong> the first time and you'll never see it again. <a href="#install">Full instructions ↓</a>
         </div>
       </div>
-      <div class="release-meta">macOS 14+ · 14"/16" MacBook Pro · works on non-notch Macs too</div>
     </section>
 
     <!-- Live notch demo -->
@@ -148,34 +149,63 @@
 
     <section class="install" id="install">
       <div class="install-eyebrow">Install</div>
-      <h2>One command. <span class="grad">Sixty seconds.</span></h2>
-      <p class="install-lead">NotchPop is open source. Run these three commands and a fresh <code>NotchPop.app</code> lands on your machine.</p>
+      <h2>Download. Drag. <span class="grad">Done.</span></h2>
+      <p class="install-lead">No Homebrew. No Xcode. No Terminal. Just a 248 KB <code>.app</code> file.</p>
 
-      <div class="install-prereq">
-        <strong>Prerequisites:</strong>
-        <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> &middot;
-        <a href="https://apps.apple.com/us/app/xcode/id497799835" target="_blank" rel="noopener">Xcode 15+</a>
-        (the build script installs <code>xcodegen</code> automatically).
+      <div class="install-grid">
+        <div class="install-card primary-card">
+          <div class="install-card-num">1</div>
+          <div class="install-card-name">Download &amp; unzip</div>
+          <p>
+            Click below. Your browser saves <code>NotchPop.zip</code>. Double-click it to unzip — you'll get <strong>NotchPop.app</strong>.
+          </p>
+          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.zip">↓ Download NotchPop.zip · 248 KB</a>
+        </div>
+
+        <div class="install-card">
+          <div class="install-card-num">2</div>
+          <div class="install-card-name">Drag to Applications</div>
+          <p>Drag <strong>NotchPop.app</strong> into your <strong>/Applications</strong> folder. That's it — installed.</p>
+        </div>
+
+        <div class="install-card">
+          <div class="install-card-num">3</div>
+          <div class="install-card-name">Right-click → Open <em>(first time only)</em></div>
+          <p>
+            macOS will say <em>"Apple cannot check it for malicious software"</em> because the app isn't signed by a paid Apple Developer ID (this is free).
+            <strong>Right-click NotchPop.app → Open → Open</strong>. You'll never see the warning again.
+          </p>
+        </div>
       </div>
 
-      <div class="install-block">
-        <button class="install-copy-btn" type="button" aria-label="Copy install commands" data-cmd="git clone https://github.com/bendawg2010/NotchPop.git
+      <div class="install-after">
+        After launching, the notch starts expanding on hover immediately. Quit / settings live in the menubar (look for the rectangle icon, top-right).
+      </div>
+
+      <details class="install-source">
+        <summary>Or build from source instead →</summary>
+        <p class="install-source-lead">
+          If you'd rather not run a downloaded binary, you can build it yourself in 60 seconds.
+          You'll need <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> and either <strong>Xcode 15+</strong> from the App Store
+          OR <strong>Xcode Command Line Tools</strong> (run <code>xcode-select --install</code> — that's a 2-minute install vs. Xcode's 15 GB).
+        </p>
+        <div class="install-block">
+          <button class="install-copy-btn" type="button" aria-label="Copy install commands" data-cmd="git clone https://github.com/bendawg2010/NotchPop.git
 cd NotchPop
 ./scripts/build.sh">📋 Copy</button>
-        <pre><code><span class="prompt">$</span> git clone https://github.com/bendawg2010/NotchPop.git
+          <pre><code><span class="prompt">$</span> git clone https://github.com/bendawg2010/NotchPop.git
 <span class="prompt">$</span> cd NotchPop
 <span class="prompt">$</span> ./scripts/build.sh</code></pre>
-      </div>
-
-      <ol class="install-steps">
-        <li>The script installs <code>xcodegen</code>, generates the Xcode project, and runs <code>xcodebuild</code> in Release.</li>
-        <li>Move <code>build/Build/Products/Release/NotchPop.app</code> into <code>/Applications</code>.</li>
-        <li>Launch it. The notch starts expanding on hover immediately. Quit / settings live in the menubar (the rectangle icon top-right).</li>
-      </ol>
+        </div>
+        <ol class="install-steps">
+          <li>The script auto-installs <code>xcodegen</code> via Homebrew, generates the Xcode project, and runs <code>xcodebuild</code> in Release.</li>
+          <li>Move <code>build/Build/Products/Release/NotchPop.app</code> into <code>/Applications</code>.</li>
+        </ol>
+      </details>
 
       <div class="install-ctas">
-        <a class="btn primary" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
-        <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop/blob/main/README.md">Read the README</a>
+        <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
+        <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop/releases">All releases</a>
       </div>
     </section>
   </main>

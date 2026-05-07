@@ -139,25 +139,28 @@ main { position: relative; z-index: 1; }
 }
 .btn.ghost:hover { background: rgba(255, 255, 255, 0.10); }
 
-.release-warning {
+.gatekeeper-note {
   display: flex; align-items: flex-start; gap: 12px;
-  max-width: 640px; margin: 16px auto 0;
-  padding: 14px 18px;
-  background: rgba(255, 184, 0, 0.10);
-  border: 1px solid rgba(255, 184, 0, 0.40);
+  max-width: 640px; margin: 18px auto 0;
+  padding: 13px 18px;
+  background: rgba(43, 134, 197, 0.07);
+  border: 1px solid rgba(43, 134, 197, 0.28);
   border-radius: 14px;
   text-align: left;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.55;
   font-weight: 500;
+  color: var(--text-muted);
 }
-.release-warning-icon {
+.gatekeeper-note-icon {
   flex-shrink: 0;
-  font-size: 20px;
-  color: #FFC93C;
+  font-size: 18px;
+  color: var(--blue);
+  font-weight: 800;
 }
-.release-warning strong { color: #FFC93C; font-weight: 800; }
-.release-warning a { text-decoration: underline; }
+.gatekeeper-note strong { color: var(--text); font-weight: 800; }
+.gatekeeper-note em { font-style: italic; color: var(--text); }
+.gatekeeper-note a { color: #ff7ad0; text-decoration: underline; }
 
 .release-meta {
   margin-top: 14px;
@@ -406,19 +409,129 @@ main { position: relative; z-index: 1; }
   margin: 0 auto 22px;
   line-height: 1.55;
 }
-.install-prereq {
-  margin: 14px auto 22px;
-  padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.04);
+.install-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 28px auto 18px;
+  text-align: left;
+}
+@media (max-width: 760px) {
+  .install-grid { grid-template-columns: 1fr; }
+}
+.install-card {
+  position: relative;
+  padding: 24px 22px 22px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+}
+.install-card.primary-card {
+  background: linear-gradient(180deg, rgba(255, 60, 172, 0.10), rgba(43, 134, 197, 0.04));
+  border-color: rgba(255, 60, 172, 0.32);
+  box-shadow: 0 16px 48px rgba(255, 60, 172, 0.20);
+}
+.install-card-num {
+  position: absolute;
+  top: -14px;
+  left: 22px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--grad);
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 8px 22px rgba(255, 60, 172, 0.45);
+}
+.install-card-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 6px 0 10px;
+  color: var(--text);
+}
+.install-card-name em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+.install-card p {
+  flex: 1;
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.install-card strong { color: var(--text); font-weight: 700; }
+.install-card em { font-style: italic; color: var(--text); }
+.install-card code {
+  font-size: 12px;
+  padding: 1px 5px;
+}
+.install-card-btn {
+  width: 100%;
+  margin-top: auto;
+  justify-content: center;
+}
+
+.install-after {
+  text-align: center;
+  margin: 22px auto 0;
+  max-width: 540px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.install-source {
+  margin: 36px auto 0;
+  max-width: 720px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0;
+  text-align: left;
+}
+.install-source > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  user-select: none;
+}
+.install-source > summary::-webkit-details-marker { display: none; }
+.install-source > summary:hover { color: var(--text); }
+.install-source[open] > summary {
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.install-source-lead {
+  margin: 16px 20px 0;
   font-size: 13px;
   color: var(--text-muted);
-  text-align: left;
-  max-width: 540px;
+  line-height: 1.6;
 }
-.install-prereq strong { color: var(--text); }
-.install-prereq a { color: #ff7ad0; text-decoration: underline; }
+.install-source-lead strong { color: var(--text); }
+.install-source-lead a { color: #ff7ad0; text-decoration: underline; }
+.install-source .install-block {
+  margin: 14px 20px 12px;
+  padding: 18px 22px;
+}
+.install-source .install-steps {
+  margin: 4px 24px 18px;
+}
 
 .install-block {
   position: relative;

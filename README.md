@@ -10,7 +10,27 @@ NotchPop is a tiny native macOS app that turns the notch on 14" / 16" MacBook Pr
 
 Works on non-notch Macs too — the UI just pins to the top-center of your main display.
 
-## Build it
+## Install (no Xcode, no Homebrew, no Terminal)
+
+**[⬇ Download NotchPop.zip from the latest release](https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.zip)** (248 KB, universal binary, macOS 14+)
+
+1. Click the link above. Your browser saves `NotchPop.zip`.
+2. Open the zip — you'll get `NotchPop.app`.
+3. Drag `NotchPop.app` into `/Applications`.
+4. **First-time launch:** macOS will say *"Apple cannot check it for malicious software."* This is because the app isn't signed by a paid Apple Developer ID (this is free and open source). To allow it:
+   - **Right-click** `NotchPop.app` → **Open** → click **Open** in the dialog.
+   - You only need to do this once.
+
+That's it. The notch starts expanding on hover immediately. Quit / settings live in the menubar (the rectangle icon, top-right of your screen).
+
+### Requirements
+- macOS 14 (Sonoma) or later
+- Apple Silicon **or** Intel (universal binary)
+- Looks best on 14" / 16" MacBook Pros with notches, but works on any Mac
+
+## Build from source (optional)
+
+If you'd rather not run a downloaded binary, you can build it yourself:
 
 ```sh
 git clone https://github.com/bendawg2010/NotchPop.git
@@ -18,14 +38,11 @@ cd NotchPop
 ./scripts/build.sh
 ```
 
-The build script installs `xcodegen` via Homebrew if it's not already there, generates the Xcode project, and runs `xcodebuild` in Release. Output lands at `build/Build/Products/Release/NotchPop.app`.
+The build script auto-installs `xcodegen` via Homebrew, generates the Xcode project, and runs `xcodebuild` in Release. Output lands at `build/Build/Products/Release/NotchPop.app`.
 
-Move it into `/Applications` and launch — the notch starts expanding on hover immediately. Quit / settings live in the menubar (the rectangle icon top-right).
-
-### Prerequisites
-- macOS 14+ (Sonoma)
-- [Homebrew](https://brew.sh)
-- [Xcode 15+](https://apps.apple.com/us/app/xcode/id497799835)
+### Build prerequisites
+- [Homebrew](https://brew.sh) — for `xcodegen`
+- [Xcode 15+](https://apps.apple.com/us/app/xcode/id497799835) **OR** Xcode Command Line Tools (`xcode-select --install`, ~2 minutes / ~3 GB vs. Xcode's 15 GB)
 
 ## How it works
 
