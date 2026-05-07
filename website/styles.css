@@ -67,10 +67,8 @@ main { position: relative; z-index: 1; }
   display: inline-block;
   width: 26px; height: 14px;
   border-radius: 0 0 8px 8px;
-  background: linear-gradient(120deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%);
-  background-size: 300% 300%;
+  background: var(--grad);
   box-shadow: 0 0 24px rgba(255, 60, 172, 0.45);
-  animation: pillShimmer 8s linear infinite;
 }
 .nav nav { display: flex; gap: 22px; }
 .nav nav a {
@@ -129,11 +127,9 @@ main { position: relative; z-index: 1; }
   font-family: inherit;
 }
 .btn.primary {
-  background: linear-gradient(120deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%);
-  background-size: 300% 300%;
+  background: var(--grad);
   color: white;
   box-shadow: 0 12px 36px rgba(255, 60, 172, 0.40);
-  animation: pillShimmer 6s linear infinite;
 }
 .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 16px 44px rgba(255, 60, 172, 0.55); }
 .btn.ghost {
@@ -225,18 +221,19 @@ main { position: relative; z-index: 1; }
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: 36px; height: 6px;
-  background: linear-gradient(120deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%);
-  background-size: 300% 300%;
+  background: var(--grad);
   border-radius: 999px;
   box-shadow: 0 0 24px rgba(255, 60, 172, 0.55);
   z-index: 3;
   opacity: 1;
   transition: opacity 0.18s;
-  animation: pillShimmer 6s linear infinite;
+  /* Smooth color shift via hue-rotate filter — no orientation
+     change, no flicker, just a slow drift around the wheel. */
+  animation: pillHue 12s linear infinite;
 }
-@keyframes pillShimmer {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+@keyframes pillHue {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
 }
 .notch.is-open .notch-pill { opacity: 0; }
 .notch-expanded {

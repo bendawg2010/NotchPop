@@ -75,32 +75,17 @@ struct NowPlayingView: View {
                 .foregroundColor(.white)
                 .frame(width: primary ? 32 : 26, height: primary ? 32 : 26)
                 .background(
-                    Group {
-                        if primary {
-                            // Animated gradient — slowly orbits while
-                            // playing for that "alive" feel; stays
-                            // mid-rotation when paused.
-                            TimelineView(.animation) { context in
-                                let t = context.date.timeIntervalSinceReferenceDate
-                                let phase = service.track.isPlaying
-                                    ? (t.truncatingRemainder(dividingBy: 5)) / 5
-                                    : 0.25
-                                let angle = phase * 2 * .pi
-                                let start = UnitPoint(x: 0.5 + 0.5 * cos(angle),
-                                                      y: 0.5 + 0.5 * sin(angle))
-                                let end   = UnitPoint(x: 0.5 - 0.5 * cos(angle),
-                                                      y: 0.5 - 0.5 * sin(angle))
-                                Circle()
-                                    .fill(LinearGradient(colors: [
-                                        Color(red: 1.00, green: 0.24, blue: 0.67),
-                                        Color(red: 0.47, green: 0.29, blue: 0.63),
-                                        Color(red: 0.17, green: 0.52, blue: 0.77),
-                                    ], startPoint: start, endPoint: end))
-                            }
-                        } else {
-                            Circle().fill(Color.white.opacity(0.10))
-                        }
-                    }
+                    Circle()
+                        .fill(primary
+                              ? AnyShapeStyle(LinearGradient(
+                                  colors: [
+                                      Color(red: 1.00, green: 0.24, blue: 0.67),
+                                      Color(red: 0.17, green: 0.52, blue: 0.77)
+                                  ],
+                                  startPoint: .topLeading,
+                                  endPoint: .bottomTrailing))
+                              : AnyShapeStyle(Color.white.opacity(0.10))
+                        )
                 )
         }
         .buttonStyle(.plain)
@@ -122,33 +107,16 @@ struct NowPlayingView: View {
     }
 
     private var progressBar: some View {
-        // Shimmery gradient that pans only while a track is actually
-        // playing. Frozen in place when paused so it doesn't waste
-        // GPU on idle frames.
-        TimelineView(.animation) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let pan = service.track.isPlaying
-                ? (t.truncatingRemainder(dividingBy: 3.5)) / 3.5
-                : 0.5
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.08))
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.00, green: 0.24, blue: 0.67),
-                                    Color(red: 1.00, green: 0.71, blue: 0.33),
-                                    Color(red: 1.00, green: 0.42, blue: 0.42),
-                                    Color(red: 0.47, green: 0.29, blue: 0.63),
-                                    Color(red: 1.00, green: 0.24, blue: 0.67),
-                                ],
-                                startPoint: UnitPoint(x: pan - 0.5, y: 0.5),
-                                endPoint: UnitPoint(x: pan + 0.5, y: 0.5)
-                            )
-                        )
-                        .frame(width: progressWidth(in: geo.size.width))
-                }
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.08))
+                Capsule()
+                    .fill(LinearGradient(
+                        colors: [Color(red: 1.00, green: 0.71, blue: 0.33),
+                                 Color(red: 1.00, green: 0.42, blue: 0.42)],
+                        startPoint: .leading, endPoint: .trailing))
+                    .frame(width: progressWidth(in: geo.size.width))
+                    .animation(.linear(duration: 0.4), value: service.track.elapsed)
             }
         }
     }
