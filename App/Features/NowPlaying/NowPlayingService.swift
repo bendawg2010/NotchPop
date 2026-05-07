@@ -45,7 +45,12 @@ final class NowPlayingService: ObservableObject {
     private var sendCommandFn: MRSendCommand?
 
     typealias MRGetNowPlayingInfo = @convention(c) (DispatchQueue, @escaping ([String: Any]) -> Void) -> Void
-    typealias MRRegister = @convention(c) (Bool) -> Void
+    /// `MRMediaRemoteRegisterForNowPlayingNotifications(dispatch_queue_t)`
+    /// — takes the queue notifications should fire on. Mis-declared as
+    /// (Bool) before, which crashed because passing `true` resulted in
+    /// MRMediaRemote treating address 0x1 as a queue object and segfaulting
+    /// during the internal objc_retain.
+    typealias MRRegister = @convention(c) (DispatchQueue) -> Void
     /// `MRMediaRemoteSendCommand(commandID, options)` — returns a Bool
     /// success but we don't use the return value.
     typealias MRSendCommand = @convention(c) (Int32, AnyObject?) -> Bool
@@ -83,7 +88,7 @@ final class NowPlayingService: ObservableObject {
             self.sendCommandFn = unsafeBitCast(sym, to: MRSendCommand.self)
         }
 
-        registerForNotificationsFn?(true)
+        registerForNotificationsFn?(.main)
 
         NotificationCenter.default.addObserver(
             forName: NSNotification.Name("kMRMediaRemoteNowPlayingInfoDidChangeNotification"),
