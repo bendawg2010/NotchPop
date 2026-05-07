@@ -22,13 +22,13 @@ Works on non-notch Macs too — the UI just pins to the top-center of your main 
 
 ## Install (no Xcode, no Homebrew, no Terminal)
 
-**[⬇ Download NotchPop.zip from the latest release](https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.zip)** (~410 KB, universal binary, macOS 14+)
+**[⬇ Download NotchPop.dmg from the latest release](https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg)** (~911 KB, universal binary, macOS 14+)
 
-1. Click the link above — your browser saves `NotchPop.zip`.
-2. Double-click the zip — you get `NotchPop.app`.
-3. Drag `NotchPop.app` into `/Applications`.
+1. Click the link above — your browser saves `NotchPop.dmg`.
+2. Double-click the DMG — Finder opens a window with the **NotchPop** icon on the left and an **Applications** shortcut on the right.
+3. Drag NotchPop onto Applications. Eject the DMG.
 4. **First-time launch:**
-   1. Double-click NotchPop.app — macOS shows a security dialog ("can't verify the app"). Click **Done**.
+   1. Open Applications, double-click NotchPop — macOS shows a security dialog (*"can't verify the app"*). Click **Done**.
    2. Open **System Settings → Privacy & Security**. Scroll down — you'll see *"NotchPop was blocked"*.
    3. Click **Open Anyway** → confirm with **Open**.
 
