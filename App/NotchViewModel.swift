@@ -15,6 +15,9 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case shelf = "Shelf"
     case nowPlaying = "Music"
     case pomodoro = "Pomodoro"
+    case stopwatch = "Stopwatch"
+    case countdown = "Timer"
+    case worldClock = "World Clock"
     case notes = "Notes"
     case battery = "Battery"
 
@@ -24,6 +27,9 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .shelf:      return "tray.full.fill"
         case .nowPlaying: return "music.note"
         case .pomodoro:   return "timer"
+        case .stopwatch:  return "stopwatch.fill"
+        case .countdown:  return "alarm.fill"
+        case .worldClock: return "globe"
         case .notes:      return "note.text"
         case .battery:    return "battery.100"
         }
@@ -33,7 +39,10 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .shelf:      return "Drag any file onto the notch — drag it back out anywhere."
         case .nowPlaying: return "Now-playing controls for Apple Music, Spotify, YouTube, and more."
-        case .pomodoro:   return "Built-in 25/5 focus timer with running progress on the notch."
+        case .pomodoro:   return "Phased focus timer with strict mode + daily goal."
+        case .stopwatch:  return "Count-up timer with lap support."
+        case .countdown:  return "Quick countdown for cooking, exercise, anything single-shot."
+        case .worldClock: return "Up to 4 cities at a glance. Configurable in Settings."
         case .notes:      return "Quick scratchpad. Auto-saves as you type."
         case .battery:    return "Plug-in peek + battery readout."
         }
@@ -91,12 +100,18 @@ final class NotchViewModel: ObservableObject {
     let nowPlaying = NowPlayingService()
     let charging = ChargingMonitor()
     let pomodoro = PomodoroService()
+    let stopwatch = StopwatchService()
+    let countdown = CountdownTimerService()
+    let worldClock = WorldClockService()
     let notes = NotesService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
     /// UserDefaults so reordering / hiding sticks across launches.
-    @Published var visibleTabs: [NotchTab] = NotchTab.allCases {
+    /// Default = the original five (Shelf / Music / Pomodoro / Notes
+    /// / Battery). Stopwatch / Timer / World Clock are opt-in via
+    /// Settings → Tabs to keep the tab bar readable for new users.
+    @Published var visibleTabs: [NotchTab] = [.shelf, .nowPlaying, .pomodoro, .notes, .battery] {
         didSet {
             let raw = visibleTabs.map { $0.rawValue }
             UserDefaults.standard.set(raw, forKey: "np.visibleTabs")

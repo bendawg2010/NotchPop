@@ -176,6 +176,12 @@ struct NotchView: View {
             NowPlayingView(service: viewModel.nowPlaying)
         case .pomodoro:
             PomodoroView(service: viewModel.pomodoro)
+        case .stopwatch:
+            StopwatchView(service: viewModel.stopwatch)
+        case .countdown:
+            CountdownTimerView(service: viewModel.countdown)
+        case .worldClock:
+            WorldClockView(service: viewModel.worldClock)
         case .notes:
             NotesView(service: viewModel.notes)
         case .battery:

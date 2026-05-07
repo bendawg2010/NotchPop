@@ -21,10 +21,12 @@ struct SettingsView: View {
                 .tabItem { Label("Behavior", systemImage: "slider.horizontal.3") }
             pomodoroSection
                 .tabItem { Label("Pomodoro", systemImage: "timer") }
+            worldClockSection
+                .tabItem { Label("World Clock", systemImage: "globe") }
             aboutSection
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 480, height: 510)
+        .frame(width: 500, height: 540)
         .padding(20)
     }
 
@@ -212,11 +214,109 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - World Clock section
+    @State private var newClockTimezoneIndex: Int = 0
+    @State private var newClockLabel: String = ""
+
+    private var worldClockSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("World Clock cities").font(.headline)
+            Text("Up to 4 cities show in the World Clock tab.")
+                .font(.caption).foregroundColor(.secondary)
+
+            // Existing cities — list with delete/move buttons
+            VStack(spacing: 0) {
+                ForEach(Array(viewModel.worldClock.clocks.enumerated()), id: \.element.id) { idx, entry in
+                    HStack(spacing: 8) {
+                        Image(systemName: "globe")
+                            .frame(width: 18)
+                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(entry.label).font(.system(size: 13, weight: .semibold))
+                            Text(entry.timezoneIdentifier).font(.caption2).foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button { moveClock(idx, by: -1) } label: { Image(systemName: "arrow.up") }
+                            .buttonStyle(.borderless)
+                            .disabled(idx == 0)
+                        Button { moveClock(idx, by: 1) } label: { Image(systemName: "arrow.down") }
+                            .buttonStyle(.borderless)
+                            .disabled(idx == viewModel.worldClock.clocks.count - 1)
+                        Button { viewModel.worldClock.remove(entry) } label: {
+                            Image(systemName: "minus.circle.fill")
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundColor(.red)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    if idx < viewModel.worldClock.clocks.count - 1 { Divider() }
+                }
+                if viewModel.worldClock.clocks.isEmpty {
+                    Text("No cities yet — add one below")
+                        .font(.caption).foregroundColor(.secondary)
+                        .padding(.vertical, 14)
+                }
+            }
+            .background(Color(.windowBackgroundColor).opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+
+            // Add-new row
+            if viewModel.worldClock.clocks.count < 6 {
+                Divider().padding(.vertical, 4)
+                Text("Add a city").font(.system(size: 12, weight: .semibold))
+                HStack(spacing: 8) {
+                    Picker("", selection: $newClockTimezoneIndex) {
+                        ForEach(Array(WorldClockService.availableTimezones.enumerated()),
+                                id: \.offset) { i, tz in
+                            Text(tz).tag(i)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: 220)
+                    TextField("Label (optional)", text: $newClockLabel)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Add") { addNewClock() }
+                        .keyboardShortcut(.defaultAction)
+                        .buttonStyle(.borderedProminent)
+                }
+            } else {
+                Text("Maximum 6 cities. Remove one before adding.")
+                    .font(.caption).foregroundColor(.secondary)
+                    .padding(.top, 4)
+            }
+            Spacer()
+        }
+    }
+
+    private func moveClock(_ from: Int, by delta: Int) {
+        let to = from + delta
+        guard to >= 0 && to < viewModel.worldClock.clocks.count else { return }
+        var arr = viewModel.worldClock.clocks
+        arr.swapAt(from, to)
+        viewModel.worldClock.clocks = arr
+    }
+
+    private func addNewClock() {
+        let identifiers = WorldClockService.availableTimezones
+        guard identifiers.indices.contains(newClockTimezoneIndex) else { return }
+        let tz = identifiers[newClockTimezoneIndex]
+        let label: String
+        if !newClockLabel.trimmingCharacters(in: .whitespaces).isEmpty {
+            label = newClockLabel
+        } else {
+            label = String(tz.split(separator: "/").last ?? Substring(tz)).replacingOccurrences(of: "_", with: " ")
+        }
+        viewModel.worldClock.add(ClockEntry(timezoneIdentifier: tz, label: label))
+        newClockLabel = ""
+    }
+
     // MARK: - About
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NotchPop").font(.title2.bold())
-            Text("v1.2 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
+            Text("v1.3 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
             Divider()
             Text("Hover the notch to expand. Drop files into the shelf, drag them back out anywhere. Music controls work with Apple Music, Spotify, YouTube, podcasts, anything that registers with the system Now-Playing center.")
                 .font(.callout)

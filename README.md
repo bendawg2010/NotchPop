@@ -2,15 +2,21 @@
 
 > Your MacBook notch, but useful. Free, open-source competitor to NotchNook / NotchBox.
 
-NotchPop is a tiny native macOS app that turns the notch into a hover-to-expand utility surface:
+NotchPop is a tiny native macOS app that turns the notch into a hover-to-expand utility surface with **8 swappable widgets**:
 
-- **📥 File shelf** — drag any file onto the notch, drag it back out anywhere. No copies, no syncing, no upload.
-- **🎵 Music controls** — play / pause / skip Apple Music, Spotify, YouTube, podcasts. Album art + track info.
-- **🍅 Pomodoro timer** — built-in 25/5 focus timer with strict mode, auto-start, daily goals.
-- **📝 Quick Notes** — auto-saving scratchpad inside the notch.
-- **⚡ Charging peek** — plug in your MacBook and the notch briefly expands.
-- **🫥 Blends with the hardware notch** — the collapsed shape matches the physical notch width/height/corner-radius exactly. Invisible until you hover.
-- **⚙️ Highly customizable** — show/hide/reorder tabs, tweak hover/collapse delay, auto-hide in fullscreen, launch at login, strict-mode Pomodoro, daily goals, etc.
+- **📥 File shelf** — drag any file onto the notch, drag it back out anywhere
+- **🎵 Music controls** — play / pause / skip Apple Music, Spotify, YouTube, podcasts
+- **🍅 Pomodoro** — focus timer with strict mode + auto-start + daily goal
+- **🕐 Stopwatch** — count-up timer with lap support + millisecond precision
+- **⏱ Countdown Timer** — single-shot timer with ±30s nudges + final-5s flash
+- **🌍 World Clock** — up to 4 cities, any of macOS's 600+ timezones
+- **📝 Quick Notes** — auto-saving scratchpad
+- **⚡ Charging peek** — plug-in cheer + battery readout
+
+**Pick whichever ones you want, in whatever order.** Settings → Tabs lets you toggle and reorder.
+
+- 🫥 **Blends with the hardware notch** — collapsed shape matches the physical notch width/height/corner-radius exactly. Invisible until you hover.
+- ⚙️ **20+ customization knobs** — hover/collapse delay, auto-hide in fullscreen, launch at login, strict-mode Pomodoro, custom timezones, etc.
 
 Works on non-notch Macs too — the UI just pins to the top-center of your main display.
 
