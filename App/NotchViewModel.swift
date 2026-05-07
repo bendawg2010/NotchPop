@@ -15,6 +15,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case shelf = "Shelf"
     case nowPlaying = "Music"
     case pomodoro = "Pomodoro"
+    case notes = "Notes"
     case battery = "Battery"
 
     var id: String { rawValue }
@@ -23,6 +24,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .shelf:      return "tray.full.fill"
         case .nowPlaying: return "music.note"
         case .pomodoro:   return "timer"
+        case .notes:      return "note.text"
         case .battery:    return "battery.100"
         }
     }
@@ -32,6 +34,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .shelf:      return "Drag any file onto the notch — drag it back out anywhere."
         case .nowPlaying: return "Now-playing controls for Apple Music, Spotify, YouTube, and more."
         case .pomodoro:   return "Built-in 25/5 focus timer with running progress on the notch."
+        case .notes:      return "Quick scratchpad. Auto-saves as you type."
         case .battery:    return "Plug-in peek + battery readout."
         }
     }
@@ -58,12 +61,38 @@ final class NotchViewModel: ObservableObject {
     @Published var persistShelfBetweenLaunches: Bool = false {
         didSet { UserDefaults.standard.set(persistShelfBetweenLaunches, forKey: "np.persistShelf") }
     }
+    /// When true, the notch is completely hidden while any app is in
+    /// fullscreen. Most users want this on for movies / games.
+    @Published var hideInFullscreen: Bool = true {
+        didSet { UserDefaults.standard.set(hideInFullscreen, forKey: "np.hideInFullscreen") }
+    }
+    /// Hover-to-expand delay (seconds). 0 = instant, 0.3 = relaxed.
+    @Published var hoverDelay: Double = 0.0 {
+        didSet { UserDefaults.standard.set(hoverDelay, forKey: "np.hoverDelay") }
+    }
+    /// Mouse-out collapse delay (seconds). Grace period for darting in/out.
+    @Published var collapseDelay: Double = 0.18 {
+        didSet { UserDefaults.standard.set(collapseDelay, forKey: "np.collapseDelay") }
+    }
+    /// Master sound-effects toggle (charging chime, pomodoro alarm, etc.)
+    @Published var soundEffectsEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(soundEffectsEnabled, forKey: "np.sound") }
+    }
+    /// Auto-show pomodoro tab when timer starts.
+    @Published var pomodoroFollowsActive: Bool = true {
+        didSet { UserDefaults.standard.set(pomodoroFollowsActive, forKey: "np.pomFollows") }
+    }
+    @Published var launchAtLogin: Bool = LaunchAtLogin.isEnabled {
+        didSet { LaunchAtLogin.setEnabled(launchAtLogin) }
+    }
 
     // MARK: - Children
     let shelf = FileShelf()
     let nowPlaying = NowPlayingService()
     let charging = ChargingMonitor()
     let pomodoro = PomodoroService()
+    let notes = NotesService()
+    let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
     /// UserDefaults so reordering / hiding sticks across launches.
@@ -95,6 +124,22 @@ final class NotchViewModel: ObservableObject {
         if d.object(forKey: "np.persistShelf") != nil {
             self.persistShelfBetweenLaunches = d.bool(forKey: "np.persistShelf")
         }
+        if d.object(forKey: "np.hideInFullscreen") != nil {
+            self.hideInFullscreen = d.bool(forKey: "np.hideInFullscreen")
+        }
+        if d.object(forKey: "np.hoverDelay") != nil {
+            self.hoverDelay = d.double(forKey: "np.hoverDelay")
+        }
+        if d.object(forKey: "np.collapseDelay") != nil {
+            let v = d.double(forKey: "np.collapseDelay")
+            self.collapseDelay = v > 0 ? v : 0.18
+        }
+        if d.object(forKey: "np.sound") != nil {
+            self.soundEffectsEnabled = d.bool(forKey: "np.sound")
+        }
+        if d.object(forKey: "np.pomFollows") != nil {
+            self.pomodoroFollowsActive = d.bool(forKey: "np.pomFollows")
+        }
         // Restore tab order/visibility, falling back to defaults if any
         // raw value is unrecognized (e.g. someone downgrading).
         if let saved = d.array(forKey: "np.visibleTabs") as? [String] {
@@ -125,6 +170,19 @@ final class NotchViewModel: ObservableObject {
         // Start services
         nowPlaying.start()
         charging.start()
+        fullscreen.start()
+
+        // Auto-switch to Pomodoro tab whenever the timer starts running
+        // (only if pomodoroFollowsActive is on AND the tab is visible).
+        pomodoro.$running
+            .removeDuplicates()
+            .sink { [weak self] running in
+                guard let self = self, self.pomodoroFollowsActive, running else { return }
+                if self.visibleTabs.contains(.pomodoro) {
+                    self.activeTab = .pomodoro
+                }
+            }
+            .store(in: &bag)
 
         // First-launch onboarding: peek the notch open with a welcome
         // card for 5 seconds so the user actually discovers it exists.
@@ -152,12 +210,15 @@ final class NotchViewModel: ObservableObject {
         }
     }
 
-    /// Compact size — just covers the physical notch when collapsed.
+    /// Compact size — EXACTLY matches the hardware notch dimensions
+    /// so the drawn shape is invisible against the physical cutout.
+    /// On non-notch Macs, fall back to a tasteful 200×32 pill.
     var compactSize: CGSize {
         let info = screenInfo
-        let h = max(info.notchHeight, 32)
-        let w = max(info.notchWidth, 200)
-        return CGSize(width: w, height: h)
+        if info.hasNotch {
+            return CGSize(width: info.notchWidth, height: info.notchHeight)
+        }
+        return CGSize(width: 200, height: 32)
     }
 
     /// Expanded size — wide enough for the file shelf row + tabs.

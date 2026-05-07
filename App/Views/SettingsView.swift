@@ -17,12 +17,14 @@ struct SettingsView: View {
         TabView {
             tabsSection
                 .tabItem { Label("Tabs", systemImage: "rectangle.stack") }
+            behaviorSection
+                .tabItem { Label("Behavior", systemImage: "slider.horizontal.3") }
             pomodoroSection
                 .tabItem { Label("Pomodoro", systemImage: "timer") }
             aboutSection
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 460, height: 460)
+        .frame(width: 480, height: 510)
         .padding(20)
     }
 
@@ -113,9 +115,54 @@ struct SettingsView: View {
         viewModel.visibleTabs = arr
     }
 
+    // MARK: - Behavior section
+    private var behaviorSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("How NotchPop behaves").font(.headline)
+
+            Toggle("Launch NotchPop at login", isOn: $viewModel.launchAtLogin)
+            Toggle("Hide notch in fullscreen apps", isOn: $viewModel.hideInFullscreen)
+            Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
+            Toggle("Sound effects (Pomodoro chime, etc.)", isOn: $viewModel.soundEffectsEnabled)
+            Toggle("Remember file shelf between launches", isOn: $viewModel.persistShelfBetweenLaunches)
+
+            Divider().padding(.vertical, 4)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Hover delay before expanding")
+                    Spacer()
+                    Text("\(Int(viewModel.hoverDelay * 1000)) ms")
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+                Slider(value: $viewModel.hoverDelay, in: 0...0.5, step: 0.05)
+                Text("Higher = brushing the notch on the way past won't trigger it.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Mouse-out collapse delay")
+                    Spacer()
+                    Text("\(Int(viewModel.collapseDelay * 1000)) ms")
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+                Slider(value: $viewModel.collapseDelay, in: 0.05...1.0, step: 0.05)
+                Text("Higher = more forgiving if you dart your mouse out for a moment.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+    }
+
     // MARK: - Pomodoro section
     private var pomodoroSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("Pomodoro durations").font(.headline)
             durationStepper("Focus", value: Binding(
                 get: { viewModel.pomodoro.focusMinutes },
@@ -129,8 +176,26 @@ struct SettingsView: View {
             durationStepper("Long break every", value: Binding(
                 get: { viewModel.pomodoro.sessionsBeforeLongBreak },
                 set: { viewModel.pomodoro.sessionsBeforeLongBreak = $0 }), range: 2...10, suffix: "sessions")
+            durationStepper("Daily goal", value: Binding(
+                get: { viewModel.pomodoro.dailyGoal },
+                set: { viewModel.pomodoro.dailyGoal = $0 }), range: 1...20, suffix: "sessions")
+
+            Divider().padding(.vertical, 4)
+
+            Toggle("Auto-start the next phase",
+                   isOn: Binding(get: { viewModel.pomodoro.autoStartNextPhase },
+                                 set: { viewModel.pomodoro.autoStartNextPhase = $0 }))
+            Text("On = goes straight from focus → break → focus without clicking.")
+                .font(.caption2).foregroundColor(.secondary)
+
+            Toggle("Strict mode (can't pause focus)",
+                   isOn: Binding(get: { viewModel.pomodoro.strictMode },
+                                 set: { viewModel.pomodoro.strictMode = $0 }))
+            Text("Pause is disabled mid-focus. Skip and Reset still work.")
+                .font(.caption2).foregroundColor(.secondary)
+
             Spacer()
-            Button("Reset Pomodoro") { viewModel.pomodoro.reset() }
+            Button("Reset Pomodoro session") { viewModel.pomodoro.reset() }
                 .buttonStyle(.bordered)
         }
     }
@@ -151,7 +216,7 @@ struct SettingsView: View {
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NotchPop").font(.title2.bold())
-            Text("v1.1 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
+            Text("v1.2 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
             Divider()
             Text("Hover the notch to expand. Drop files into the shelf, drag them back out anywhere. Music controls work with Apple Music, Spotify, YouTube, podcasts, anything that registers with the system Now-Playing center.")
                 .font(.callout)

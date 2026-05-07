@@ -19,19 +19,37 @@ struct NotchView: View {
     /// have to land mouse on a 30px-tall strip.
     private let hoverGutter: CGFloat = 18
 
+    /// Corner radius for the visible notch. Compact = hardware-matched
+    /// (so the drawn shape is indistinguishable from the real notch).
+    /// Expanded = larger for a friendlier rounded panel.
+    private var bottomCornerRadius: CGFloat {
+        viewModel.expanded ? 22 : viewModel.screenInfo.notchCornerRadius
+    }
+
+    /// True when the notch should be drawn at all. Hides entirely when
+    /// the user enabled "hide in fullscreen" and any app is fullscreen.
+    private var shouldRender: Bool {
+        if viewModel.hideInFullscreen && viewModel.fullscreen.anyAppFullscreen {
+            return viewModel.expanded // still allow it during welcome peek
+        }
+        return true
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
-            // The actual visible notch (black, rounded bottom corners)
-            NotchShape(bottomCornerRadius: viewModel.expanded ? 18 : 8)
+            // Pure-black notch silhouette — NO border, NO opacity.
+            // When collapsed, dimensions match the hardware notch
+            // exactly so the drawn shape is indistinguishable from
+            // the physical cutout above it. When expanded, the shape
+            // grows downward + outward with a continuous-corner curve.
+            NotchShape(bottomCornerRadius: bottomCornerRadius)
                 .fill(Color.black)
-                .overlay(
-                    NotchShape(bottomCornerRadius: viewModel.expanded ? 18 : 8)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
-                )
-                .frame(height: viewModel.targetSize.height)
+                .frame(width: viewModel.targetSize.width,
+                       height: viewModel.targetSize.height)
+                .opacity(shouldRender ? 1 : 0)
 
             // Expanded content sits inside the bottom of the shape
-            if viewModel.expanded {
+            if viewModel.expanded && !viewModel.showingWelcome {
                 expandedContent
                     .padding(.top, max(viewModel.screenInfo.notchHeight, 32))
                     .padding(.horizontal, 16)
@@ -43,6 +61,14 @@ struct NotchView: View {
                                           .animation(.spring(response: 0.45, dampingFraction: 0.80).delay(0.05)),
                         removal:   .opacity.animation(.easeOut(duration: 0.12))
                     ))
+            } else if viewModel.expanded && viewModel.showingWelcome {
+                WelcomeCard()
+                    .padding(.top, max(viewModel.screenInfo.notchHeight, 32))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+                    .frame(width: viewModel.expandedSize.width,
+                           height: viewModel.expandedSize.height)
+                    .transition(.opacity)
             }
         }
         .frame(width: viewModel.targetSize.width,
@@ -61,12 +87,26 @@ struct NotchView: View {
         collapseWorkItem?.cancel()
 
         if hovering {
-            viewModel.expanded = true
+            // Optional hover delay so brushing-the-notch doesn't always trigger.
+            let delay = max(0, viewModel.hoverDelay)
+            if delay <= 0.001 {
+                viewModel.expanded = true
+            } else {
+                let work = DispatchWorkItem { [weak vm = viewModel] in
+                    guard let vm = vm, vm.hovering else { return }
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+                        vm.expanded = true
+                    }
+                }
+                collapseWorkItem = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+            }
         } else {
             // Don't collapse during the welcome peek — the timer in
             // NotchViewModel handles that timing.
             if viewModel.showingWelcome { return }
             // Grace period so the user can dart in/out without losing it.
+            let delay = max(0.05, viewModel.collapseDelay)
             let work = DispatchWorkItem { [weak vm = viewModel] in
                 guard let vm = vm else { return }
                 if !vm.hovering {
@@ -76,27 +116,22 @@ struct NotchView: View {
                 }
             }
             collapseWorkItem = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
         }
     }
 
     @ViewBuilder
     private var expandedContent: some View {
-        if viewModel.showingWelcome {
-            WelcomeCard()
-                .transition(.opacity)
-        } else {
-            VStack(spacing: 8) {
-                tabBar
-                paneFor(viewModel.activeTab)
-                    .id(viewModel.activeTab) // force a transition between tabs
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: .trailing)),
-                        removal:   .opacity.combined(with: .move(edge: .leading))
-                    ))
-            }
-            .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.activeTab)
+        VStack(spacing: 8) {
+            tabBar
+            paneFor(viewModel.activeTab)
+                .id(viewModel.activeTab) // force a transition between tabs
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .trailing)),
+                    removal:   .opacity.combined(with: .move(edge: .leading))
+                ))
         }
+        .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.activeTab)
     }
 
     private var tabBar: some View {
@@ -141,6 +176,8 @@ struct NotchView: View {
             NowPlayingView(service: viewModel.nowPlaying)
         case .pomodoro:
             PomodoroView(service: viewModel.pomodoro)
+        case .notes:
+            NotesView(service: viewModel.notes)
         case .battery:
             ChargingView(monitor: viewModel.charging)
         }

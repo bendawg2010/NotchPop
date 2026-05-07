@@ -53,6 +53,20 @@ final class PomodoroService: ObservableObject {
     @Published var sessionsBeforeLongBreak: Int = 4 {
         didSet { UserDefaults.standard.set(sessionsBeforeLongBreak, forKey: "np.pom.cycle") }
     }
+    /// Automatically begin the next phase when one ends, with no
+    /// click required. On = "deep flow"; off = "I want a button".
+    @Published var autoStartNextPhase: Bool = false {
+        didSet { UserDefaults.standard.set(autoStartNextPhase, forKey: "np.pom.autoStart") }
+    }
+    /// In strict mode the user can't pause a focus session. Skip and
+    /// reset are still available so they're not trapped.
+    @Published var strictMode: Bool = false {
+        didSet { UserDefaults.standard.set(strictMode, forKey: "np.pom.strict") }
+    }
+    /// Daily session goal (just for display; doesn't gate anything).
+    @Published var dailyGoal: Int = 8 {
+        didSet { UserDefaults.standard.set(dailyGoal, forKey: "np.pom.goal") }
+    }
 
     private var timer: Timer?
     private var lastSessionDate: Date = Date()
@@ -63,6 +77,9 @@ final class PomodoroService: ObservableObject {
         shortBreakMinutes = (d.object(forKey: "np.pom.short") as? Int) ?? 5
         longBreakMinutes  = (d.object(forKey: "np.pom.long")  as? Int) ?? 15
         sessionsBeforeLongBreak = (d.object(forKey: "np.pom.cycle") as? Int) ?? 4
+        autoStartNextPhase = (d.object(forKey: "np.pom.autoStart") as? Bool) ?? false
+        strictMode = (d.object(forKey: "np.pom.strict") as? Bool) ?? false
+        dailyGoal = (d.object(forKey: "np.pom.goal") as? Int) ?? 8
         // Reset session count if a new day has begun
         let lastDay = (d.object(forKey: "np.pom.dayStamp") as? String) ?? ""
         let today = Self.dayStamp()
@@ -96,10 +113,17 @@ final class PomodoroService: ObservableObject {
     }
 
     func pause() {
+        // Strict mode disallows pausing during a focus session.
+        if strictMode && phase == .focus { return }
         running = false
         timer?.invalidate()
         timer = nil
     }
+
+    /// True if the current phase can be paused right now (false if
+    /// strict mode is on during a focus block — surfaces in the UI
+    /// so the button can be disabled).
+    var canPause: Bool { !(strictMode && phase == .focus) }
 
     func toggle() { running ? pause() : start() }
 
@@ -154,6 +178,12 @@ final class PomodoroService: ObservableObject {
         }
         totalDuration = remaining
         notifyCompleted(of: completedPhase)
+        if autoStartNextPhase {
+            // Brief pause so the notification fires before timer ticks.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                self?.start()
+            }
+        }
     }
 
     private func notifyCompleted(of completed: PomodoroPhase) {

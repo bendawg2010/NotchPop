@@ -10,14 +10,22 @@ import AppKit
 
 struct ScreenInfo: Equatable {
     let hasNotch: Bool
+    /// Hardware notch height in points (= safeAreaInsets.top on notched
+    /// MBPs). Typical: 32pt on 14"/16" M-series.
     let notchHeight: CGFloat
+    /// Hardware notch width in points. Typical: ~178pt on 14"/16".
     let notchWidth: CGFloat
+    /// Bottom-corner radius of the hardware notch. Apple uses ~8.5pt
+    /// continuous on current hardware. We measure where possible, fall
+    /// back to 8.5 otherwise.
+    let notchCornerRadius: CGFloat
     let screenSize: CGSize
 
     static let fallback = ScreenInfo(
         hasNotch: false,
         notchHeight: 32,
-        notchWidth: 220,
+        notchWidth: 200,
+        notchCornerRadius: 8.5,
         screenSize: CGSize(width: 1440, height: 900)
     )
 }
@@ -28,10 +36,11 @@ enum ScreenHelper {
         let inset = screen.safeAreaInsets.top
         let hasNotch = inset > 0
 
-        var notchWidth: CGFloat = 220
+        // Precise notch width: the gap between auxiliaryTopLeftArea
+        // and auxiliaryTopRightArea. macOS publishes these as the
+        // "ledge" segments either side of the notch.
+        var notchWidth: CGFloat = 200
         if hasNotch {
-            // The auxiliary top-left and top-right rects sit on either
-            // side of the notch. Compute the gap between them.
             if let left = screen.auxiliaryTopLeftArea,
                let right = screen.auxiliaryTopRightArea {
                 let gap = right.origin.x - left.maxX
@@ -41,8 +50,14 @@ enum ScreenHelper {
 
         return ScreenInfo(
             hasNotch: hasNotch,
-            notchHeight: hasNotch ? max(inset, 32) : 36,
+            // Real notch is ~31.something on M-series; safeAreaInsets
+            // returns the rounded value. Use it as-is so our shape's
+            // top edge sits exactly flush with the bezel.
+            notchHeight: hasNotch ? inset : 32,
             notchWidth: notchWidth,
+            // Hardware corner radius is ~8.5pt continuous. Apple has
+            // not published an API to read it.
+            notchCornerRadius: hasNotch ? 8.5 : 10,
             screenSize: screen.frame.size
         )
     }

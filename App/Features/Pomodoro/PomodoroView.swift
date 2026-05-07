@@ -23,14 +23,22 @@ struct PomodoroView: View {
                         .font(.system(size: 13, weight: .heavy))
                         .foregroundColor(.white)
                 }
-                Text("\(service.sessionsToday) session\(service.sessionsToday == 1 ? "" : "s") today · \(service.focusMinutes)/\(service.shortBreakMinutes)")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.62))
+                HStack(spacing: 6) {
+                    Text("\(service.sessionsToday) / \(service.dailyGoal) today")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.62))
+                    if service.strictMode && service.phase == .focus {
+                        Text("· strict")
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(Color(red: 1.00, green: 0.42, blue: 0.42))
+                    }
+                }
                 HStack(spacing: 6) {
                     transportButton(
                         icon: service.running ? "pause.fill" : "play.fill",
                         label: service.running ? "Pause" : "Start",
-                        primary: true
+                        primary: true,
+                        disabled: service.running && !service.canPause
                     ) {
                         service.toggle()
                     }
@@ -90,6 +98,7 @@ struct PomodoroView: View {
 
     private func transportButton(icon: String, label: String,
                                  primary: Bool = false,
+                                 disabled: Bool = false,
                                  action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
@@ -107,8 +116,10 @@ struct PomodoroView: View {
                               : AnyShapeStyle(Color.white.opacity(0.10))
                         )
                 )
+                .opacity(disabled ? 0.35 : 1.0)
         }
         .buttonStyle(.plain)
-        .help(label)
+        .disabled(disabled)
+        .help(disabled ? "\(label) — disabled by strict mode" : label)
     }
 }

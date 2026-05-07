@@ -6,9 +6,11 @@ NotchPop is a tiny native macOS app that turns the notch into a hover-to-expand 
 
 - **📥 File shelf** — drag any file onto the notch, drag it back out anywhere. No copies, no syncing, no upload.
 - **🎵 Music controls** — play / pause / skip Apple Music, Spotify, YouTube, podcasts. Album art + track info.
-- **🍅 Pomodoro timer** — built-in 25/5 focus timer with a glowing progress ring. Custom durations, daily session count, end-of-phase notifications.
-- **⚡ Charging peek** — plug in your MacBook and the notch briefly expands with a battery cheer.
-- **⚙️ Customizable** — show / hide / reorder tabs from Settings. Your notch, your call.
+- **🍅 Pomodoro timer** — built-in 25/5 focus timer with strict mode, auto-start, daily goals.
+- **📝 Quick Notes** — auto-saving scratchpad inside the notch.
+- **⚡ Charging peek** — plug in your MacBook and the notch briefly expands.
+- **🫥 Blends with the hardware notch** — the collapsed shape matches the physical notch width/height/corner-radius exactly. Invisible until you hover.
+- **⚙️ Highly customizable** — show/hide/reorder tabs, tweak hover/collapse delay, auto-hide in fullscreen, launch at login, strict-mode Pomodoro, daily goals, etc.
 
 Works on non-notch Macs too — the UI just pins to the top-center of your main display.
 
