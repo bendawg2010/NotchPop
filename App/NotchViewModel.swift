@@ -94,6 +94,21 @@ final class NotchViewModel: ObservableObject {
     @Published var launchAtLogin: Bool = LaunchAtLogin.isEnabled {
         didSet { LaunchAtLogin.setEnabled(launchAtLogin) }
     }
+    /// Notch fit overrides — most users want the auto-detected hardware
+    /// match, but if your MBP model has slightly different dimensions
+    /// (or you're on a non-notch Mac and want a custom-sized pill),
+    /// these sliders let you nudge the rendered shape ±10pt to make
+    /// it disappear into the bezel.
+    @Published var notchWidthOffset: Double = 0 {
+        didSet { UserDefaults.standard.set(notchWidthOffset, forKey: "np.notchWidthOff"); onSizeChange?() }
+    }
+    @Published var notchHeightExtension: Double = 0 {
+        didSet { UserDefaults.standard.set(notchHeightExtension, forKey: "np.notchHeightExt"); onSizeChange?() }
+    }
+    @Published var notchCornerRadiusOverride: Double = 0 {
+        // 0 = use auto-detected hardware value (8.5). Positive = override.
+        didSet { UserDefaults.standard.set(notchCornerRadiusOverride, forKey: "np.notchRadius") }
+    }
 
     // MARK: - Children
     let shelf = FileShelf()
@@ -155,6 +170,9 @@ final class NotchViewModel: ObservableObject {
         if d.object(forKey: "np.pomFollows") != nil {
             self.pomodoroFollowsActive = d.bool(forKey: "np.pomFollows")
         }
+        self.notchWidthOffset = d.double(forKey: "np.notchWidthOff")
+        self.notchHeightExtension = d.double(forKey: "np.notchHeightExt")
+        self.notchCornerRadiusOverride = d.double(forKey: "np.notchRadius")
         // Restore tab order/visibility, falling back to defaults if any
         // raw value is unrecognized (e.g. someone downgrading).
         if let saved = d.array(forKey: "np.visibleTabs") as? [String] {
@@ -227,13 +245,31 @@ final class NotchViewModel: ObservableObject {
 
     /// Compact size — EXACTLY matches the hardware notch dimensions
     /// so the drawn shape is invisible against the physical cutout.
+    /// User can nudge ±10pt via Settings → Behavior → Notch fit if
+    /// their specific MBP doesn't quite hit auto-detected values.
     /// On non-notch Macs, fall back to a tasteful 200×32 pill.
     var compactSize: CGSize {
         let info = screenInfo
         if info.hasNotch {
-            return CGSize(width: info.notchWidth, height: info.notchHeight)
+            return CGSize(
+                width:  max(40, info.notchWidth + notchWidthOffset),
+                height: max(20, info.notchHeight + notchHeightExtension)
+            )
         }
-        return CGSize(width: 200, height: 32)
+        return CGSize(
+            width:  max(40, 200 + notchWidthOffset),
+            height: max(20, 32 + notchHeightExtension)
+        )
+    }
+
+    /// Corner radius for the COLLAPSED notch shape. 0 in the override
+    /// means "use auto-detected", anything else is an explicit user
+    /// pick (typically 6-12pt for fine-tuning blend with the hardware).
+    var compactCornerRadius: CGFloat {
+        if notchCornerRadiusOverride > 0 {
+            return CGFloat(notchCornerRadiusOverride)
+        }
+        return screenInfo.notchCornerRadius
     }
 
     /// Expanded size — wide enough for the file shelf row + tabs.

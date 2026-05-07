@@ -119,47 +119,108 @@ struct SettingsView: View {
 
     // MARK: - Behavior section
     private var behaviorSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("How NotchPop behaves").font(.headline)
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("How NotchPop behaves").font(.headline)
 
-            Toggle("Launch NotchPop at login", isOn: $viewModel.launchAtLogin)
-            Toggle("Hide notch in fullscreen apps", isOn: $viewModel.hideInFullscreen)
-            Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
-            Toggle("Sound effects (Pomodoro chime, etc.)", isOn: $viewModel.soundEffectsEnabled)
-            Toggle("Remember file shelf between launches", isOn: $viewModel.persistShelfBetweenLaunches)
+                Toggle("Launch NotchPop at login", isOn: $viewModel.launchAtLogin)
+                Toggle("Hide notch in fullscreen apps", isOn: $viewModel.hideInFullscreen)
+                Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
+                Toggle("Sound effects (Pomodoro chime, etc.)", isOn: $viewModel.soundEffectsEnabled)
+                Toggle("Remember file shelf between launches", isOn: $viewModel.persistShelfBetweenLaunches)
 
-            Divider().padding(.vertical, 4)
+                Divider().padding(.vertical, 4)
+                Text("Hover timing").font(.system(size: 13, weight: .semibold))
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Hover delay before expanding")
-                    Spacer()
-                    Text("\(Int(viewModel.hoverDelay * 1000)) ms")
-                        .foregroundColor(.secondary)
-                        .monospacedDigit()
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Hover delay before expanding")
+                        Spacer()
+                        Text("\(Int(viewModel.hoverDelay * 1000)) ms")
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
+                    Slider(value: $viewModel.hoverDelay, in: 0...0.5, step: 0.05)
+                    Text("Higher = brushing the notch on the way past won't trigger it.")
+                        .font(.caption2).foregroundColor(.secondary)
                 }
-                Slider(value: $viewModel.hoverDelay, in: 0...0.5, step: 0.05)
-                Text("Higher = brushing the notch on the way past won't trigger it.")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Mouse-out collapse delay")
-                    Spacer()
-                    Text("\(Int(viewModel.collapseDelay * 1000)) ms")
-                        .foregroundColor(.secondary)
-                        .monospacedDigit()
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Mouse-out collapse delay")
+                        Spacer()
+                        Text("\(Int(viewModel.collapseDelay * 1000)) ms")
+                            .foregroundColor(.secondary)
+                            .monospacedDigit()
+                    }
+                    Slider(value: $viewModel.collapseDelay, in: 0.05...1.0, step: 0.05)
+                    Text("Higher = more forgiving if you dart your mouse out for a moment.")
+                        .font(.caption2).foregroundColor(.secondary)
                 }
-                Slider(value: $viewModel.collapseDelay, in: 0.05...1.0, step: 0.05)
-                Text("Higher = more forgiving if you dart your mouse out for a moment.")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
 
-            Spacer()
+                Divider().padding(.vertical, 4)
+
+                // Notch-fit overrides — for users whose collapsed notch
+                // doesn't quite blend with their hardware. Auto-detection
+                // is right for most M-series MBPs but a few have slightly
+                // different bezel radii / cutout widths.
+                Text("Notch fit").font(.system(size: 13, weight: .semibold))
+                Text("If the collapsed notch doesn't blend perfectly with your hardware, nudge these. The drawn shape is always pure black.")
+                    .font(.caption2).foregroundColor(.secondary)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Width nudge")
+                        Spacer()
+                        Text(formatOffset(viewModel.notchWidthOffset))
+                            .foregroundColor(.secondary).monospacedDigit()
+                    }
+                    Slider(value: $viewModel.notchWidthOffset, in: -10...10, step: 0.5)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Height extension")
+                        Spacer()
+                        Text(formatOffset(viewModel.notchHeightExtension))
+                            .foregroundColor(.secondary).monospacedDigit()
+                    }
+                    Slider(value: $viewModel.notchHeightExtension, in: 0...10, step: 0.5)
+                    Text("Extends the notch a few pixels below the hardware cutout. Useful if you want the bottom corners to be visible vs. perfectly hidden.")
+                        .font(.caption2).foregroundColor(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Corner radius")
+                        Spacer()
+                        Text(viewModel.notchCornerRadiusOverride > 0
+                             ? String(format: "%.1f pt", viewModel.notchCornerRadiusOverride)
+                             : "Auto (\(String(format: "%.1f", viewModel.screenInfo.notchCornerRadius)))")
+                            .foregroundColor(.secondary).monospacedDigit()
+                    }
+                    Slider(value: $viewModel.notchCornerRadiusOverride, in: 0...14, step: 0.5)
+                    Text("0 = auto-detect from your screen. Higher = rounder bottom corners.")
+                        .font(.caption2).foregroundColor(.secondary)
+                }
+
+                Button("Reset notch fit to auto") {
+                    viewModel.notchWidthOffset = 0
+                    viewModel.notchHeightExtension = 0
+                    viewModel.notchCornerRadiusOverride = 0
+                }
+                .buttonStyle(.bordered)
+
+                Spacer(minLength: 8)
+            }
+            .padding(.bottom, 10)
         }
+    }
+
+    private func formatOffset(_ v: Double) -> String {
+        let rounded = (v * 2).rounded() / 2
+        if rounded == 0 { return "0 pt" }
+        return String(format: "%@%.1f pt", v > 0 ? "+" : "", rounded)
     }
 
     // MARK: - Pomodoro section

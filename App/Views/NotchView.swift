@@ -20,10 +20,11 @@ struct NotchView: View {
     private let hoverGutter: CGFloat = 18
 
     /// Corner radius for the visible notch. Compact = hardware-matched
-    /// (so the drawn shape is indistinguishable from the real notch).
+    /// (so the drawn shape is indistinguishable from the real notch),
+    /// honoring any user override from Settings → Notch fit.
     /// Expanded = larger for a friendlier rounded panel.
     private var bottomCornerRadius: CGFloat {
-        viewModel.expanded ? 22 : viewModel.screenInfo.notchCornerRadius
+        viewModel.expanded ? 22 : viewModel.compactCornerRadius
     }
 
     /// True when the notch should be drawn at all. Hides entirely when
