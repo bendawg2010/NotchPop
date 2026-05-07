@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct FileShelfView: View {
     @ObservedObject var shelf: FileShelf
     @State private var isDropTargeted: Bool = false
+    @State private var pulse: Bool = false
 
     var body: some View {
         ZStack {
@@ -43,10 +44,17 @@ struct FileShelfView: View {
         VStack(spacing: 6) {
             Image(systemName: "tray.and.arrow.down")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(.white.opacity(isDropTargeted ? 0.9 : 0.5))
+                .scaleEffect(pulse ? 1.08 : 1.0)
+                .opacity(pulse ? 1.0 : 0.78)
             Text(isDropTargeted ? "Drop to add" : "Drag a file here")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.white.opacity(isDropTargeted ? 0.95 : 0.55))
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
         }
     }
 

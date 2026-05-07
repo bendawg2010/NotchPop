@@ -31,9 +31,20 @@ final class NotchViewModel: ObservableObject {
     @Published var activeTab: NotchTab = .shelf
     @Published var screenInfo: ScreenInfo = ScreenHelper.current()
 
-    @Published var nowPlayingEnabled: Bool = true
-    @Published var chargingEnabled: Bool = true
-    @Published var persistShelfBetweenLaunches: Bool = false
+    /// True only during the first-launch welcome peek. When true, the
+    /// expanded view shows the welcome card instead of normal tabs.
+    @Published var showingWelcome: Bool = false
+
+    // Settings — persisted across launches via UserDefaults.
+    @Published var nowPlayingEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(nowPlayingEnabled, forKey: "np.nowPlayingEnabled") }
+    }
+    @Published var chargingEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(chargingEnabled, forKey: "np.chargingEnabled") }
+    }
+    @Published var persistShelfBetweenLaunches: Bool = false {
+        didSet { UserDefaults.standard.set(persistShelfBetweenLaunches, forKey: "np.persistShelf") }
+    }
 
     // MARK: - Children
     let shelf = FileShelf()
@@ -46,6 +57,18 @@ final class NotchViewModel: ObservableObject {
     private var bag = Set<AnyCancellable>()
 
     init() {
+        // Restore persisted settings (defaults: true for everything)
+        let d = UserDefaults.standard
+        if d.object(forKey: "np.nowPlayingEnabled") != nil {
+            self.nowPlayingEnabled = d.bool(forKey: "np.nowPlayingEnabled")
+        }
+        if d.object(forKey: "np.chargingEnabled") != nil {
+            self.chargingEnabled = d.bool(forKey: "np.chargingEnabled")
+        }
+        if d.object(forKey: "np.persistShelf") != nil {
+            self.persistShelfBetweenLaunches = d.bool(forKey: "np.persistShelf")
+        }
+
         // Re-broadcast: any expanded toggle must notify the window
         $expanded
             .removeDuplicates()
@@ -61,9 +84,37 @@ final class NotchViewModel: ObservableObject {
             }
             .store(in: &bag)
 
+        // Restore shelf if user opted in
+        if persistShelfBetweenLaunches { shelf.restore() }
+
         // Start services
         nowPlaying.start()
         charging.start()
+
+        // First-launch onboarding: peek the notch open with a welcome
+        // card for 5 seconds so the user actually discovers it exists.
+        if !UserDefaults.standard.bool(forKey: "np.didFirstLaunch") {
+            UserDefaults.standard.set(true, forKey: "np.didFirstLaunch")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                self?.runWelcomePeek()
+            }
+        }
+    }
+
+    private func runWelcomePeek() {
+        showingWelcome = true
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+            expanded = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self = self else { return }
+            self.showingWelcome = false
+            if !self.hovering {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                    self.expanded = false
+                }
+            }
+        }
     }
 
     /// Compact size — just covers the physical notch when collapsed.
@@ -75,8 +126,10 @@ final class NotchViewModel: ObservableObject {
     }
 
     /// Expanded size — wide enough for the file shelf row + tabs.
+    /// Height covers: notch top inset (~32) + tabs (26) + spacing (8) +
+    /// pane content (88) + bottom padding (16) = ~170pt with breathing.
     var expandedSize: CGSize {
-        CGSize(width: 520, height: 165)
+        CGSize(width: 520, height: 178)
     }
 
     /// What size the host window should currently be.
