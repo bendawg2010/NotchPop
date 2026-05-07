@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+
+  <title>NotchPop — Your MacBook notch, but useful.</title>
+  <meta name="description" content="Free, open-source macOS app that turns the notch into a hover-to-expand file shelf, now-playing widget, and charging peek. Drag files in, drag them out anywhere." />
+
+  <meta property="og:title" content="NotchPop — Your MacBook notch, but useful." />
+  <meta property="og:description" content="Free macOS app. The notch becomes a file shelf + now-playing + charging peek. Hover to expand." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://notchpop.pages.dev/" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FF3CAC'/%3E%3Cstop offset='.5' stop-color='%23784BA0'/%3E%3Cstop offset='1' stop-color='%232B86C5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='black'/%3E%3Cpath d='M16 14 H48 V22 Q48 30 40 30 H24 Q16 30 16 22 Z' fill='url(%23g)'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="/">
+      <span class="logo-mark"></span>
+      <span>NotchPop</span>
+    </a>
+    <nav>
+      <a href="https://github.com/bendawg2010/NotchPop" target="_blank" rel="noopener">★ GitHub</a>
+      <a href="https://github.com/sponsors/bendawg2010" target="_blank" rel="noopener">Sponsor</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Your MacBook notch,<br/><span class="grad">but useful.</span></h1>
+      <p class="lead">Hover the notch — it pops open. Drop a file in, it sits there. Drag it out anywhere. Music shows up. Plug in, it cheers. Free. Open source.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#install">↓ Build for macOS</a>
+        <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View source on GitHub</a>
+      </div>
+      <div class="release-warning" role="note">
+        <span class="release-warning-icon" aria-hidden="true">⚠</span>
+        <div>
+          <strong>No prebuilt binary yet.</strong>
+          You'll need to build from source — it's a one-line script. <a href="#install">Skip down to the install steps ↓</a>
+        </div>
+      </div>
+      <div class="release-meta">macOS 14+ · 14"/16" MacBook Pro · works on non-notch Macs too</div>
+    </section>
+
+    <!-- Live notch demo -->
+    <section class="notch-demo" aria-label="Animated notch demo">
+      <div class="screen">
+        <div class="screen-bezel"></div>
+        <div class="notch" id="notchHero">
+          <div class="notch-pill"></div>
+          <div class="notch-expanded">
+            <div class="ne-tabs">
+              <span class="ne-tab is-on">📥 Shelf</span>
+              <span class="ne-tab">🎵 Now Playing</span>
+              <span class="ne-tab">🔋 Battery</span>
+            </div>
+            <div class="ne-shelf">
+              <div class="ne-thumb"><span>📄</span><em>essay.pdf</em></div>
+              <div class="ne-thumb"><span>🖼</span><em>vibe.png</em></div>
+              <div class="ne-thumb"><span>📊</span><em>budget.xlsx</em></div>
+              <div class="ne-thumb"><span>📦</span><em>build.zip</em></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-cap">Hover above. The notch expands into a real, drag-droppable shelf.</div>
+    </section>
+
+    <section class="features">
+      <div class="feature">
+        <h3>📥 File shelf</h3>
+        <p>Drop any file onto the notch — it sits there. Drag it out into Finder, an email, Slack, anywhere. No copies, no syncing, no upload.</p>
+      </div>
+      <div class="feature">
+        <h3>🎵 Now Playing</h3>
+        <p>Album art and track info from Music, Spotify, YouTube, anything with media controls. Reads the system Now-Playing center, no logins.</p>
+      </div>
+      <div class="feature">
+        <h3>⚡ Charging peek</h3>
+        <p>Plug in your MacBook — the notch briefly expands with a battery cheer. Auto-collapses after 4 seconds. Like AirPods, but for power.</p>
+      </div>
+      <div class="feature">
+        <h3>🪞 Hover to expand</h3>
+        <p>Mouse into the notch, it pops. Mouse out, it goes back to being a notch. No keyboard shortcut, no menu — just instinct.</p>
+      </div>
+      <div class="feature">
+        <h3>🚀 Native &amp; tiny</h3>
+        <p>SwiftUI + AppKit. ~10MB binary. No Electron, no JavaScript. Boots before your menubar finishes painting.</p>
+      </div>
+      <div class="feature">
+        <h3>🔓 Free forever</h3>
+        <p>MIT licensed. No subscription. No login. NotchNook charges $25 — this does the same things and costs nothing.</p>
+      </div>
+    </section>
+
+    <section class="comparison">
+      <h2>How it stacks up</h2>
+      <div class="cmp-table">
+        <div class="cmp-row cmp-head">
+          <div>Feature</div>
+          <div>NotchPop</div>
+          <div>NotchNook</div>
+          <div>Boring Notch</div>
+        </div>
+        <div class="cmp-row">
+          <div>Price</div>
+          <div class="cmp-good">Free</div>
+          <div class="cmp-bad">$24.99</div>
+          <div class="cmp-good">Free</div>
+        </div>
+        <div class="cmp-row">
+          <div>Open source</div>
+          <div class="cmp-good">Yes (MIT)</div>
+          <div class="cmp-bad">No</div>
+          <div class="cmp-good">Yes</div>
+        </div>
+        <div class="cmp-row">
+          <div>File shelf</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-meh">Limited</div>
+        </div>
+        <div class="cmp-row">
+          <div>Now Playing</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-good">✓</div>
+        </div>
+        <div class="cmp-row">
+          <div>Charging peek</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-good">✓</div>
+        </div>
+        <div class="cmp-row">
+          <div>Login required</div>
+          <div class="cmp-good">No</div>
+          <div class="cmp-bad">Yes</div>
+          <div class="cmp-good">No</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="install" id="install">
+      <div class="install-eyebrow">Install</div>
+      <h2>One command. <span class="grad">Sixty seconds.</span></h2>
+      <p class="install-lead">NotchPop is open source. Run these three commands and a fresh <code>NotchPop.app</code> lands on your machine.</p>
+
+      <div class="install-prereq">
+        <strong>Prerequisites:</strong>
+        <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> &middot;
+        <a href="https://apps.apple.com/us/app/xcode/id497799835" target="_blank" rel="noopener">Xcode 15+</a>
+        (the build script installs <code>xcodegen</code> automatically).
+      </div>
+
+      <div class="install-block">
+        <button class="install-copy-btn" type="button" aria-label="Copy install commands" data-cmd="git clone https://github.com/bendawg2010/NotchPop.git
+cd NotchPop
+./scripts/build.sh">📋 Copy</button>
+        <pre><code><span class="prompt">$</span> git clone https://github.com/bendawg2010/NotchPop.git
+<span class="prompt">$</span> cd NotchPop
+<span class="prompt">$</span> ./scripts/build.sh</code></pre>
+      </div>
+
+      <ol class="install-steps">
+        <li>The script installs <code>xcodegen</code>, generates the Xcode project, and runs <code>xcodebuild</code> in Release.</li>
+        <li>Move <code>build/Build/Products/Release/NotchPop.app</code> into <code>/Applications</code>.</li>
+        <li>Launch it. The notch starts expanding on hover immediately. Quit / settings live in the menubar (the rectangle icon top-right).</li>
+      </ol>
+
+      <div class="install-ctas">
+        <a class="btn primary" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
+        <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop/blob/main/README.md">Read the README</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>© NotchPop · MIT licensed · <a href="https://github.com/bendawg2010/NotchPop" target="_blank" rel="noopener">open source</a></div>
+    <div>
+      <a href="https://github.com/sponsors/bendawg2010" target="_blank" rel="noopener">Sponsor</a> ·
+      <a href="https://cash.app/$Dryeetsolutions" target="_blank" rel="noopener">Tip $1</a>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll(".install-copy-btn").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        const cmd = btn.getAttribute("data-cmd") || "";
+        const original = btn.textContent;
+        try {
+          await navigator.clipboard.writeText(cmd);
+          btn.textContent = "✓ Copied";
+          btn.classList.add("is-ok");
+        } catch (e) {
+          btn.textContent = "Press Cmd/Ctrl+C";
+        }
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove("is-ok");
+        }, 1800);
+      });
+    });
+
+    // Auto-loop the hero notch demo (collapsed → expanded → collapsed)
+    const notchHero = document.getElementById('notchHero');
+    if (notchHero) {
+      let on = false;
+      setInterval(function () {
+        on = !on;
+        notchHero.classList.toggle('is-open', on);
+      }, 2400);
+    }
+  </script>
+
+  <!-- Cloudflare Web Analytics -->
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "__CF_BEACON_TOKEN__"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+</body>
+</html>

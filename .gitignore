@@ -1,0 +1,19 @@
+# Xcode + xcodegen
+*.xcodeproj/
+build/
+DerivedData/
+xcuserdata/
+*.xcworkspace/
+.swiftpm/
+*.xcuserstate
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Build artefacts
+*.app

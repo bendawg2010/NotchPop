@@ -1,0 +1,42 @@
+name: NotchPop
+options:
+  bundleIdPrefix: com.benburnette
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "14.0"
+  defaultConfig: Debug
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: NO
+    OTHER_CODE_SIGN_FLAGS: "--timestamp=none"
+    GENERATE_INFOPLIST_FILE: NO
+
+targets:
+  NotchPop:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: NotchPop
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSPrincipalClass: NSApplication
+        NSHumanReadableCopyright: "Free · MIT licensed"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.benburnette.NotchPop
+        PRODUCT_NAME: NotchPop
+        CODE_SIGN_ENTITLEMENTS: App/NotchPop.entitlements
+        LD_RUNPATH_SEARCH_PATHS:
+          - "@executable_path/../Frameworks"
+        ENABLE_PREVIEWS: YES
