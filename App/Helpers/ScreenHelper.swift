@@ -7,6 +7,7 @@
 // notch; the gap between them = notch width.
 
 import AppKit
+import CoreGraphics
 
 struct ScreenInfo: Equatable {
     let hasNotch: Bool
@@ -31,24 +32,38 @@ struct ScreenInfo: Equatable {
 }
 
 enum ScreenHelper {
-    /// Returns the screen we should pin the notch UI to. Critical bug
-    /// fix: NSScreen.main returns whatever screen has KEYBOARD focus,
-    /// which shifts as the user switches windows between displays. So
-    /// the notch UI was wandering to whichever monitor was last clicked.
-    /// We always want the screen that HAS THE NOTCH (built-in MBP
-    /// display), regardless of where the active window lives.
+    /// Returns the screen we should pin the notch UI to. Three-tier
+    /// fallback because every detection method is unreliable on SOME
+    /// hardware combo:
+    ///
+    /// 1. CGDisplayIsBuiltin — the most authoritative way to find the
+    ///    laptop's internal display. Works even when safeAreaInsets is
+    ///    misreported, even when display arrangement puts the laptop
+    ///    at non-zero origin, even with multiple notched displays.
+    /// 2. safeAreaInsets.top > 0 — works on most Macs but has been
+    ///    seen to false-zero on some external-display configs.
+    /// 3. NSScreen.main — last resort. Returns whichever screen has
+    ///    keyboard focus right now, which shifts as the user clicks
+    ///    around — so we treat it as a poor tiebreaker only.
     static func notchedScreen() -> NSScreen? {
-        // 1. Prefer a screen with an actual hardware notch
+        // 1. Built-in display via CGDisplayIsBuiltin
+        for screen in NSScreen.screens {
+            let key = NSDeviceDescriptionKey("NSScreenNumber")
+            guard let raw = screen.deviceDescription[key] as? NSNumber else { continue }
+            let displayID = raw.uint32Value as CGDirectDisplayID
+            if CGDisplayIsBuiltin(displayID) != 0 {
+                return screen
+            }
+        }
+        // 2. Prefer a screen with a non-zero top safe-area inset
         if let notched = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) {
             return notched
         }
-        // 2. Fall back to the primary screen (origin == .zero in macOS
-        //    is the screen with the menu bar — the laptop's display
-        //    even when an external monitor is connected).
+        // 3. Primary screen (origin == .zero) — the menu-bar display
         if let primary = NSScreen.screens.first(where: { $0.frame.origin == .zero }) {
             return primary
         }
-        // 3. Last resort
+        // 4. Last resort
         return NSScreen.main
     }
 

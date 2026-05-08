@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.9</title>
+      <pubDate>Fri, 08 May 2026 13:40:28 +0000</pubDate>
+      <sparkle:version>1.5.9</sparkle:version>
+      <sparkle:shortVersionString>1.5.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.9 — Settings + centering, real fixes this time</h2><p>You said v1.5.8 still had the broken Settings button and the off-center notch. Both were fixed earlier (v1.5.4 and v1.5.7) but the underlying mechanisms had edge cases I missed:</p><h3>Settings (now actually works)</h3><p>SwiftUI's <code>Settings { ... }</code> Scene only registers <code>showSettingsWindow:</code> when the app has an NSMainMenu. We're an LSUIElement (menu-bar) app with no main menu, so <code>NSApp.sendAction</code> had nothing to dispatch to. <strong>Built a manual NSWindow + NSHostingController for the Settings window</strong>, bypassing the SwiftUI Settings scene entirely. Click the gear in the notch (or menubar → Settings…) and it actually opens now.</p><h3>Centering (uses CGDisplayIsBuiltin now)</h3><p><code>safeAreaInsets.top &gt; 0</code> was the previous detection for 'this is the notched display.' On some hardware combos (multi-display setups, certain external monitors) this gave the wrong answer. <strong>Now using <code>CGDisplayIsBuiltin()</code></strong> — the most authoritative API to identify the laptop's internal display. Three-tier fallback: built-in display first, safeAreaInsets second, primary screen third, NSScreen.main last.</p>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.9/NotchPop.dmg"
+        sparkle:version="1.5.9"
+        sparkle:shortVersionString="1.5.9"
+        length="1930296"
+        type="application/octet-stream"
+        sparkle:edSignature="zeBgZ6Z6fWSgjLTJs1fs3QRelLBnWg1n+MOM2FqaNh2Ue9ivdGlcwRdTv+G10rAnIIxlndseoECvx2IYiq+WAQ==" />
+    </item>
+    <item>
       <title>v1.5.8</title>
       <pubDate>Fri, 08 May 2026 01:50:29 +0000</pubDate>
       <sparkle:version>1.5.8</sparkle:version>

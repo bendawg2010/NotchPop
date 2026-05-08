@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var notchWindowController: NotchWindowController?
     var statusItem: NSStatusItem?
     var screenChangeCancellable: AnyCancellable?
+    var settingsController: SettingsWindowController?
     let viewModel = NotchViewModel()
     let updater = UpdaterController()
 
@@ -98,23 +99,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openSettings() {
-        // For LSUIElement apps the activation policy must briefly flip
-        // so the Settings window can become a real focused window.
-        // After the user closes it, applicationDidFinishLaunching's
-        // .accessory policy is restored on next focus loss anyway.
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-
-        // sendAction routes through the responder chain, which is how
-        // SwiftUI's Settings scene actually receives this action. The
-        // older `NSApp.responds(to:)` check was misleading — NSApp
-        // itself doesn't respond, but sending the action with a nil
-        // target triggers the chain dispatch SwiftUI listens to.
-        if #available(macOS 14, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        // SwiftUI's Settings scene needs an NSMainMenu to wire up the
+        // showSettingsWindow: action, which we don't have as an
+        // LSUIElement (menu-bar) app. The previous sendAction approach
+        // was a no-op because no responder in the chain was registered
+        // for that selector. Using a manual NSWindow + NSHostingController
+        // bypasses the whole Settings scene mechanism — works every
+        // time, no menu-bar dependency.
+        if settingsController == nil {
+            settingsController = SettingsWindowController(viewModel: viewModel)
         }
+        settingsController?.present()
     }
 
     @objc private func clearShelf() {
