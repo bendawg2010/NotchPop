@@ -8,13 +8,17 @@
 import AppKit
 import SwiftUI
 
-/// Borderless overlay window that lives at the very top-center of the
-/// active screen. Mouse events pass through transparent areas.
-final class NotchWindow: NSWindow {
+/// Borderless overlay panel that lives at the very top-center of the
+/// active screen. We use NSPanel (not NSWindow) with `.nonactivatingPanel`
+/// so the notch can become key — letting users actually TYPE into the
+/// Quick Notes pane — WITHOUT NotchPop stealing app focus from the
+/// Mac's frontmost app. Plain NSWindow with canBecomeKey=true would
+/// activate NotchPop and steal focus on every click.
+final class NotchWindow: NSPanel {
     init() {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 220, height: 36),
-            styleMask: [.borderless, .fullSizeContentView],
+            styleMask: [.borderless, .fullSizeContentView, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -35,9 +39,15 @@ final class NotchWindow: NSWindow {
         self.titlebarAppearsTransparent = true
         self.titleVisibility = .hidden
         self.ignoresMouseEvents = false
+        // Allow becoming key so TextEditor receives keystrokes
+        self.hidesOnDeactivate = false
+        self.becomesKeyOnlyIfNeeded = true
     }
 
-    override var canBecomeKey: Bool { false }
+    /// True so SwiftUI text fields receive keystrokes. The
+    /// .nonactivatingPanel style keeps NotchPop from becoming the
+    /// active app — the previously-frontmost app stays frontmost.
+    override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 }
 

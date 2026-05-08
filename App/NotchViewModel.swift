@@ -11,15 +11,18 @@ import SwiftUI
 /// Tabs / panes shown when the notch is expanded. The user can hide
 /// any of these from Settings — `visibleTabs` in NotchViewModel filters
 /// the list at render time.
+///
+/// Battery used to be its own tab, but per user feedback it's now an
+/// inline indicator in the top-right of the expanded notch (always
+/// visible). The .battery case is gone; existing users who had it in
+/// their saved visibleTabs get it filtered out at restore time.
 enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case shelf = "Shelf"
     case nowPlaying = "Music"
     case pomodoro = "Pomodoro"
-    case stopwatch = "Stopwatch"
-    case countdown = "Timer"
+    case timers = "Timers"      // combined Stopwatch + Countdown
     case worldClock = "World Clock"
     case notes = "Notes"
-    case battery = "Battery"
 
     var id: String { rawValue }
     var icon: String {
@@ -27,24 +30,20 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .shelf:      return "tray.full.fill"
         case .nowPlaying: return "music.note"
         case .pomodoro:   return "timer"
-        case .stopwatch:  return "stopwatch.fill"
-        case .countdown:  return "alarm.fill"
+        case .timers:     return "stopwatch.fill"
         case .worldClock: return "globe"
         case .notes:      return "note.text"
-        case .battery:    return "battery.100"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
     var blurb: String {
         switch self {
         case .shelf:      return "Drag any file onto the notch — drag it back out anywhere."
-        case .nowPlaying: return "Now-playing controls for Apple Music, Spotify, YouTube, and more."
+        case .nowPlaying: return "Apple Music / Spotify track info + transport controls."
         case .pomodoro:   return "Phased focus timer with strict mode + daily goal."
-        case .stopwatch:  return "Count-up timer with lap support."
-        case .countdown:  return "Quick countdown for cooking, exercise, anything single-shot."
+        case .timers:     return "Stopwatch and quick countdown timer in one tab."
         case .worldClock: return "Up to 4 cities at a glance. Configurable in Settings."
         case .notes:      return "Quick scratchpad. Auto-saves as you type."
-        case .battery:    return "Plug-in peek + battery readout."
         }
     }
 }
@@ -53,8 +52,19 @@ final class NotchViewModel: ObservableObject {
     // MARK: - State
     @Published var expanded: Bool = false
     @Published var hovering: Bool = false
-    @Published var activeTab: NotchTab = .shelf
+    @Published var activeTab: NotchTab = .nowPlaying
     @Published var screenInfo: ScreenInfo = ScreenHelper.current()
+
+    /// Which tab the notch shows when first expanded each session.
+    /// User-configurable in Settings → Behavior. Per user feedback,
+    /// default is now Music instead of Shelf — most people expand the
+    /// notch to glance at music or a timer; the shelf only matters
+    /// when actively dragging a file (which auto-switches to it).
+    @Published var defaultTab: NotchTab = .nowPlaying {
+        didSet {
+            UserDefaults.standard.set(defaultTab.rawValue, forKey: "np.defaultTab")
+        }
+    }
 
     /// True only during the first-launch welcome peek. When true, the
     /// expanded view shows the welcome card instead of normal tabs.
@@ -123,10 +133,10 @@ final class NotchViewModel: ObservableObject {
 
     /// User-configurable order + visibility of tabs. Persisted via
     /// UserDefaults so reordering / hiding sticks across launches.
-    /// Default = the original five (Shelf / Music / Pomodoro / Notes
-    /// / Battery). Stopwatch / Timer / World Clock are opt-in via
-    /// Settings → Tabs to keep the tab bar readable for new users.
-    @Published var visibleTabs: [NotchTab] = [.shelf, .nowPlaying, .pomodoro, .notes, .battery] {
+    /// Default = Music / Pomodoro / Timers / Notes / Shelf — the order
+    /// puts the most-used widgets first and Shelf last (it auto-shows
+    /// when the user drags a file in anyway).
+    @Published var visibleTabs: [NotchTab] = [.nowPlaying, .pomodoro, .timers, .notes, .shelf] {
         didSet {
             let raw = visibleTabs.map { $0.rawValue }
             UserDefaults.standard.set(raw, forKey: "np.visibleTabs")
@@ -174,12 +184,20 @@ final class NotchViewModel: ObservableObject {
         self.notchHeightExtension = d.double(forKey: "np.notchHeightExt")
         self.notchCornerRadiusOverride = d.double(forKey: "np.notchRadius")
         // Restore tab order/visibility, falling back to defaults if any
-        // raw value is unrecognized (e.g. someone downgrading).
+        // raw value is unrecognized. Legacy raw values from old NotchTab
+        // cases ("Battery", "Stopwatch", "Timer") get silently dropped;
+        // if the resulting list would be empty, we keep the defaults.
         if let saved = d.array(forKey: "np.visibleTabs") as? [String] {
             let restored = saved.compactMap { NotchTab(rawValue: $0) }
             if !restored.isEmpty {
                 self.visibleTabs = restored
             }
+        }
+        // Restore default-tab choice
+        if let raw = d.string(forKey: "np.defaultTab"),
+           let parsed = NotchTab(rawValue: raw) {
+            self.defaultTab = parsed
+            self.activeTab = parsed
         }
 
         // Re-broadcast: any expanded toggle must notify the window
@@ -227,12 +245,16 @@ final class NotchViewModel: ObservableObject {
         }
     }
 
-    private func runWelcomePeek() {
+    /// Triggers the multi-scene welcome animation. Used on first launch
+    /// and replayable from Settings → About → "Replay welcome animation".
+    func runWelcomePeek() {
         showingWelcome = true
         withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
             expanded = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+        // 3 scenes × 1.5s + breathing room. Match WelcomeCard's
+        // sceneIndex schedule.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) { [weak self] in
             guard let self = self else { return }
             self.showingWelcome = false
             if !self.hovering {

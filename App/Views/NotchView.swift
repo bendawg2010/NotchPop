@@ -48,6 +48,32 @@ struct NotchView: View {
                 .frame(width: viewModel.targetSize.width,
                        height: viewModel.targetSize.height)
                 .opacity(shouldRender ? 1 : 0)
+                // When the user starts dragging a file from Finder
+                // toward the notch, auto-expand + switch to Shelf.
+                // Per user feedback: "when you drag a file it should
+                // show shelf".
+                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                    if viewModel.visibleTabs.contains(.shelf) {
+                        viewModel.activeTab = .shelf
+                        viewModel.expanded = true
+                    }
+                    // Forward the drop to the FileShelf service so
+                    // the file lands in the shelf even if the user
+                    // released on the collapsed notch.
+                    var urls: [URL] = []
+                    let group = DispatchGroup()
+                    for p in providers {
+                        group.enter()
+                        _ = p.loadObject(ofClass: URL.self) { url, _ in
+                            if let u = url { urls.append(u) }
+                            group.leave()
+                        }
+                    }
+                    group.notify(queue: .main) {
+                        viewModel.shelf.add(urls: urls)
+                    }
+                    return true
+                }
 
             // Expanded content sits inside the bottom of the shape
             if viewModel.expanded && !viewModel.showingWelcome {
@@ -135,12 +161,16 @@ struct NotchView: View {
         .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.activeTab)
     }
 
+    /// Tab bar runs along the top of the expanded notch; on the right
+    /// we mount a compact battery indicator so it's always visible
+    /// without needing a dedicated tab.
     private var tabBar: some View {
         HStack(spacing: 4) {
             ForEach(viewModel.visibleTabs) { tab in
                 tabButton(tab)
             }
-            Spacer()
+            Spacer(minLength: 6)
+            InlineBatteryIndicator(monitor: viewModel.charging)
         }
     }
 
@@ -177,16 +207,12 @@ struct NotchView: View {
             NowPlayingView(service: viewModel.nowPlaying)
         case .pomodoro:
             PomodoroView(service: viewModel.pomodoro)
-        case .stopwatch:
-            StopwatchView(service: viewModel.stopwatch)
-        case .countdown:
-            CountdownTimerView(service: viewModel.countdown)
+        case .timers:
+            TimersTabView(stopwatch: viewModel.stopwatch, countdown: viewModel.countdown)
         case .worldClock:
             WorldClockView(service: viewModel.worldClock)
         case .notes:
             NotesView(service: viewModel.notes)
-        case .battery:
-            ChargingView(monitor: viewModel.charging)
         }
     }
 }

@@ -9,52 +9,54 @@ import SwiftUI
 
 struct PomodoroView: View {
     @ObservedObject var service: PomodoroService
+    @State private var showDurationEditor = false
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ringView
-                .frame(width: 70, height: 70)
+                .frame(width: 64, height: 64)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(service.phase.emoji)
-                        .font(.system(size: 14))
-                    Text(service.phase.label)
-                        .font(.system(size: 13, weight: .heavy))
-                        .foregroundColor(.white)
-                }
-                HStack(spacing: 6) {
-                    Text("\(service.sessionsToday) / \(service.dailyGoal) today")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.62))
-                    if service.strictMode && service.phase == .focus {
-                        Text("· strict")
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundColor(Color(red: 1.00, green: 0.42, blue: 0.42))
+            VStack(alignment: .leading, spacing: 3) {
+                phasePicker
+                HStack(spacing: 4) {
+                    Button {
+                        showDurationEditor = true
+                    } label: {
+                        Text(durationLabel)
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white.opacity(0.85))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                    .fill(Color.white.opacity(0.10))
+                            )
                     }
+                    .buttonStyle(.plain)
+                    .help("Click to edit duration")
+                    .popover(isPresented: $showDurationEditor) {
+                        durationEditor
+                    }
+                    Text("· \(service.sessionsToday)/\(service.dailyGoal) today")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.62))
                 }
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     transportButton(
                         icon: service.running ? "pause.fill" : "play.fill",
                         label: service.running ? "Pause" : "Start",
                         primary: true,
                         disabled: service.running && !service.canPause
-                    ) {
-                        service.toggle()
-                    }
-                    transportButton(icon: "forward.end.fill", label: "Skip") {
-                        service.skip()
-                    }
-                    transportButton(icon: "arrow.counterclockwise", label: "Reset") {
-                        service.reset()
-                    }
+                    ) { service.toggle() }
+                    transportButton(icon: "forward.end.fill", label: "Skip") { service.skip() }
+                    transportButton(icon: "arrow.counterclockwise", label: "Reset") { service.reset() }
                 }
                 .padding(.top, 2)
             }
             Spacer()
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .frame(height: 88)
         .background(
@@ -65,6 +67,90 @@ struct PomodoroView: View {
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
+    }
+
+    /// Phase picker — three pills the user clicks to jump into Focus
+    /// / Short break / Long break. Per user feedback: "you should be
+    /// able to choose what your currently on not foced into work".
+    private var phasePicker: some View {
+        HStack(spacing: 4) {
+            phaseButton(.focus,      "🍅", "Focus")
+            phaseButton(.shortBreak, "☕", "Short")
+            phaseButton(.longBreak,  "🌴", "Long")
+            if service.strictMode && service.phase == .focus {
+                Text("STRICT")
+                    .font(.system(size: 8, weight: .heavy))
+                    .foregroundColor(Color(red: 1.00, green: 0.42, blue: 0.42))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color(red: 1.00, green: 0.42, blue: 0.42).opacity(0.15))
+                    )
+            }
+        }
+    }
+
+    private func phaseButton(_ p: PomodoroPhase, _ emoji: String, _ label: String) -> some View {
+        let on = service.phase == p
+        return Button {
+            service.selectPhase(p)
+        } label: {
+            HStack(spacing: 3) {
+                Text(emoji).font(.system(size: 9))
+                Text(label).font(.system(size: 9, weight: .heavy))
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(on ? Color.white.opacity(0.18) : Color.clear)
+            )
+            .foregroundColor(on ? .white : .white.opacity(0.55))
+        }
+        .buttonStyle(.plain)
+        .help("Switch to \(label)")
+    }
+
+    /// "25m" / "5m" / "15m" — current phase's duration in compact form.
+    private var durationLabel: String {
+        let mins: Int
+        switch service.phase {
+        case .focus, .idle: mins = service.focusMinutes
+        case .shortBreak:   mins = service.shortBreakMinutes
+        case .longBreak:    mins = service.longBreakMinutes
+        }
+        return "\(mins)m"
+    }
+
+    /// Inline duration editor — ±/+ steppers for the CURRENT phase
+    /// only. Settings still has steppers for all four durations.
+    private var durationEditor: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Edit \(service.phase.label.lowercased()) duration")
+                .font(.headline)
+            switch service.phase {
+            case .focus, .idle:
+                Stepper("Focus: \(service.focusMinutes) min",
+                        value: Binding(get: { service.focusMinutes },
+                                       set: { service.focusMinutes = $0 }),
+                        in: 5...120)
+            case .shortBreak:
+                Stepper("Short break: \(service.shortBreakMinutes) min",
+                        value: Binding(get: { service.shortBreakMinutes },
+                                       set: { service.shortBreakMinutes = $0 }),
+                        in: 1...30)
+            case .longBreak:
+                Stepper("Long break: \(service.longBreakMinutes) min",
+                        value: Binding(get: { service.longBreakMinutes },
+                                       set: { service.longBreakMinutes = $0 }),
+                        in: 5...60)
+            }
+            Text("Other durations live in Settings → Pomodoro.")
+                .font(.caption2).foregroundColor(.secondary)
+        }
+        .padding(16)
+        .frame(width: 240)
     }
 
     private var ringView: some View {

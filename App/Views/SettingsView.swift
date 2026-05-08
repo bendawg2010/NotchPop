@@ -123,6 +123,23 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("How NotchPop behaves").font(.headline)
 
+                // Default tab — which pane the notch shows when expanded
+                HStack {
+                    Text("Default tab on expand")
+                    Spacer()
+                    Picker("", selection: $viewModel.defaultTab) {
+                        ForEach(viewModel.visibleTabs) { tab in
+                            Label(tab.rawValue, systemImage: tab.icon).tag(tab)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: 180)
+                }
+                Text("When you hover the notch, this tab shows first. Dragging a file in still auto-switches to Shelf.")
+                    .font(.caption2).foregroundColor(.secondary)
+
+                Divider().padding(.vertical, 2)
+
                 Toggle("Launch NotchPop at login", isOn: $viewModel.launchAtLogin)
                 Toggle("Hide notch in fullscreen apps", isOn: $viewModel.hideInFullscreen)
                 Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
@@ -377,10 +394,22 @@ struct SettingsView: View {
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NotchPop").font(.title2.bold())
-            Text("v1.3 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
+            Text("v1.4 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
             Divider()
-            Text("Hover the notch to expand. Drop files into the shelf, drag them back out anywhere. Music controls work with Apple Music, Spotify, YouTube, podcasts, anything that registers with the system Now-Playing center.")
+            Text("Hover the notch to expand. Drop files in. Drag them back out anywhere. Music works with Apple Music + Spotify (transport controls included).")
                 .font(.callout)
+
+            Divider()
+            HStack(spacing: 12) {
+                Button {
+                    viewModel.runWelcomePeek()
+                } label: {
+                    Label("Replay welcome animation", systemImage: "play.circle.fill")
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+
             Spacer()
             HStack(spacing: 14) {
                 Link("GitHub", destination: URL(string: "https://github.com/bendawg2010/NotchPop")!)

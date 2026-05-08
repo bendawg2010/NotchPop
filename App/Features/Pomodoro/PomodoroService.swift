@@ -112,6 +112,28 @@ final class PomodoroService: ObservableObject {
         }
     }
 
+    /// Manually pick which phase the user wants to start in (instead
+    /// of being forced into Focus). Called by the phase picker buttons
+    /// in the Pomodoro pane.
+    func selectPhase(_ newPhase: PomodoroPhase) {
+        guard newPhase != phase else { return }
+        timer?.invalidate()
+        timer = nil
+        running = false
+        phase = newPhase
+        switch newPhase {
+        case .focus:
+            remaining = TimeInterval(focusMinutes * 60)
+        case .shortBreak:
+            remaining = TimeInterval(shortBreakMinutes * 60)
+        case .longBreak:
+            remaining = TimeInterval(longBreakMinutes * 60)
+        case .idle:
+            remaining = TimeInterval(focusMinutes * 60)
+        }
+        totalDuration = remaining
+    }
+
     func pause() {
         // Strict mode disallows pausing during a focus session.
         if strictMode && phase == .focus { return }
