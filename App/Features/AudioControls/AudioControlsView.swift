@@ -66,24 +66,39 @@ final class AudioControlsService: ObservableObject {
         AudioObjectSetPropertyData(deviceID, &addr, 0, nil, vSize, &v)
     }
 
-    /// Set system brightness via osascript. There is no public API
-    /// for this on macOS — Apple gates the brightness assistant
-    /// behind the private DisplayServices framework. The osascript
-    /// path uses System Events keystrokes to bump brightness in
-    /// 1/16 increments, which is the SAME mechanism the F1/F2 keys
-    /// drive when you press them.
+    /// Bump display brightness up or down by one step. macOS doesn't
+    /// expose brightness keys as ordinary keyboard keys — they're
+    /// system-defined HID events with NX_KEYTYPE codes. The previous
+    /// version (CGEvent.keyboardEvent virtualKey 144/145) wrote
+    /// keyboard key 144/145 which... isn't a thing, so nothing
+    /// happened. User report: "brightness thing either" doesn't work.
+    ///
+    /// Fix: NSEvent.otherEvent(systemDefined) with subtype 8 and
+    /// data1 packed as `(keyCode << 16) | flags`, where keyCode is
+    /// NX_KEYTYPE_BRIGHTNESS_UP (0x90) or NX_KEYTYPE_BRIGHTNESS_DOWN
+    /// (0x91), flags is 0xa00 for keydown and 0xb00 for keyup. This
+    /// is the EXACT path the keyboard daemon uses when you press
+    /// the F1/F2 keys.
     func nudgeBrightness(up: Bool) {
-        // Send the F1/F2 keystroke equivalents via CGEvent.
-        // F1 = 122 (down), F2 = 120 (up). Wait — in macOS reality
-        // F1 is the brightness-DOWN key when fn-row defaults are
-        // active; F2 is brightness-UP. We post the appropriate
-        // virtual key.
-        let keyCode: CGKeyCode = up ? 144 : 145 // brightness up / down system codes
-        let src = CGEventSource(stateID: .combinedSessionState)
-        let down = CGEvent(keyboardEventSource: src, virtualKey: keyCode, keyDown: true)
-        down?.post(tap: .cghidEventTap)
-        let upE = CGEvent(keyboardEventSource: src, virtualKey: keyCode, keyDown: false)
-        upE?.post(tap: .cghidEventTap)
+        // NX_KEYTYPE_BRIGHTNESS_UP = 0x90, _DOWN = 0x91.
+        let keyType: Int32 = up ? 0x90 : 0x91
+        // Flags byte: 0xa00 = keyDown, 0xb00 = keyUp.
+        for flagWord in [0xa00, 0xb00] {
+            let data1: Int = (Int(keyType) << 16) | flagWord
+            let event = NSEvent.otherEvent(
+                with: .systemDefined,
+                location: .zero,
+                modifierFlags: [],
+                timestamp: 0,
+                windowNumber: 0,
+                context: nil,
+                subtype: 8,
+                data1: data1,
+                data2: -1)
+            // Post via cghidEventTap so it lands in the same queue
+            // the system keyboard daemon would post into.
+            event?.cgEvent?.post(tap: .cghidEventTap)
+        }
     }
 }
 

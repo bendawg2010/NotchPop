@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.28</title>
+      <pubDate>Fri, 08 May 2026 19:13:36 +0000</pubDate>
+      <sparkle:version>1.5.28</sparkle:version>
+      <sparkle:shortVersionString>1.5.28</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Random generators actually generate AND copy now.</strong> Two bugs: (1) UUID() inside the tile builder rerolled every render, so the 'Copied!' flash never matched. (2) plain pasteboard.setString silently failed from the .nonactivatingPanel notch — same root cause as the v1.5.23 clipboard fix. New writeToPasteboard() helper uses the writeStringRobustly pattern (declareTypes + setString → readback verify → fallback writeObjects → 50ms retry).</li><li><strong>Brightness up/down works.</strong> Was using CGEvent.keyboardEvent with virtualKey 144/145 — but brightness keys aren't keyboard keys, they're system-defined HID events with NX_KEYTYPE codes. Fix: NSEvent.otherEvent(.systemDefined) with subtype 8 and data1 = (keyCode &lt;&lt; 16) | (0xa00 keydown / 0xb00 keyup), keyCode = NX_KEYTYPE_BRIGHTNESS_UP (0x90) / _DOWN (0x91). Same path the keyboard daemon uses when you press F1/F2.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.28/NotchPop.dmg"
+        sparkle:version="1.5.28"
+        sparkle:shortVersionString="1.5.28"
+        length="2602136"
+        type="application/octet-stream"
+        sparkle:edSignature="otLeo/5rab605X87Cn2FnjkRu4deZRAJDn1StBWPuSJbodmEetWGoCLzoHdTfkSI6S+uamo4MmZU7tFkAoS/Dw==" />
+    </item>
+    <item>
       <title>v1.5.27</title>
       <pubDate>Fri, 08 May 2026 19:04:21 +0000</pubDate>
       <sparkle:version>1.5.27</sparkle:version>

@@ -8,7 +8,7 @@ import AppKit
 import SwiftUI
 
 struct RandomGenView: View {
-    @State private var lastCopiedID: UUID?
+    @State private var lastCopiedID: String?
 
     var body: some View {
         VStack(spacing: 6) {
@@ -80,11 +80,19 @@ struct RandomGenView: View {
     private func generatorTile(label: String, icon: String,
                                gradient: [Color],
                                result: @escaping () -> String) -> some View {
-        let id = UUID()
+        // Stable per-label ID — UUID() inside the function body
+        // re-rolls every SwiftUI re-render, which made the
+        // 'Copied!' flash never appear. Hashing the label gives us
+        // a stable id per tile that survives renders.
+        let id = label
         return Button {
             let value = result()
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(value, forType: .string)
+            // Same writeStringRobustly pattern as ClipboardService —
+            // .nonactivatingPanel windows lose silent-setString
+            // races with the pasteboard server. User report: "the
+            // random things dont work" — the click was firing but
+            // the pasteboard never got the value.
+            writeToPasteboard(value)
             withAnimation(.easeOut(duration: 0.15)) {
                 lastCopiedID = id
             }
@@ -134,5 +142,25 @@ struct RandomGenView: View {
     private func generatePassword() -> String {
         let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
         return String((0..<16).map { _ in chars.randomElement()! })
+    }
+
+    /// Robust pasteboard write — declareTypes + setString, verify
+    /// readback, fall back to writeObjects, retry once after 50ms.
+    /// Mirrors ClipboardService.writeStringRobustly so this view's
+    /// chips actually copy from a .nonactivatingPanel context.
+    private func writeToPasteboard(_ text: String) {
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.declareTypes([.string], owner: nil)
+        let ok = pb.setString(text, forType: .string)
+        if ok, pb.string(forType: .string) == text { return }
+        pb.clearContents()
+        let woOK = pb.writeObjects([text as NSString])
+        if woOK, pb.string(forType: .string) == text { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            pb.clearContents()
+            pb.declareTypes([.string], owner: nil)
+            _ = pb.setString(text, forType: .string)
+        }
     }
 }
