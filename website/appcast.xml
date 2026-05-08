@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.13</title>
+      <pubDate>Fri, 08 May 2026 16:17:07 +0000</pubDate>
+      <sparkle:version>1.5.13</sparkle:version>
+      <sparkle:shortVersionString>1.5.13</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Settings now scrolls everywhere.</strong> Pre-1.5.13 only the Behavior and Pomodoro tabs scrolled — Tabs, World Clock, and About silently truncated their tail content. All eight tabs are scrollable now.</li><li><strong>New Updates tab:</strong> Force Update Now button, current-version readout, last-checked timestamp, and a toggle for automatic checks. If Sparkle ever gets confused again, this is your panic button.</li><li><strong>New Appearance tab:</strong> pick an accent color (pink/blue/purple/mint/orange/graphite or the brand pink→blue gradient), 12-vs-24-hour clock format, show seconds, reduce motion.</li><li><strong>New Diagnostics tab:</strong> re-detect screen, re-center notch, copy diagnostic info to clipboard for bug reports, jump straight to Console.app.</li><li>New Behavior options: auto-expand on file drag, click-outside-to-collapse toggle.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.13/NotchPop.dmg"
+        sparkle:version="1.5.13"
+        sparkle:shortVersionString="1.5.13"
+        length="2002470"
+        type="application/octet-stream"
+        sparkle:edSignature="yFE7ss2I2vwok52nIC8MP6Tx1SNCRfc8dVCFCfgSVh5vrtK5YdPqBdhbuYTdmgbhynD6G6OEg4zsMQYye5sHDg==" />
+    </item>
+    <item>
       <title>v1.5.12</title>
       <pubDate>Fri, 08 May 2026 16:07:10 +0000</pubDate>
       <sparkle:version>1.5.12</sparkle:version>

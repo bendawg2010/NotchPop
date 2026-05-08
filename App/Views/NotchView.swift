@@ -338,7 +338,9 @@ struct NotchView: View {
         case .timers:
             TimersTabView(stopwatch: viewModel.stopwatch, countdown: viewModel.countdown)
         case .worldClock:
-            WorldClockView(service: viewModel.worldClock)
+            WorldClockView(service: viewModel.worldClock,
+                           uses24Hour: viewModel.clockUses24Hour,
+                           showsSeconds: viewModel.clockShowsSeconds)
         case .notes:
             NotesView(service: viewModel.notes)
         case .clipboard:

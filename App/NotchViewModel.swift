@@ -8,6 +8,58 @@ import AppKit
 import Combine
 import SwiftUI
 
+/// User-pickable accent for gradients and primary buttons. We keep
+/// the existing pink→blue brand gradient as the default but let users
+/// swap to a single solid accent if they prefer something quieter.
+/// Each case provides .startColor + .endColor (which collapse to the
+/// same color for solid choices), so consumers can use a single
+/// LinearGradient(colors:) call regardless of solid-vs-gradient.
+enum AccentChoice: String, CaseIterable, Identifiable, Codable {
+    case pinkBlue   // brand gradient (default)
+    case pink
+    case blue
+    case purple
+    case mint
+    case orange
+    case graphite
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .pinkBlue: return "Pink → Blue (brand)"
+        case .pink:     return "Pink"
+        case .blue:     return "Blue"
+        case .purple:   return "Purple"
+        case .mint:     return "Mint"
+        case .orange:   return "Orange"
+        case .graphite: return "Graphite"
+        }
+    }
+
+    var startColor: Color {
+        switch self {
+        case .pinkBlue, .pink: return Color(red: 1.00, green: 0.24, blue: 0.67)
+        case .blue:            return Color(red: 0.17, green: 0.52, blue: 0.97)
+        case .purple:          return Color(red: 0.62, green: 0.30, blue: 0.96)
+        case .mint:            return Color(red: 0.18, green: 0.82, blue: 0.62)
+        case .orange:          return Color(red: 1.00, green: 0.52, blue: 0.20)
+        case .graphite:        return Color(red: 0.55, green: 0.58, blue: 0.65)
+        }
+    }
+    var endColor: Color {
+        switch self {
+        case .pinkBlue:        return Color(red: 0.17, green: 0.52, blue: 0.77)
+        case .pink:            return Color(red: 1.00, green: 0.24, blue: 0.67)
+        case .blue:            return Color(red: 0.17, green: 0.52, blue: 0.97)
+        case .purple:          return Color(red: 0.62, green: 0.30, blue: 0.96)
+        case .mint:            return Color(red: 0.18, green: 0.82, blue: 0.62)
+        case .orange:          return Color(red: 1.00, green: 0.52, blue: 0.20)
+        case .graphite:        return Color(red: 0.55, green: 0.58, blue: 0.65)
+        }
+    }
+}
+
 /// Tabs / panes shown when the notch is expanded. The user can hide
 /// any of these from Settings — `visibleTabs` in NotchViewModel filters
 /// the list at render time.
@@ -147,6 +199,42 @@ final class NotchViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Appearance
+
+    /// Brand-accent color for buttons, gradients, ring strokes. Default
+    /// "pink-to-blue" matches NotchPop's pink/blue gradient. Users can
+    /// pick a single solid accent if they prefer a less colorful UI.
+    @Published var accentChoice: AccentChoice = .pinkBlue {
+        didSet { UserDefaults.standard.set(accentChoice.rawValue, forKey: "np.accent") }
+    }
+    /// 24-hour vs 12-hour time format. Affects World Clock, system
+    /// time displays, and any other "what time is it" rendering.
+    /// Default = 24h (matches the prior hardcoded HH:mm format).
+    @Published var clockUses24Hour: Bool = true {
+        didSet { UserDefaults.standard.set(clockUses24Hour, forKey: "np.clock24h") }
+    }
+    /// Show seconds in clock displays. Off by default (cleaner).
+    @Published var clockShowsSeconds: Bool = false {
+        didSet { UserDefaults.standard.set(clockShowsSeconds, forKey: "np.clockSec") }
+    }
+    /// Reduce motion: kills welcome animation, gradient ring rotation,
+    /// and any other purely-decorative animation. Useful for users with
+    /// vestibular sensitivity or a low-power Mac.
+    @Published var reducedMotion: Bool = false {
+        didSet { UserDefaults.standard.set(reducedMotion, forKey: "np.reduceMotion") }
+    }
+    /// When dragging a file near the notch, auto-expand to the file
+    /// shelf even before the user has actually hovered. ON by default
+    /// because it makes the drop target much easier to hit.
+    @Published var expandOnDragHover: Bool = true {
+        didSet { UserDefaults.standard.set(expandOnDragHover, forKey: "np.dragExpand") }
+    }
+    /// Click outside the expanded notch to collapse it. ON by default;
+    /// users who prefer "hover only" behavior can turn this off.
+    @Published var clickOutsideToCollapse: Bool = true {
+        didSet { UserDefaults.standard.set(clickOutsideToCollapse, forKey: "np.clickOutside") }
+    }
+
     // MARK: - Children
     let shelf = FileShelf()
     let nowPlaying = NowPlayingService()
@@ -220,6 +308,26 @@ final class NotchViewModel: ObservableObject {
         self.notchCornerRadiusOverride = d.double(forKey: "np.notchRadius")
         if d.object(forKey: "np.liveActivities") != nil {
             self.liveActivitiesEnabled = d.bool(forKey: "np.liveActivities")
+        }
+        // Appearance settings
+        if let raw = d.string(forKey: "np.accent"),
+           let parsed = AccentChoice(rawValue: raw) {
+            self.accentChoice = parsed
+        }
+        if d.object(forKey: "np.clock24h") != nil {
+            self.clockUses24Hour = d.bool(forKey: "np.clock24h")
+        }
+        if d.object(forKey: "np.clockSec") != nil {
+            self.clockShowsSeconds = d.bool(forKey: "np.clockSec")
+        }
+        if d.object(forKey: "np.reduceMotion") != nil {
+            self.reducedMotion = d.bool(forKey: "np.reduceMotion")
+        }
+        if d.object(forKey: "np.dragExpand") != nil {
+            self.expandOnDragHover = d.bool(forKey: "np.dragExpand")
+        }
+        if d.object(forKey: "np.clickOutside") != nil {
+            self.clickOutsideToCollapse = d.bool(forKey: "np.clickOutside")
         }
         // Restore tab order/visibility, falling back to defaults if any
         // raw value is unrecognized. Legacy raw values from old NotchTab
@@ -332,10 +440,16 @@ final class NotchViewModel: ObservableObject {
 
     /// Triggers the multi-scene welcome animation. Used on first launch
     /// and replayable from Settings → About → "Replay welcome animation".
+    /// When `reducedMotion` is on we skip the animation entirely — peek
+    /// open without the spring, hold for the same duration, then close.
     func runWelcomePeek() {
         showingWelcome = true
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+        if reducedMotion {
             expanded = true
+        } else {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+                expanded = true
+            }
         }
         // 3 scenes × 1.5s + breathing room. Match WelcomeCard's
         // sceneIndex schedule.
@@ -343,8 +457,12 @@ final class NotchViewModel: ObservableObject {
             guard let self = self else { return }
             self.showingWelcome = false
             if !self.hovering {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                if self.reducedMotion {
                     self.expanded = false
+                } else {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                        self.expanded = false
+                    }
                 }
             }
         }

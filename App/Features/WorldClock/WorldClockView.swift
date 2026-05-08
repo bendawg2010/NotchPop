@@ -8,9 +8,15 @@ import SwiftUI
 
 struct WorldClockView: View {
     @ObservedObject var service: WorldClockService
+    /// Pulled in from the NotchViewModel so the user's 12/24-hour and
+    /// "show seconds" preferences propagate into each city card.
+    /// Defaults match the historical hardcoded "HH:mm" format if the
+    /// caller doesn't pass these.
+    var uses24Hour: Bool = true
+    var showsSeconds: Bool = false
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
+        TimelineView(.periodic(from: .now, by: showsSeconds ? 1 : 1)) { context in
             HStack(spacing: 8) {
                 if service.clocks.isEmpty {
                     emptyState
@@ -47,7 +53,12 @@ struct WorldClockView: View {
         let tz = TimeZone(identifier: entry.timezoneIdentifier) ?? .current
         let formatter = DateFormatter()
         formatter.timeZone = tz
-        formatter.dateFormat = "HH:mm"
+        // Build the format string from user prefs:
+        //   24h: HH:mm or HH:mm:ss
+        //   12h: h:mm a or h:mm:ss a (a = AM/PM)
+        let baseFmt = uses24Hour ? "HH:mm" : "h:mm"
+        let withSec = showsSeconds ? baseFmt.replacingOccurrences(of: "mm", with: "mm:ss") : baseFmt
+        formatter.dateFormat = uses24Hour ? withSec : (withSec + " a")
         let timeStr = formatter.string(from: now)
 
         formatter.dateFormat = "EEE"
