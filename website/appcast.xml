@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.24</title>
+      <pubDate>Fri, 08 May 2026 18:28:33 +0000</pubDate>
+      <sparkle:version>1.5.24</sparkle:version>
+      <sparkle:shortVersionString>1.5.24</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Screenshot drops work now.</strong> The drop handler only listened for .fileURL — but the macOS screenshot floating thumbnail (the bottom-right preview after ⇧⌘5) ships PNG bytes BEFORE auto-saving, so dragging from there had nothing for us to load. Now also accepts .image / .png / .tiff — image-data drops get written to ~/Library/Application Support/NotchPop/shelf/screenshot-yyyy-MM-dd-HHmmss-SSS.png and shelfed as a real file. Web drags + Photos drags work the same way.</li><li><strong>One-click 'download new version' notification.</strong> The independent-launch version check posts a notification when you're behind, but in v1.5.19–v1.5.23 clicking it did nothing. Now AppDelegate is the UNUserNotificationCenterDelegate — clicking the banner opens the GitHub-release DMG URL directly in your default browser. Drag to Applications, replace, done. Sparkle-stuck users finally have a one-click escape.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.24/NotchPop.dmg"
+        sparkle:version="1.5.24"
+        sparkle:shortVersionString="1.5.24"
+        length="2284813"
+        type="application/octet-stream"
+        sparkle:edSignature="d6OuTO81xUXSQTza+RuAkRU15qAGJtp7A3uYQ3XSN1hjmNGykOUU9D87E+nQdE4keb8BIQduR1lUDh8qW5mDBQ==" />
+    </item>
+    <item>
       <title>v1.5.23</title>
       <pubDate>Fri, 08 May 2026 18:08:03 +0000</pubDate>
       <sparkle:version>1.5.23</sparkle:version>

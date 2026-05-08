@@ -7,8 +7,9 @@
 import AppKit
 import Combine
 import SwiftUI
+import UserNotifications
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     var notchWindowController: NotchWindowController?
     var statusItem: NSStatusItem?
     var screenChangeCancellable: AnyCancellable?
@@ -25,6 +26,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         installNotchWindow()
         observeScreenChanges()
+        // Become the notification-center delegate so we can handle
+        // taps on the "new version available" banner — the userInfo
+        // payload carries a GitHub-release DMG URL we open in the
+        // browser, giving Sparkle-stuck users a one-click escape.
+        UNUserNotificationCenter.current().delegate = self
         // Listen for the showMenuBarIcon toggle so we can show/hide
         // the menubar item live without needing a relaunch.
         NotificationCenter.default.addObserver(
@@ -163,6 +169,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func replayWelcome() {
         viewModel.runWelcomePeek()
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    /// Show notifications even when NotchPop is the foreground app.
+    /// (Without this, our own banners get suppressed because UNUC
+    /// hides them in-app by default.)
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler:
+                                    @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound])
+    }
+
+    /// Handle taps on our notifications. The "new version available"
+    /// banner carries np.action=openDMGURL with np.dmgURL — open it
+    /// in the default browser so the user can grab the DMG directly
+    /// (escape hatch when Sparkle is stuck).
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler:
+                                    @escaping () -> Void) {
+        defer { completionHandler() }
+        let info = response.notification.request.content.userInfo
+        guard (info["np.action"] as? String) == "openDMGURL",
+              let urlStr = info["np.dmgURL"] as? String,
+              let url = URL(string: urlStr) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     @objc private func menubarVisibilityChanged() {

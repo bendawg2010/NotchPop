@@ -114,7 +114,7 @@ final class UpdaterController: NSObject {
     /// launch as a safety net for users where Sparkle's internal
     /// state has gone sideways.
     func runIndependentVersionCheck() {
-        guard let url = URL(string: "https://notchpop.pages.dev/appcast.xml") else { return }
+        guard let url = URL(string: "https://notchpop.pages.dev/appcast.xml?t=\(Int(Date().timeIntervalSince1970))") else { return }
         var req = URLRequest(url: url, timeoutInterval: 10)
         req.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         URLSession.shared.dataTask(with: req) { [weak self] data, _, error in
@@ -122,9 +122,6 @@ final class UpdaterController: NSObject {
                   let data = data,
                   error == nil,
                   let xml = String(data: data, encoding: .utf8) else { return }
-            // Quick-and-dirty: pull the FIRST `<sparkle:version>...</sparkle:version>`
-            // out of the document. The appcast prepends new entries,
-            // so this is the latest version.
             guard let range = xml.range(of: #"<sparkle:version>([^<]+)</sparkle:version>"#,
                                          options: .regularExpression),
                   let inner = xml[range].range(of: #">[^<]+<"#, options: .regularExpression)
@@ -133,18 +130,33 @@ final class UpdaterController: NSObject {
             let latest = String(raw).trimmingCharacters(in: .whitespacesAndNewlines)
             let current = (Bundle.main.infoDictionary?["CFBundleShortVersionString"]
                            as? String) ?? "0.0"
-            // Semantic-version-ish compare via NumericSearch — handles
-            // 1.5.10 > 1.5.9 correctly without writing a real parser.
             if latest.compare(current, options: .numeric) == .orderedDescending {
                 NSLog("NotchPop: independent check found newer version \(latest) > \(current)")
                 DispatchQueue.main.async {
-                    self.notify(
-                        title: "NotchPop \(latest) available",
-                        body: "Open Settings → Updates → Force Update Now, or click here to grab the DMG manually."
-                    )
+                    self.notifyWithDeepLink(version: latest)
                 }
             }
         }.resume()
+    }
+
+    /// Like notify() but the notification carries a userInfo entry
+    /// with the GitHub-release DMG URL so the click handler in
+    /// AppDelegate can open it. Means a user whose Sparkle is stuck
+    /// can click the system notification banner to download the
+    /// new version manually.
+    private func notifyWithDeepLink(version: String) {
+        let dmgURL = "https://github.com/bendawg2010/NotchPop/releases/download/v\(version)/NotchPop.dmg"
+        let content = UNMutableNotificationContent()
+        content.title = "NotchPop \(version) is available"
+        content.body = "Sparkle's been weird? Click here to download the DMG directly. Drag to Applications, replace, done."
+        content.sound = .default
+        content.userInfo = ["np.action": "openDMGURL",
+                            "np.dmgURL": dmgURL]
+        let req = UNNotificationRequest(
+            identifier: "notchpop.update.deeplink." + UUID().uuidString,
+            content: content,
+            trigger: nil)
+        UNUserNotificationCenter.current().add(req)
     }
 
     /// Live binding for the menu item — disabled while Sparkle is busy.

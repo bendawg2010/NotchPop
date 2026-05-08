@@ -9,6 +9,7 @@
 // window frame matches the visible notch.
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
@@ -268,7 +269,16 @@ struct NotchView: View {
         // near the notch and it counts. Auto-expands to Shelf the
         // moment the drag touches us, so users get a generous drop
         // target instead of a 178pt-wide notch sliver.
-        .onDrop(of: [.fileURL], isTargeted: dragTargetBinding) { providers in
+        //
+        // We accept fileURL AND raw image types — the macOS
+        // screenshot floating thumbnail (the bottom-right preview
+        // after ⇧⌘5) ships PNG bytes BEFORE it auto-saves, so a
+        // drag from there into the notch had no fileURL to load.
+        // User report: "dropping screenshots into the thing doesnt
+        // work." Now we save image-data drops to disk as a PNG in
+        // Application Support and shelf the resulting URL.
+        .onDrop(of: [.fileURL, .image, .png, .tiff],
+                isTargeted: dragTargetBinding) { providers in
             handleFileDrop(providers: providers)
         }
     }
@@ -326,12 +336,21 @@ struct NotchView: View {
         }
         viewModel.expanded = true
 
+        // We resolve each provider on a background queue then collect
+        // the URLs on main when done. Each provider can be EITHER a
+        // file URL (Finder drag, drag-out from another shelf) OR raw
+        // image bytes (screenshot floating thumbnail, web drag, Photos
+        // drag). We try fileURL first because it's the highest-fidelity
+        // source — preserves the user's original filename + location.
         var urls: [URL] = []
         let group = DispatchGroup()
+        let lock = NSLock()
         for p in providers {
             group.enter()
-            _ = p.loadObject(ofClass: URL.self) { url, _ in
-                if let u = url { urls.append(u) }
+            resolveProvider(p) { url in
+                if let u = url {
+                    lock.lock(); urls.append(u); lock.unlock()
+                }
                 group.leave()
             }
         }
@@ -340,6 +359,90 @@ struct NotchView: View {
             isDragHovering = false
         }
         return true
+    }
+
+    /// Try to resolve a single NSItemProvider to a file URL. First
+    /// asks for an actual file URL (Finder drag → ideal). If that
+    /// returns nothing, requests image data (PNG → TIFF → public.image)
+    /// and writes it to a temp file under
+    /// ~/Library/Application Support/NotchPop/shelf/ so the resulting
+    /// URL survives across launches.
+    private func resolveProvider(_ p: NSItemProvider,
+                                 completion: @escaping (URL?) -> Void) {
+        // 1. File URL path — preserves filename + extension.
+        if p.canLoadObject(ofClass: URL.self) {
+            _ = p.loadObject(ofClass: URL.self) { url, _ in
+                if let u = url, u.isFileURL {
+                    completion(u)
+                    return
+                }
+                // Fall back to image-data attempt
+                self.tryImageData(p, completion: completion)
+            }
+            return
+        }
+        // 2. Direct image-data path
+        tryImageData(p, completion: completion)
+    }
+
+    /// Pull raw image bytes out of an item provider in priority order
+    /// (PNG > TIFF > public.image), write to a stable temp directory,
+    /// hand back the resulting file URL.
+    private func tryImageData(_ p: NSItemProvider,
+                              completion: @escaping (URL?) -> Void) {
+        let candidates: [String] = [
+            UTType.png.identifier,
+            UTType.tiff.identifier,
+            UTType.image.identifier,
+        ]
+        for typeID in candidates where p.hasItemConformingToTypeIdentifier(typeID) {
+            p.loadDataRepresentation(forTypeIdentifier: typeID) { data, _ in
+                guard let data = data else {
+                    completion(nil)
+                    return
+                }
+                let ext = (typeID == UTType.tiff.identifier) ? "tiff" : "png"
+                if let writtenURL = self.writeShelfTempFile(data: data, ext: ext) {
+                    completion(writtenURL)
+                } else {
+                    completion(nil)
+                }
+            }
+            return
+        }
+        completion(nil)
+    }
+
+    /// Build a unique URL in our application-support shelf folder
+    /// and write the dropped image data there. Returns nil if either
+    /// the directory create or the write fails.
+    private func writeShelfTempFile(data: Data, ext: String) -> URL? {
+        let fm = FileManager.default
+        guard let appSupport = fm.urls(for: .applicationSupportDirectory,
+                                       in: .userDomainMask).first
+        else { return nil }
+        let dir = appSupport
+            .appendingPathComponent("NotchPop", isDirectory: true)
+            .appendingPathComponent("shelf", isDirectory: true)
+        do {
+            try fm.createDirectory(at: dir,
+                                    withIntermediateDirectories: true,
+                                    attributes: nil)
+        } catch {
+            NSLog("NotchPop shelf: failed to create temp dir: \(error)")
+            return nil
+        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd-HHmmss-SSS"
+        let name = "screenshot-\(formatter.string(from: Date())).\(ext)"
+        let url = dir.appendingPathComponent(name)
+        do {
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            NSLog("NotchPop shelf: failed to write temp file \(name): \(error)")
+            return nil
+        }
     }
 
     private func onHoverChange(_ hovering: Bool) {
