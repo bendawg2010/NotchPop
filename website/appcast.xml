@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.19</title>
+      <pubDate>Fri, 08 May 2026 17:36:30 +0000</pubDate>
+      <sparkle:version>1.5.19</sparkle:version>
+      <sparkle:shortVersionString>1.5.19</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Sparkle escape hatch — for real this time.</strong> Force Update Now now ALSO clears NSURLCache and calls SPUUpdater.resetUpdateCycle() (Sparkle's official 'throw away in-memory state' API). Plus the feed URL is appended with a per-launch cache-busting token so Cloudflare can't return a 304 with a stale parse.</li><li><strong>Independent appcast check at launch.</strong> 8 seconds after launch, NotchPop fetches the appcast DIRECTLY (bypassing Sparkle entirely), parses the latest version with a regex, and posts a system notification if you're behind. Safety net for the cases where Sparkle's internal state is stuck.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.19/NotchPop.dmg"
+        sparkle:version="1.5.19"
+        sparkle:shortVersionString="1.5.19"
+        length="2145293"
+        type="application/octet-stream"
+        sparkle:edSignature="2AySskP6k7a0avIylLohyTGIIFOoMMRD3E4mBwq02rsMrPV4zW5Coy/Mlr2gA9NsrV/lkTteZGq3gYk1LORJAA==" />
+    </item>
+    <item>
       <title>v1.5.18</title>
       <pubDate>Fri, 08 May 2026 17:32:00 +0000</pubDate>
       <sparkle:version>1.5.18</sparkle:version>

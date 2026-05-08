@@ -40,6 +40,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updater.clearSkippedVersionsOnLaunch()
         _ = updater.controller
         updater.notifyIfJustUpdated()
+        // Side-channel safety net: 8 seconds after launch, fetch the
+        // appcast directly (bypassing Sparkle) and compare to our
+        // bundle version. If we're behind, post a system notification
+        // with a deep link. Catches the cases where Sparkle's
+        // internal state is stuck and "Force Update Now" hasn't
+        // been clicked yet.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            self?.updater.runIndependentVersionCheck()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

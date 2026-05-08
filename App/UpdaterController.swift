@@ -51,20 +51,34 @@ final class UpdaterController: NSObject {
         controller.checkForUpdates(sender)
     }
 
-    /// "Force update now" — wipes Sparkle's cached state (skipped
-    /// version, queued silent install, time-of-last-check) and asks the
-    /// updater to check immediately. Use this when a user reports
-    /// being trapped on an old version (Sparkle saying "you're up to
-    /// date" while the menubar shows the stale CFBundleShortVersionString).
+    /// "Force update now" — nukes everything Sparkle and the URL
+    /// session might have cached, then asks the updater to start a
+    /// fresh cycle. Use this when a user reports being trapped on an
+    /// old version (Sparkle saying "you're up to date" while the
+    /// dialog mentions a NEWER version a line below).
+    ///
+    /// What we wipe (and why each one matters):
+    ///   • SUSkippedVersion / SUSkippedMinorVersion — set when the
+    ///     user clicked "Skip This Version" on a previous appcast
+    ///     entry. Keeps the dialog showing "up to date" forever.
+    ///   • SULastCheckTime / SUUpdaterLastCheckTime — Sparkle's
+    ///     scheduling key. Clearing it forces a real check rather
+    ///     than the cached "no update" answer.
+    ///   • SUFeedLastModifiedString / SUFeedLastETagString — HTTP
+    ///     If-Modified-Since / If-None-Match values. Without these
+    ///     cleared, Cloudflare returns 304 Not Modified and Sparkle
+    ///     re-uses its cached parse of the appcast.
+    ///   • URLCache.shared — global NSURLCache that URLSession
+    ///     consults. Sparkle uses URLSession internally; if our
+    ///     prior response is in here, Sparkle never even hits the
+    ///     network.
+    /// And then we call controller.updater.resetUpdateCycle() — this
+    /// is the official Sparkle API for "throw away whatever you've
+    /// got and start a brand-new update cycle." Followed by a
+    /// user-initiated checkForUpdates so the user sees the result.
     @objc func forceUpdateNow(_ sender: Any?) {
-        NSLog("NotchPop: forceUpdateNow — wiping Sparkle cached state")
+        NSLog("NotchPop: forceUpdateNow — nuking Sparkle + URL caches")
         let defaults = UserDefaults.standard
-        // SUSkippedVersion: set when user clicked "Skip This Version".
-        // SUSkippedMinorVersion: same idea on Sparkle 2.x.
-        // SULastCheckTime: forces Sparkle to actually hit the appcast
-        //   instead of returning a cached "no update" answer.
-        // SUFeedLastModifiedString / Etag: HTTP cache; clearing avoids
-        //   getting a 304 Not Modified from Cloudflare's CDN.
         for key in [
             "SUSkippedVersion",
             "SUSkippedMinorVersion",
@@ -72,11 +86,65 @@ final class UpdaterController: NSObject {
             "SUFeedLastModifiedString",
             "SUFeedLastETagString",
             "SUUpdaterLastCheckTime",
+            "SULastProfileSubmissionDate",
         ] {
             defaults.removeObject(forKey: key)
         }
         defaults.synchronize()
+
+        // Clear NSURLCache — without this, URLSession serves us our
+        // own previous response of the appcast, never going to the
+        // network, never seeing the latest entries.
+        URLCache.shared.removeAllCachedResponses()
+
+        // Sparkle's official "start over" call — discards in-memory
+        // appcast state, re-schedules the cycle from scratch.
+        controller.updater.resetUpdateCycle()
+
+        // Then a user-visible check so the user gets a sheet either
+        // way (sees "you're up to date" with the LATEST version OR
+        // "v1.5.X is available, install now").
         controller.checkForUpdates(sender)
+    }
+
+    /// Side-channel update check that bypasses Sparkle entirely —
+    /// just fetches the appcast, parses the top entry, compares to
+    /// the current bundle version. If a newer one exists, posts a
+    /// system notification with a deep link to the DMG. Runs once at
+    /// launch as a safety net for users where Sparkle's internal
+    /// state has gone sideways.
+    func runIndependentVersionCheck() {
+        guard let url = URL(string: "https://notchpop.pages.dev/appcast.xml") else { return }
+        var req = URLRequest(url: url, timeoutInterval: 10)
+        req.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        URLSession.shared.dataTask(with: req) { [weak self] data, _, error in
+            guard let self = self,
+                  let data = data,
+                  error == nil,
+                  let xml = String(data: data, encoding: .utf8) else { return }
+            // Quick-and-dirty: pull the FIRST `<sparkle:version>...</sparkle:version>`
+            // out of the document. The appcast prepends new entries,
+            // so this is the latest version.
+            guard let range = xml.range(of: #"<sparkle:version>([^<]+)</sparkle:version>"#,
+                                         options: .regularExpression),
+                  let inner = xml[range].range(of: #">[^<]+<"#, options: .regularExpression)
+            else { return }
+            let raw = xml[range][inner].dropFirst().dropLast()
+            let latest = String(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+            let current = (Bundle.main.infoDictionary?["CFBundleShortVersionString"]
+                           as? String) ?? "0.0"
+            // Semantic-version-ish compare via NumericSearch — handles
+            // 1.5.10 > 1.5.9 correctly without writing a real parser.
+            if latest.compare(current, options: .numeric) == .orderedDescending {
+                NSLog("NotchPop: independent check found newer version \(latest) > \(current)")
+                DispatchQueue.main.async {
+                    self.notify(
+                        title: "NotchPop \(latest) available",
+                        body: "Open Settings → Updates → Force Update Now, or click here to grab the DMG manually."
+                    )
+                }
+            }
+        }.resume()
     }
 
     /// Live binding for the menu item — disabled while Sparkle is busy.
@@ -115,9 +183,18 @@ final class UpdaterController: NSObject {
 }
 
 extension UpdaterController: SPUUpdaterDelegate {
-    /// Read SUFeedURL from Info.plist (returning nil here means Sparkle
-    /// uses the plist value rather than letting us override).
-    func feedURLString(for updater: SPUUpdater) -> String? { nil }
+    /// Override the feed URL with a cache-busting query string. The
+    /// vanilla SUFeedURL from Info.plist would be sent as-is, and
+    /// CDN/HTTP caching layers (Cloudflare's edge, NSURLCache,
+    /// Sparkle's internal If-None-Match) could return a stale parse.
+    /// By appending a per-launch random token we guarantee a fresh
+    /// fetch on every check. Costs us nothing — the appcast is
+    /// 5kb and the request happens at most a few times an hour.
+    func feedURLString(for updater: SPUUpdater) -> String? {
+        let base = "https://notchpop.pages.dev/appcast.xml"
+        let bust = "t=\(Int(Date().timeIntervalSince1970))"
+        return "\(base)?\(bust)"
+    }
 
     func updater(_ updater: SPUUpdater,
                  didFindValidUpdate item: SUAppcastItem) {
