@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.15</title>
+      <pubDate>Fri, 08 May 2026 16:39:20 +0000</pubDate>
+      <sparkle:version>1.5.15</sparkle:version>
+      <sparkle:shortVersionString>1.5.15</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Centering bug fixed.</strong> The notch was occasionally landing at the right position then jumping to the left a moment later — caused by an async race in the window controller (an older applyContentSize's stale newFrame would clobber a newer call's correct frame). Fixed with a per-call generation counter so only the latest re-apply runs.</li><li><strong>Screen detection caches.</strong> ScreenHelper now caches the chosen display ID for the session, only re-resolving when display config changes. No more jumping between screens mid-session.</li><li><strong>New Quick Actions tab</strong> — Lock, Sleep, Screenshot, Mission Control, plus one-tap shortcuts to Sound / Display / Network prefs and Trash.</li><li><strong>Live activity progress line.</strong> Music's track elapsed and Pomodoro/Countdown phase progress now show as a thin gradient line at the bottom of the integrated notch pill.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.15/NotchPop.dmg"
+        sparkle:version="1.5.15"
+        sparkle:shortVersionString="1.5.15"
+        length="2040948"
+        type="application/octet-stream"
+        sparkle:edSignature="HDVILy6V4cy42hnSUyMt7FpgJqifk6bxaC9WT5XhsDFC10d190FVRaBFmV/wUsC0H/4UakiONA0RO169eMVvAQ==" />
+    </item>
+    <item>
       <title>v1.5.14</title>
       <pubDate>Fri, 08 May 2026 16:27:43 +0000</pubDate>
       <sparkle:version>1.5.14</sparkle:version>

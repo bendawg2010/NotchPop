@@ -783,7 +783,12 @@ struct SettingsView: View {
 
             HStack(spacing: 10) {
                 Button {
+                    // Wipe ScreenHelper's cached display ID so the
+                    // next lookup re-resolves from scratch, then
+                    // refresh viewModel.screenInfo + reposition.
+                    ScreenHelper.invalidateCache()
                     viewModel.screenInfo = ScreenHelper.current()
+                    repositionNotch()
                 } label: {
                     Label("Re-detect screen", systemImage: "arrow.clockwise")
                 }

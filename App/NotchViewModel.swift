@@ -79,35 +79,38 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case systemStats = "System"
     case calendar = "Calendar"
     case airpods = "AirPods"
+    case quickActions = "Quick Actions"
 
     var id: String { rawValue }
     var icon: String {
         switch self {
-        case .shelf:       return "tray.full.fill"
-        case .nowPlaying:  return "music.note"
-        case .pomodoro:    return "timer"
-        case .timers:      return "stopwatch.fill"
-        case .worldClock:  return "globe"
-        case .notes:       return "note.text"
-        case .clipboard:   return "doc.on.clipboard.fill"
-        case .systemStats: return "cpu"
-        case .calendar:    return "calendar"
-        case .airpods:     return "airpods.gen2"
+        case .shelf:        return "tray.full.fill"
+        case .nowPlaying:   return "music.note"
+        case .pomodoro:     return "timer"
+        case .timers:       return "stopwatch.fill"
+        case .worldClock:   return "globe"
+        case .notes:        return "note.text"
+        case .clipboard:    return "doc.on.clipboard.fill"
+        case .systemStats:  return "cpu"
+        case .calendar:     return "calendar"
+        case .airpods:      return "airpods.gen2"
+        case .quickActions: return "bolt.fill"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
     var blurb: String {
         switch self {
-        case .shelf:       return "Drag any file onto the notch — drag it back out anywhere."
-        case .nowPlaying:  return "Apple Music / Spotify track info + transport controls."
-        case .pomodoro:    return "Phased focus timer with strict mode + daily goal."
-        case .timers:      return "Stopwatch and quick countdown timer in one tab."
-        case .worldClock:  return "Up to 4 cities at a glance. Configurable in Settings."
-        case .notes:       return "Quick scratchpad. Auto-saves as you type."
-        case .clipboard:   return "Last 12 things you copied — click any to paste it back."
-        case .systemStats: return "Live CPU + RAM gauges so you can spot a runaway process."
-        case .calendar:    return "Today's next events, pulled from macOS Calendar via EventKit."
-        case .airpods:     return "Battery levels for connected AirPods — left, right, and case."
+        case .shelf:        return "Drag any file onto the notch — drag it back out anywhere."
+        case .nowPlaying:   return "Apple Music / Spotify track info + transport controls."
+        case .pomodoro:     return "Phased focus timer with strict mode + daily goal."
+        case .timers:       return "Stopwatch and quick countdown timer in one tab."
+        case .worldClock:   return "Up to 4 cities at a glance. Configurable in Settings."
+        case .notes:        return "Quick scratchpad. Auto-saves as you type."
+        case .clipboard:    return "Last 12 things you copied — click any to paste it back."
+        case .systemStats:  return "Live CPU + RAM gauges so you can spot a runaway process."
+        case .calendar:     return "Today's next events, pulled from macOS Calendar via EventKit."
+        case .airpods:      return "Battery levels for connected AirPods — left, right, and case."
+        case .quickActions: return "Lock screen, sleep displays, screenshot, Mission Control — fast."
         }
     }
 }

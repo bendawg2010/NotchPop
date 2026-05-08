@@ -426,6 +426,8 @@ struct NotchView: View {
             CalendarView(service: viewModel.calendar)
         case .airpods:
             AirPodsView(service: viewModel.airpods)
+        case .quickActions:
+            QuickActionsView(viewModel: viewModel)
         }
     }
 }

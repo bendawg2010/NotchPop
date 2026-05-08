@@ -32,39 +32,88 @@ struct ScreenInfo: Equatable {
 }
 
 enum ScreenHelper {
-    /// Returns the screen we should pin the notch UI to. Three-tier
+    /// Cached display ID of the notched screen. We resolve once per
+    /// session (or until didChangeScreenParametersNotification fires),
+    /// then look it up by ID on every subsequent notchedScreen() call.
+    /// Without this cache, notchedScreen() walked NSScreen.screens on
+    /// every applyContentSize() — sometimes finding the screen, then
+    /// sometimes not (e.g. transient CGDisplayIsBuiltin-returns-false
+    /// during display sleep transitions), causing the notch to jump
+    /// between screens within one user session.
+    private static var cachedDisplayID: CGDirectDisplayID?
+    private static var observerInstalled = false
+
+    private static func installObserverIfNeeded() {
+        guard !observerInstalled else { return }
+        observerInstalled = true
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Invalidate; the next notchedScreen() call re-resolves.
+            cachedDisplayID = nil
+        }
+    }
+
+    /// Returns the screen we should pin the notch UI to. Multi-tier
     /// fallback because every detection method is unreliable on SOME
     /// hardware combo:
     ///
-    /// 1. CGDisplayIsBuiltin — the most authoritative way to find the
+    /// 1. Cached display ID (if still present in NSScreen.screens) —
+    ///    keeps our choice stable across calls in the same session.
+    /// 2. CGDisplayIsBuiltin — the most authoritative way to find the
     ///    laptop's internal display. Works even when safeAreaInsets is
     ///    misreported, even when display arrangement puts the laptop
     ///    at non-zero origin, even with multiple notched displays.
-    /// 2. safeAreaInsets.top > 0 — works on most Macs but has been
+    /// 3. safeAreaInsets.top > 0 — works on most Macs but has been
     ///    seen to false-zero on some external-display configs.
-    /// 3. NSScreen.main — last resort. Returns whichever screen has
+    /// 4. Primary screen (origin == .zero) — the menu-bar display.
+    /// 5. NSScreen.main — last resort. Returns whichever screen has
     ///    keyboard focus right now, which shifts as the user clicks
     ///    around — so we treat it as a poor tiebreaker only.
     static func notchedScreen() -> NSScreen? {
-        // 1. Built-in display via CGDisplayIsBuiltin
+        installObserverIfNeeded()
+
+        // 1. Use the cached choice if it's still around
+        if let id = cachedDisplayID {
+            for screen in NSScreen.screens {
+                if screenDisplayID(screen) == id { return screen }
+            }
+            // Display was unplugged — fall through and re-resolve
+            cachedDisplayID = nil
+        }
+
+        // 2. Built-in display via CGDisplayIsBuiltin
         for screen in NSScreen.screens {
-            let key = NSDeviceDescriptionKey("NSScreenNumber")
-            guard let raw = screen.deviceDescription[key] as? NSNumber else { continue }
-            let displayID = raw.uint32Value as CGDirectDisplayID
-            if CGDisplayIsBuiltin(displayID) != 0 {
+            guard let id = screenDisplayID(screen) else { continue }
+            if CGDisplayIsBuiltin(id) != 0 {
+                cachedDisplayID = id
                 return screen
             }
         }
-        // 2. Prefer a screen with a non-zero top safe-area inset
+        // 3. Prefer a screen with a non-zero top safe-area inset
         if let notched = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) {
+            cachedDisplayID = screenDisplayID(notched)
             return notched
         }
-        // 3. Primary screen (origin == .zero) — the menu-bar display
+        // 4. Primary screen (origin == .zero) — the menu-bar display
         if let primary = NSScreen.screens.first(where: { $0.frame.origin == .zero }) {
+            cachedDisplayID = screenDisplayID(primary)
             return primary
         }
-        // 4. Last resort
+        // 5. Last resort — explicitly do NOT cache .main, it shifts.
         return NSScreen.main
+    }
+
+    /// Force the next notchedScreen() call to re-resolve from scratch.
+    /// Bound to the Diagnostics → Re-detect screen button.
+    static func invalidateCache() { cachedDisplayID = nil }
+
+    private static func screenDisplayID(_ screen: NSScreen) -> CGDirectDisplayID? {
+        let key = NSDeviceDescriptionKey("NSScreenNumber")
+        guard let raw = screen.deviceDescription[key] as? NSNumber else { return nil }
+        return raw.uint32Value as CGDirectDisplayID
     }
 
     static func current() -> ScreenInfo {
