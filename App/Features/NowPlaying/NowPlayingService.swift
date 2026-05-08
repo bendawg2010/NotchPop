@@ -598,6 +598,50 @@ final class NowPlayingService: ObservableObject {
         }
     }
 
+    /// Seek the active player to `seconds`. Both Apple Music and Spotify
+    /// expose `player position` as a real-number (seconds) AppleScript
+    /// property, so the script shape is identical except for the app name.
+    ///
+    /// We optimistically update `track.elapsed` immediately so the
+    /// scrubber holds at the user's release point instead of snapping
+    /// back to a stale read; the next periodic poll (5s) or distributed
+    /// notification will overwrite with the real value.
+    ///
+    /// Defensive: if no player is active or the script errors out, we
+    /// NSLog and just return — never crash. AppleScript errors can come
+    /// from the app being mid-launch, the user revoking automation
+    /// permission, or seeking past the end of a track.
+    func seek(to seconds: TimeInterval) {
+        // Clamp to a sane non-negative value before formatting; AppleScript
+        // will accept a negative position but Music/Spotify both treat
+        // it as 0 anyway, and the formatted string looks weird.
+        let target = max(0, seconds)
+
+        // Optimistic UI update first so the bar holds its position.
+        if Thread.isMainThread {
+            self.track.elapsed = target
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.track.elapsed = target }
+        }
+
+        // Format with %f rather than string interpolation to avoid
+        // locale-specific decimal separators (e.g. "1,5" in de_DE)
+        // which AppleScript's parser would reject.
+        let formatted = String(format: "%.3f", target)
+
+        switch active {
+        case .appleMusic:
+            let source = #"tell application "Music" to set player position to "# + formatted
+            runScript(source)
+        case .spotify:
+            let source = #"tell application "Spotify" to set player position to "# + formatted
+            runScript(source)
+        case .none:
+            NSLog("NotchPop: seek requested but no active player — ignoring")
+            return
+        }
+    }
+
     // MARK: - Helpers
 
     private func publish(_ t: NowPlayingTrack) {

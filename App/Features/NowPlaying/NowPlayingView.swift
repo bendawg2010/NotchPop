@@ -5,10 +5,11 @@
 // transport controls on the far right.
 //
 // Polish features layered on top of the read-only baseline:
-//   • Draggable scrubber knob — visually mirrors user intent during
-//     a drag, snaps back to the real elapsed on release. There is
-//     no AppleScript writeback exposed by the service yet, so the
-//     drag is purely cosmetic until that's wired up.
+//   • Draggable scrubber knob — mirrors user intent during a drag and
+//     on release issues `service.seek(to:)` which writes the new
+//     player position via AppleScript (`set player position to N`).
+//     The service also optimistically updates `track.elapsed` so the
+//     bar holds its new position instead of snapping back.
 //   • Elapsed-of-duration timestamp under the bar (monospaced).
 //   • Centered empty state with a single-line hint.
 //   • Marquee-scrolling track title when it overflows.
@@ -24,10 +25,10 @@ struct NowPlayingView: View {
 
     /// Ephemeral scrub position. While the user is dragging the
     /// playhead this holds their *intended* elapsed time so the bar
-    /// and timestamp follow the finger. We never write this back to
-    /// `service.track.elapsed` — there's no exposed API to seek
-    /// Apple Music / Spotify yet (TODO below). On release we just
-    /// drop it and let the real elapsed re-take control.
+    /// and timestamp follow the finger. On release we hand it off to
+    /// `service.seek(to:)` (which issues an AppleScript `set player
+    /// position` to the active player and optimistically writes the
+    /// service's `track.elapsed`) and then clear it.
     @State private var scrubElapsed: TimeInterval? = nil
 
     /// True while a drag is active. Used to pause animations on the
@@ -223,14 +224,15 @@ struct NowPlayingView: View {
                         scrubElapsed = service.track.duration * Double(frac)
                     }
                     .onEnded { _ in
-                        // TODO: when the service exposes a seek API
-                        // (`tell application "Music" to set player
-                        // position to X` for Apple Music; equivalent
-                        // for Spotify), call it here with
-                        // `scrubElapsed` before clearing it. For now
-                        // we just drop the ephemeral value and let
-                        // the real elapsed re-take control — the
-                        // playhead snaps back.
+                        // Commit the user's release position to the
+                        // active player via AppleScript before clearing
+                        // the ephemeral state. The service also
+                        // optimistically writes `track.elapsed = target`
+                        // so the bar holds its new position rather than
+                        // snapping back to a stale read.
+                        if let target = scrubElapsed {
+                            service.seek(to: target)
+                        }
                         scrubElapsed = nil
                         isScrubbing = false
                     }

@@ -34,6 +34,10 @@
 	<string>NotchPop shows your next few calendar events in the Calendar tab inside the notch.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Free · MIT licensed</string>
+	<key>NSLocationUsageDescription</key>
+	<string>NotchPop fetches your local weather using a coarse city-level location. The Weather tab shows current temperature and conditions.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>NotchPop fetches your local weather using a coarse city-level location. The Weather tab shows current temperature and conditions.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUAutomaticallyUpdate</key>

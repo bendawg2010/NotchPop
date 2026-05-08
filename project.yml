@@ -23,8 +23,8 @@ settings:
     # those mutations on the next regen — so every shipped DMG had
     # CFBundleShortVersionString=1.0 internally, breaking Sparkle's
     # version comparison and creating an endless 'update available' loop.
-    MARKETING_VERSION: "1.5.15"
-    CURRENT_PROJECT_VERSION: "10"
+    MARKETING_VERSION: "1.5.16"
+    CURRENT_PROJECT_VERSION: "11"
 
 # Sparkle handles auto-updates. The framework gets pulled in via SPM
 # (Swift Package Manager) — Xcode embeds it in NotchPop.app/Contents/
@@ -69,6 +69,12 @@ targets:
         # EventKit access — needed by the Calendar peek widget
         NSCalendarsUsageDescription: "NotchPop shows your next few calendar events in the Calendar tab inside the notch."
         NSCalendarsFullAccessUsageDescription: "NotchPop shows your next few calendar events in the Calendar tab inside the notch."
+        # CoreLocation — Weather tab fetches your local conditions from
+        # Open-Meteo using your coarse (city-level) location. We never
+        # send the location anywhere except to Open-Meteo (and ipapi.co
+        # as a fallback if you've denied CoreLocation entirely).
+        NSLocationWhenInUseUsageDescription: "NotchPop fetches your local weather using a coarse city-level location. The Weather tab shows current temperature and conditions."
+        NSLocationUsageDescription: "NotchPop fetches your local weather using a coarse city-level location. The Weather tab shows current temperature and conditions."
         # ---- Sparkle auto-update keys ----
         # Public key from the matching private key in Keychain. Sparkle
         # rejects any appcast entry whose ed25519 signature doesn't

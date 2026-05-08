@@ -66,6 +66,12 @@ final class NotchWindowController: NSWindowController {
     /// the left.")
     private var sizeApplyGeneration: UInt64 = 0
 
+    /// Global click monitor used to collapse the expanded notch when
+    /// the user clicks outside our window. Only installed when
+    /// viewModel.clickOutsideToCollapse is true; we toggle the
+    /// monitor in/out as the setting changes via Combine.
+    private var globalClickMonitor: Any?
+
     init(viewModel: NotchViewModel) {
         self.viewModel = viewModel
         let window = NotchWindow()
@@ -80,9 +86,47 @@ final class NotchWindowController: NSWindowController {
         }
 
         repositionForCurrentScreen()
+        installGlobalClickMonitor()
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    deinit {
+        if let m = globalClickMonitor {
+            NSEvent.removeMonitor(m)
+        }
+    }
+
+    /// Install a global mouse-down monitor that collapses the expanded
+    /// notch when the user clicks anywhere outside our window. Honors
+    /// Settings → Behavior → "Click outside the notch to collapse it."
+    /// Global monitors are passive — they observe events without
+    /// consuming them, so user clicks pass through to whatever app
+    /// they were targeting.
+    private func installGlobalClickMonitor() {
+        // No-op if already installed
+        if globalClickMonitor != nil { return }
+        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        ) { [weak self] _ in
+            guard let self = self,
+                  self.viewModel.clickOutsideToCollapse,
+                  self.viewModel.expanded,
+                  !self.viewModel.showingWelcome,
+                  let window = self.window else { return }
+            // NSEvent.mouseLocation is in screen coords (y-up). The
+            // window frame is also in screen coords. If the click is
+            // outside our window, collapse.
+            let screenPoint = NSEvent.mouseLocation
+            if !window.frame.contains(screenPoint) {
+                DispatchQueue.main.async {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.85)) {
+                        self.viewModel.expanded = false
+                    }
+                }
+            }
+        }
+    }
 
     func repositionForCurrentScreen() {
         guard let window = window else { return }

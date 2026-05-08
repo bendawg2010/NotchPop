@@ -428,6 +428,8 @@ struct NotchView: View {
             AirPodsView(service: viewModel.airpods)
         case .quickActions:
             QuickActionsView(viewModel: viewModel)
+        case .weather:
+            WeatherView(service: viewModel.weather)
         }
     }
 }

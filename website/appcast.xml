@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.16</title>
+      <pubDate>Fri, 08 May 2026 16:47:43 +0000</pubDate>
+      <sparkle:version>1.5.16</sparkle:version>
+      <sparkle:shortVersionString>1.5.16</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Music seek works.</strong> Drag the playhead in the Music tab and release — it actually scrubs Apple Music or Spotify to that position now (used to be cosmetic-only). Works for both players via AppleScript.</li><li><strong>Click outside to collapse</strong> is now wired up. Settings → Behavior toggle was already there but never connected — it is now, via a global mouse-down monitor (passive observation only, doesn't consume clicks).</li><li><strong>New Weather tab.</strong> Live conditions from Open-Meteo (free, no API key, no rate limits). Big SF Symbol, temp + location, °F / °C toggle, refresh button. Updates every 15 minutes. Falls back to coarse IP-based location if you decline CoreLocation permission.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.16/NotchPop.dmg"
+        sparkle:version="1.5.16"
+        sparkle:shortVersionString="1.5.16"
+        length="2084981"
+        type="application/octet-stream"
+        sparkle:edSignature="NemWSsIMLrR3IqUe3MckObZD3Ub74I4yKobgx8H3EsnuQjWTz9h6P87YqV+CbzRSgprkHHTZ1ekTCYmcDUCbBw==" />
+    </item>
+    <item>
       <title>v1.5.15</title>
       <pubDate>Fri, 08 May 2026 16:39:20 +0000</pubDate>
       <sparkle:version>1.5.15</sparkle:version>

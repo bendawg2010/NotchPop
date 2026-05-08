@@ -80,6 +80,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case calendar = "Calendar"
     case airpods = "AirPods"
     case quickActions = "Quick Actions"
+    case weather = "Weather"
 
     var id: String { rawValue }
     var icon: String {
@@ -95,6 +96,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .calendar:     return "calendar"
         case .airpods:      return "airpods.gen2"
         case .quickActions: return "bolt.fill"
+        case .weather:      return "cloud.sun.fill"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -111,6 +113,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .calendar:     return "Today's next events, pulled from macOS Calendar via EventKit."
         case .airpods:      return "Battery levels for connected AirPods — left, right, and case."
         case .quickActions: return "Lock screen, sleep displays, screenshot, Mission Control — fast."
+        case .weather:      return "Live conditions from Open-Meteo. Free, no API key. °F / °C."
         }
     }
 }
@@ -251,6 +254,7 @@ final class NotchViewModel: ObservableObject {
     let systemStats = SystemStatsService()
     let calendar = CalendarService()
     let airpods = AirPodsService()
+    let weather = WeatherService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
