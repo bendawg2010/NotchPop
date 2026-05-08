@@ -40,33 +40,30 @@ struct NotchView: View {
         return true
     }
 
+    /// The current dimensions of the visible black shape — wider
+    /// when expanded OR when a live activity is showing (integrated
+    /// pill style), narrowest at hardware-notch dimensions otherwise.
+    private var visibleShapeSize: CGSize {
+        if viewModel.expanded { return viewModel.targetSize }
+        if viewModel.hasAnyLiveActivity { return viewModel.compactSizeWithActivities }
+        return viewModel.compactSize
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
-            // Live activities — only rendered when collapsed AND
-            // something's active (timer / music). They flank the
-            // notch on left + right respectively, sharing the same
-            // window so they hover-highlight together.
-            if !viewModel.expanded
-               && viewModel.liveActivitiesEnabled
-               && (viewModel.leftActivityWidth > 0 || viewModel.rightActivityWidth > 0) {
-                LiveActivityBar(viewModel: viewModel)
-                    .frame(width: viewModel.targetSize.width,
-                           height: viewModel.targetSize.height)
-            }
-
-            // The actual notch shape. When collapsed, drawn at the
-            // hardware-matched compactSize and centered horizontally in
-            // the (potentially wider) target frame so live-activity
-            // pills can flank it without shifting the notch off-center.
-            // When expanded, fills the full targetSize.
+            // ONE integrated black notch shape. When something is
+            // active (timer / music), the shape grows wider into a
+            // pill that contains the activity content (icon + signal).
+            // The hardware notch sits in the middle of this pill —
+            // since both are pure black, it reads as one continuous
+            // shape. NotchNook does the same.
             NotchShape(bottomCornerRadius: bottomCornerRadius)
                 .fill(Color.black)
-                .frame(width: viewModel.expanded ? viewModel.targetSize.width : viewModel.compactSize.width,
-                       height: viewModel.expanded ? viewModel.targetSize.height : viewModel.compactSize.height)
+                .frame(width: visibleShapeSize.width,
+                       height: visibleShapeSize.height)
                 .opacity(shouldRender ? 1 : 0)
                 .overlay {
-                    // Subtle accent ring shown only while a drag is
-                    // hovered over us — makes the drop target obvious.
+                    // Drop ring while a drag is over us
                     if isDragHovering {
                         NotchShape(bottomCornerRadius: bottomCornerRadius)
                             .stroke(LinearGradient(colors: [
@@ -74,8 +71,18 @@ struct NotchView: View {
                                 Color(red: 0.17, green: 0.52, blue: 0.77),
                             ], startPoint: .leading, endPoint: .trailing),
                                     lineWidth: 2)
-                            .frame(width: viewModel.expanded ? viewModel.targetSize.width : viewModel.compactSize.width,
-                                   height: viewModel.expanded ? viewModel.targetSize.height : viewModel.compactSize.height)
+                            .frame(width: visibleShapeSize.width,
+                                   height: visibleShapeSize.height)
+                            .transition(.opacity)
+                    }
+                }
+                .overlay {
+                    // Live activity content (icon + audio bars / time)
+                    // sits INSIDE the shape when collapsed.
+                    if !viewModel.expanded && viewModel.hasAnyLiveActivity {
+                        LiveActivityBar(viewModel: viewModel)
+                            .frame(width: visibleShapeSize.width,
+                                   height: visibleShapeSize.height)
                             .transition(.opacity)
                     }
                 }
@@ -136,9 +143,16 @@ struct NotchView: View {
             set: { newValue in
                 isDragHovering = newValue
                 if newValue {
-                    if viewModel.visibleTabs.contains(.shelf) {
-                        viewModel.activeTab = .shelf
+                    // Force the Shelf tab to be visible even if the
+                    // user has hidden it — we want a real drop target,
+                    // not just a "the file went somewhere invisible"
+                    // outcome. We only ADD shelf to visibleTabs if
+                    // it's already missing; otherwise we just switch
+                    // to it.
+                    if !viewModel.visibleTabs.contains(.shelf) {
+                        viewModel.visibleTabs.insert(.shelf, at: 0)
                     }
+                    viewModel.activeTab = .shelf
                     viewModel.expanded = true
                     // Cancel any pending hover-collapse timer
                     collapseWorkItem?.cancel()
@@ -242,16 +256,48 @@ struct NotchView: View {
     }
 
     /// Tab bar runs along the top of the expanded notch; on the right
-    /// we mount a compact battery indicator so it's always visible
-    /// without needing a dedicated tab.
+    /// we mount a Settings gear, a compact battery indicator, and a
+    /// version label so they're always visible without needing tabs.
     private var tabBar: some View {
         HStack(spacing: 4) {
             ForEach(viewModel.visibleTabs) { tab in
                 tabButton(tab)
             }
             Spacer(minLength: 6)
+            settingsGearButton
             InlineBatteryIndicator(monitor: viewModel.charging)
+            versionLabel
         }
+    }
+
+    /// Tiny gear icon — clicking opens the Settings window. Lives in
+    /// the expanded notch top-right next to the battery so users can
+    /// reach Settings without going to the menu bar.
+    private var settingsGearButton: some View {
+        Button {
+            (NSApp.delegate as? AppDelegate)?.openSettings()
+        } label: {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white.opacity(0.65))
+                .frame(width: 22, height: 22)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.white.opacity(0.05))
+                )
+        }
+        .buttonStyle(.plain)
+        .help("Settings")
+    }
+
+    /// Small version label showing the current build (CFBundleShortVersionString).
+    /// Tooltip shows the full version + a hint to check for updates.
+    private var versionLabel: some View {
+        let v = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
+        return Text("v\(v)")
+            .font(.system(size: 9, weight: .heavy, design: .rounded))
+            .foregroundColor(.white.opacity(0.45))
+            .help("NotchPop v\(v) — Check for Updates from the menubar (⌘U)")
     }
 
     private func tabButton(_ tab: NotchTab) -> some View {

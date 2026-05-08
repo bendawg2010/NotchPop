@@ -97,15 +97,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 
-    @objc private func openSettings() {
+    @objc func openSettings() {
+        // For LSUIElement apps the activation policy must briefly flip
+        // so the Settings window can become a real focused window.
+        // After the user closes it, applicationDidFinishLaunching's
+        // .accessory policy is restored on next focus loss anyway.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        // SwiftUI's Settings scene responds to this selector; on macOS
-        // 14+ the API is `showSettingsWindow:` while older calls used
-        // `showPreferencesWindow:`. Try both.
-        if NSApp.responds(to: Selector(("showSettingsWindow:"))) {
-            NSApp.perform(Selector(("showSettingsWindow:")), with: nil)
-        } else if NSApp.responds(to: Selector(("showPreferencesWindow:"))) {
-            NSApp.perform(Selector(("showPreferencesWindow:")), with: nil)
+
+        // sendAction routes through the responder chain, which is how
+        // SwiftUI's Settings scene actually receives this action. The
+        // older `NSApp.responds(to:)` check was misleading — NSApp
+        // itself doesn't respond, but sending the action with a nil
+        // target triggers the chain dispatch SwiftUI listens to.
+        if #available(macOS 14, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
     }
 

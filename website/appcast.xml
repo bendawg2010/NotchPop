@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.4</title>
+      <pubDate>Fri, 08 May 2026 01:18:03 +0000</pubDate>
+      <sparkle:version>1.5.4</sparkle:version>
+      <sparkle:shortVersionString>1.5.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.4 — NotchNook-style live activities + bug fixes</h2><h3>What changed</h3><ul><li><strong>Live activity is now ONE integrated wide pill</strong> — matching the NotchNook reference design. The notch grows wider with the icon on the left and content on the right (animated audio bars for music, countdown text for timer). Single continuous black shape, not two flanking pills.</li><li><strong>Music: now shows actual play state</strong> — case-insensitive parsing of 'Playing' / 'Paused' / 'Stopped' so macOS 26's variant codes don't slip through as 'paused'. Optimistic state flip when you click the play button so the icon updates instantly.</li><li><strong>Music: artwork loads via three paths</strong> — raw AppleScript data, then 'data of artwork 1', then a fallback that queries iTunes Search API for the cover (works without Apple Events permission).</li><li><strong>Settings opens reliably</strong> — switched from <code>NSApp.responds(to:)</code> probing to <code>NSApp.sendAction</code> which goes through the responder chain SwiftUI's Settings scene actually listens to.</li><li><strong>Settings gear in the notch</strong> — small ⚙ button next to the battery indicator in the expanded view. One click opens Settings.</li><li><strong>Version label in the notch</strong> — small <code>v1.5.4</code> tag in the top-right of the expanded view so you always know what you're on.</li><li><strong>Drag-to-shelf forces Shelf visible</strong> — even if you've hidden the Shelf tab, dragging a file in temporarily adds it back so you have a real drop target.</li></ul><h3>Note</h3><p>If music isn't detected, check <strong>System Settings → Privacy &amp; Security → Automation → NotchPop</strong> and make sure Music + Spotify are checked. macOS only prompts once and silent-denies forever after.</p>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.4/NotchPop.dmg"
+        sparkle:version="1.5.4"
+        sparkle:shortVersionString="1.5.4"
+        length="1806265"
+        type="application/octet-stream"
+        sparkle:edSignature="KwY+XatCZ+WXzfklBIwvSb9jMgb8pnnFwOnV8e4/PZ/VRQ1Uw1X6bCOhSjdKDZEZiVzd3Ipc8JHFIU2JDhwFCw==" />
+    </item>
+    <item>
       <title>v1.5.3</title>
       <pubDate>Fri, 08 May 2026 01:09:02 +0000</pubDate>
       <sparkle:version>1.5.3</sparkle:version>

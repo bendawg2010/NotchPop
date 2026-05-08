@@ -321,7 +321,7 @@ final class NotchViewModel: ObservableObject {
         )
     }
 
-    // MARK: - Live activities
+    // MARK: - Live activities (NotchNook-style integrated wide pill)
 
     /// True if a timer (Pomodoro or Countdown) is currently running.
     /// Pomodoro takes precedence — it's the higher-stakes timer.
@@ -334,26 +334,29 @@ final class NotchViewModel: ObservableObject {
         nowPlaying.track.isPlaying && !nowPlaying.track.title.isEmpty
     }
 
-    /// Width reserved on the LEFT of the notch for the timer pill
-    /// when one is running and live activities are enabled.
-    var leftActivityWidth: CGFloat {
-        guard liveActivitiesEnabled, hasActiveTimer, !expanded else { return 0 }
-        return 90
+    /// True if any live-activity content should be shown on the notch.
+    /// Timer outranks music — we only show one at a time, matching the
+    /// NotchNook reference design.
+    var hasAnyLiveActivity: Bool {
+        liveActivitiesEnabled && !expanded && (hasActiveTimer || hasActiveMusic)
     }
 
-    /// Width reserved on the RIGHT of the notch for the music pill
-    /// when audio is playing and live activities are enabled.
-    var rightActivityWidth: CGFloat {
-        guard liveActivitiesEnabled, hasActiveMusic, !expanded else { return 0 }
-        return 180
-    }
+    /// Pixel size of the small icon on the left side of the activity
+    /// pill. ~24pt fits inside our 32pt-tall notch with breathing room.
+    var activityLeftIconSize: CGFloat { 22 }
 
-    /// Total compact-mode window width including any live activity
-    /// pills flanking the notch.
+    /// How much wider the notch pill grows when an activity is active.
+    /// Designed so the icon (~22pt) and the right-side content (~38pt
+    /// for audio bars or "00:00" text) both fit, plus padding.
+    var activityExtraWidth: CGFloat { 110 }
+
+    /// Compact-mode width when an activity is showing — the integrated
+    /// wide pill that replaces the bare notch shape.
     var compactSizeWithActivities: CGSize {
         let base = compactSize
+        guard hasAnyLiveActivity else { return base }
         return CGSize(
-            width: base.width + leftActivityWidth + rightActivityWidth,
+            width: base.width + activityExtraWidth,
             height: base.height
         )
     }

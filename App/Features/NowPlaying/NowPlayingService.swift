@@ -91,6 +91,12 @@ final class NowPlayingService: ObservableObject {
 
     private var pollTimer: Timer?
 
+    /// Timestamp of the most recent distributed-notification handler run.
+    /// The 5s polling timer consults this to skip a probe if a notification
+    /// fired within the last second — notification data is fresher than
+    /// AppleScript probes and we don't want a stale probe overwriting it.
+    private var lastNotificationAt: Date?
+
     func start() {
         let center = DistributedNotificationCenter.default()
 
@@ -126,8 +132,16 @@ final class NowPlayingService: ObservableObject {
         // Cheap: runs every 5s, only does work if a music app is running.
         pollTimer?.invalidate()
         pollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            // Skip the probe if a notification handler just fired — its
+            // payload is fresher than anything AppleScript would return
+            // and re-probing risks overwriting good state with stale data.
+            if let last = self.lastNotificationAt,
+               Date().timeIntervalSince(last) < 1.0 {
+                return
+            }
             DispatchQueue.global(qos: .utility).async {
-                self?.probeInitialState()
+                self.probeInitialState()
             }
         }
     }
@@ -136,6 +150,7 @@ final class NowPlayingService: ObservableObject {
 
     private func handleAppleMusicNotification(_ note: Notification) {
         guard let info = note.userInfo else { return }
+        lastNotificationAt = Date()
 
         let state = (info["Player State"] as? String) ?? ""
         // When the user quits Music, "Stopped" arrives with empty fields.
@@ -152,7 +167,19 @@ final class NowPlayingService: ObservableObject {
         t.title  = (info["Name"]   as? String) ?? ""
         t.artist = (info["Artist"] as? String) ?? ""
         t.album  = (info["Album"]  as? String) ?? ""
-        t.isPlaying = (state == "Playing")
+        // Parse playback state defensively. Apple Music typically ships
+        // "Playing" / "Paused" / "Stopped" but on macOS 26 we've also
+        // seen four-char-codes like "kPSP" leak through. If we can't
+        // parse it, preserve the previous isPlaying value rather than
+        // forcing it to false (which made the play/pause icon stale).
+        let lower = state.lowercased()
+        if lower.contains("playing") {
+            t.isPlaying = true
+        } else if lower.contains("paus") || lower.contains("stop") {
+            t.isPlaying = false
+        } else {
+            t.isPlaying = track.isPlaying
+        }
         // Apple Music ships duration in milliseconds.
         if let totalMs = info["Total Time"] as? Double {
             t.duration = totalMs / 1000.0
@@ -171,11 +198,12 @@ final class NowPlayingService: ObservableObject {
 
         // Apple Music doesn't put artwork in the notification, so kick
         // off an AppleScript query for it. Result arrives async.
-        fetchAppleMusicArtwork(matching: token)
+        fetchAppleMusicArtwork(matching: token, title: t.title, artist: t.artist)
     }
 
     private func handleSpotifyNotification(_ note: Notification) {
         guard let info = note.userInfo else { return }
+        lastNotificationAt = Date()
 
         let state = (info["Player State"] as? String) ?? ""
         if state == "Stopped" {
@@ -190,7 +218,17 @@ final class NowPlayingService: ObservableObject {
         t.title  = (info["Name"]   as? String) ?? ""
         t.artist = (info["Artist"] as? String) ?? ""
         t.album  = (info["Album"]  as? String) ?? ""
-        t.isPlaying = (state == "Playing")
+        // Defensive parse: macOS 26 has been observed sending the raw
+        // four-char-code "kPSP" instead of "Playing" — preserve the
+        // previous isPlaying rather than defaulting to false on garbage.
+        let lower = state.lowercased()
+        if lower.contains("playing") {
+            t.isPlaying = true
+        } else if lower.contains("paus") || lower.contains("stop") {
+            t.isPlaying = false
+        } else {
+            t.isPlaying = track.isPlaying
+        }
         // Spotify also uses milliseconds for Duration.
         if let durMs = info["Duration"] as? Double {
             t.duration = durMs / 1000.0
@@ -282,6 +320,10 @@ final class NowPlayingService: ObservableObject {
     }
 
     private func applyProbeResult(_ raw: String, source: ActivePlayer) {
+        // Log the raw probe result so we can verify the separator survived
+        // AppleScript's coercion path on whatever macOS the user is on.
+        NSLog("NotchPop: raw probe result for \(source): \(raw)")
+
         let parts = raw.components(separatedBy: Self.probeSep)
         guard parts.count >= 5 else {
             NSLog("NotchPop: probe returned malformed result: \(raw)")
@@ -295,8 +337,20 @@ final class NowPlayingService: ObservableObject {
         if let d = Double(parts[3]) {
             t.duration = d
         }
+        // Same defensive logic as the notification handlers: if the state
+        // string is empty or unrecognizable, preserve the existing
+        // isPlaying. Otherwise we'd flip the icon to "play" the moment
+        // the probe runs against e.g. macOS 26's "kPSP" code.
         let state = parts[4].lowercased()
-        t.isPlaying = state.contains("playing")
+        if state.contains("playing") {
+            t.isPlaying = true
+        } else if state.contains("paus") || state.contains("stop") {
+            t.isPlaying = false
+        } else if state.isEmpty {
+            t.isPlaying = track.isPlaying
+        } else {
+            t.isPlaying = track.isPlaying
+        }
 
         active = source
         let token = UUID()
@@ -306,7 +360,7 @@ final class NowPlayingService: ObservableObject {
         NSLog("NotchPop: probe found \(source) — \(t.title) — \(t.artist)")
 
         if source == .appleMusic {
-            fetchAppleMusicArtwork(matching: token)
+            fetchAppleMusicArtwork(matching: token, title: t.title, artist: t.artist)
         }
     }
 
@@ -326,17 +380,46 @@ final class NowPlayingService: ObservableObject {
         task.resume()
     }
 
-    private func fetchAppleMusicArtwork(matching token: UUID) {
+    /// Fetch artwork for the currently-playing Apple Music track.
+    ///
+    /// macOS 26 changed Music.app's AppleScript artwork interface: the
+    /// classic `data of artwork 1` path now sometimes returns a
+    /// `typeFileURL` descriptor (a URL to a temp file) or a `typeBoolean`
+    /// (when artwork is missing) instead of raw image bytes. We try
+    /// several paths in sequence and fall back to the public iTunes
+    /// Search API as a last resort — that path requires no permissions
+    /// and works even when AppleScript is restricted.
+    ///
+    /// The `title` / `artist` parameters power the iTunes Search fallback.
+    /// They're captured at the moment we kick off the fetch so a track
+    /// change mid-flight won't cause us to query for the wrong song.
+    private func fetchAppleMusicArtwork(matching token: UUID, title: String, artist: String) {
         // AppleScript returns artwork as raw image data we can hand to
         // NSImage. Wrap in `try` because some tracks (cloud library, DRM)
         // simply have no artwork and the script will throw.
-        let source = """
+        //
+        // Path 1: `tell artwork 1 of current track to return raw data`.
+        // Path 2: `data of artwork 1 of current track`.
+        // Path 3: iTunes Search API (URL-based).
+        let primarySource = """
         tell application "Music"
             try
                 if player state is not stopped then
                     tell artwork 1 of current track
-                        return data
+                        return raw data
                     end tell
+                end if
+            on error
+                return missing value
+            end try
+        end tell
+        return missing value
+        """
+        let fallbackSource = """
+        tell application "Music"
+            try
+                if player state is not stopped then
+                    return data of artwork 1 of current track
                 end if
             on error
                 return missing value
@@ -346,22 +429,106 @@ final class NowPlayingService: ObservableObject {
         """
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
-            var err: NSDictionary?
-            guard let script = NSAppleScript(source: source) else { return }
-            let descriptor = script.executeAndReturnError(&err)
-            guard err == nil,
-                  descriptor.descriptorType != typeNull,
-                  let img = NSImage(data: descriptor.data) else { return }
-            DispatchQueue.main.async {
-                guard self.artworkFetchToken == token else { return }
-                self.track.artwork = img
+
+            if let img = self.runArtworkScript(primarySource) {
+                self.applyArtwork(img, token: token)
+                return
             }
+            if let img = self.runArtworkScript(fallbackSource) {
+                self.applyArtwork(img, token: token)
+                return
+            }
+            // Last resort: iTunes Search API. No auth needed, returns JSON.
+            self.fetchArtworkFromITunesSearch(title: title, artist: artist, token: token)
         }
+    }
+
+    /// Run an AppleScript that should return artwork bytes and decode
+    /// the result into an NSImage. Returns nil on any failure path —
+    /// missing artwork, wrong descriptor type, undecodable bytes, etc.
+    private func runArtworkScript(_ source: String) -> NSImage? {
+        var err: NSDictionary?
+        guard let script = NSAppleScript(source: source) else { return nil }
+        let descriptor = script.executeAndReturnError(&err)
+        if err != nil { return nil }
+        // Guard against typeNull (no artwork) and typeBoolean (Music
+        // sometimes returns `false` when artwork is missing). Empty
+        // .data also means there's nothing to decode.
+        guard descriptor.descriptorType != typeNull,
+              descriptor.descriptorType != typeBoolean,
+              !descriptor.data.isEmpty else {
+            NSLog("NotchPop: artwork script returned non-data descriptor type=\(descriptor.descriptorType)")
+            return nil
+        }
+        // If AppleScript handed us a file URL to a temp image, follow it.
+        if descriptor.descriptorType == typeFileURL,
+           let url = descriptor.fileURLValue,
+           let data = try? Data(contentsOf: url),
+           let img = NSImage(data: data) {
+            return img
+        }
+        return NSImage(data: descriptor.data)
+    }
+
+    /// Apply artwork on the main thread, but only if the song hasn't
+    /// changed since we kicked off this fetch (artworkFetchToken match).
+    private func applyArtwork(_ img: NSImage, token: UUID) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self, self.artworkFetchToken == token else { return }
+            self.track.artwork = img
+        }
+    }
+
+    /// Public iTunes Search API fallback. URL pattern:
+    /// https://itunes.apple.com/search?term={artist}+{title}&limit=1&entity=song
+    /// We pull `artworkUrl100` from the first result and rewrite the
+    /// "100x100" path component to "300x300" for a higher-res image.
+    private func fetchArtworkFromITunesSearch(title: String, artist: String, token: UUID) {
+        guard !title.isEmpty else { return }
+        let term = "\(artist) \(title)"
+        guard let encoded = term.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "https://itunes.apple.com/search?term=\(encoded)&limit=1&entity=song") else {
+            return
+        }
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+            guard let self = self,
+                  let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let results = json["results"] as? [[String: Any]],
+                  let first = results.first,
+                  let artworkURLString = first["artworkUrl100"] as? String else {
+                return
+            }
+            // 100x100 → 300x300 for a sharper image. The CDN serves the
+            // requested size on demand; if rewriting fails just use 100x.
+            let upgraded = artworkURLString.replacingOccurrences(of: "100x100", with: "300x300")
+            guard let imgURL = URL(string: upgraded) else { return }
+            URLSession.shared.dataTask(with: imgURL) { [weak self] imgData, _, _ in
+                guard let self = self,
+                      let imgData = imgData,
+                      let img = NSImage(data: imgData) else { return }
+                self.applyArtwork(img, token: token)
+            }.resume()
+        }
+        task.resume()
     }
 
     // MARK: - Transport controls
 
+    /// Toggle play/pause on the active player and OPTIMISTICALLY flip
+    /// `track.isPlaying` immediately so the UI updates without waiting
+    /// for the next distributed notification (which can lag 100–500ms
+    /// or, on macOS 26, never arrive at all for some media-key paths).
+    /// If the optimistic guess is wrong the next real notification or
+    /// probe will correct it.
     func togglePlayPause() {
+        // Flip optimistically first.
+        let optimistic = !track.isPlaying
+        if Thread.isMainThread {
+            self.track.isPlaying = optimistic
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.track.isPlaying = optimistic }
+        }
         switch active {
         case .appleMusic:
             runScript(#"tell application "Music" to playpause"#)
@@ -373,7 +540,16 @@ final class NowPlayingService: ObservableObject {
         }
     }
 
+    /// Skip forward. We can't optimistically populate the new track's
+    /// metadata (we don't know it yet) but we can at least mark playback
+    /// as active so the icon doesn't go stale — most "next track" cases
+    /// land on a playing track.
     func nextTrack() {
+        if Thread.isMainThread {
+            self.track.isPlaying = true
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.track.isPlaying = true }
+        }
         switch active {
         case .appleMusic:
             runScript(#"tell application "Music" to next track"#)
@@ -384,7 +560,13 @@ final class NowPlayingService: ObservableObject {
         }
     }
 
+    /// Skip back. Same optimistic isPlaying = true as nextTrack().
     func previousTrack() {
+        if Thread.isMainThread {
+            self.track.isPlaying = true
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.track.isPlaying = true }
+        }
         switch active {
         case .appleMusic:
             // "back track" rewinds; "previous track" jumps to prev song.
@@ -424,12 +606,29 @@ final class NowPlayingService: ObservableObject {
         }
     }
 
+    /// Run an AppleScript that should return a string. Defends against:
+    ///   • Script compilation failure (nil from init).
+    ///   • Runtime errors (non-nil err, returns nil).
+    ///   • Non-string return types — descriptor.stringValue is nil if
+    ///     AppleScript handed back e.g. a record or a boolean. We log
+    ///     the descriptor type so we can debug the macOS 26 cases where
+    ///     `(player state as text)` started returning non-text values.
     private func runScriptReturningString(_ source: String) -> String? {
         var err: NSDictionary?
-        guard let script = NSAppleScript(source: source) else { return nil }
+        guard let script = NSAppleScript(source: source) else {
+            NSLog("NotchPop: AppleScript failed to compile")
+            return nil
+        }
         let descriptor = script.executeAndReturnError(&err)
-        if err != nil { return nil }
-        return descriptor.stringValue
+        if let err = err {
+            NSLog("NotchPop: AppleScript runtime error: \(err)")
+            return nil
+        }
+        guard let value = descriptor.stringValue else {
+            NSLog("NotchPop: AppleScript returned non-string descriptor type=\(descriptor.descriptorType)")
+            return nil
+        }
+        return value
     }
 
     deinit {
