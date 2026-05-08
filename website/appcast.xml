@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.3</title>
+      <pubDate>Fri, 08 May 2026 01:09:02 +0000</pubDate>
+      <sparkle:version>1.5.3</sparkle:version>
+      <sparkle:shortVersionString>1.5.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.3 — Drag-to-shelf is way easier now</h2><ul><li><strong>Drop zone is now the entire window</strong>, not just the visible notch shape. You no longer have to aim at a 178pt sliver — anywhere near the top of the screen counts.</li><li><strong>Auto-expand on drag-hover</strong> — the moment you start dragging a file toward the notch, it expands to the full Shelf view. Big drop target waiting for you instead of a tiny pill.</li><li><strong>Visible drop ring</strong> — pink → blue gradient stroke appears around the notch while you're dragging so you know it's targeted.</li><li>Drag leaves the window without dropping → notch collapses back after a brief grace period.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.3/NotchPop.dmg"
+        sparkle:version="1.5.3"
+        sparkle:shortVersionString="1.5.3"
+        length="1808730"
+        type="application/octet-stream"
+        sparkle:edSignature="OUmv7KYGY3m9KF473qqXL7w3GgOJHvoVPxQRCpnn6eiJ3TsOzozqOwOMh6rD6reIYBruRObObPB/LuCtuPsdDg==" />
+    </item>
+    <item>
       <title>v1.5.2</title>
       <pubDate>Fri, 08 May 2026 01:04:53 +0000</pubDate>
       <sparkle:version>1.5.2</sparkle:version>

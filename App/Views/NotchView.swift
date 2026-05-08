@@ -13,6 +13,10 @@ import SwiftUI
 struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @State private var collapseWorkItem: DispatchWorkItem?
+    /// True while the user has a drag (file from Finder, etc.) hovered
+    /// over our window. Drives auto-expand-on-hover so the notch grows
+    /// into a big drop target before they release the mouse.
+    @State private var isDragHovering: Bool = false
 
     /// Extra invisible padding below the visible notch — clicks pass
     /// through but the hover hit-area extends further so users don't
@@ -60,29 +64,24 @@ struct NotchView: View {
                 .frame(width: viewModel.expanded ? viewModel.targetSize.width : viewModel.compactSize.width,
                        height: viewModel.expanded ? viewModel.targetSize.height : viewModel.compactSize.height)
                 .opacity(shouldRender ? 1 : 0)
+                .overlay {
+                    // Subtle accent ring shown only while a drag is
+                    // hovered over us — makes the drop target obvious.
+                    if isDragHovering {
+                        NotchShape(bottomCornerRadius: bottomCornerRadius)
+                            .stroke(LinearGradient(colors: [
+                                Color(red: 1.00, green: 0.24, blue: 0.67),
+                                Color(red: 0.17, green: 0.52, blue: 0.77),
+                            ], startPoint: .leading, endPoint: .trailing),
+                                    lineWidth: 2)
+                            .frame(width: viewModel.expanded ? viewModel.targetSize.width : viewModel.compactSize.width,
+                                   height: viewModel.expanded ? viewModel.targetSize.height : viewModel.compactSize.height)
+                            .transition(.opacity)
+                    }
+                }
                 .frame(width: viewModel.targetSize.width,
                        height: viewModel.targetSize.height,
                        alignment: .center)
-                // Drag-from-Finder onto the notch → auto-expand + Shelf
-                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-                    if viewModel.visibleTabs.contains(.shelf) {
-                        viewModel.activeTab = .shelf
-                        viewModel.expanded = true
-                    }
-                    var urls: [URL] = []
-                    let group = DispatchGroup()
-                    for p in providers {
-                        group.enter()
-                        _ = p.loadObject(ofClass: URL.self) { url, _ in
-                            if let u = url { urls.append(u) }
-                            group.leave()
-                        }
-                    }
-                    group.notify(queue: .main) {
-                        viewModel.shelf.add(urls: urls)
-                    }
-                    return true
-                }
 
             // Expanded content sits inside the bottom of the shape
             if viewModel.expanded && !viewModel.showingWelcome {
@@ -112,10 +111,82 @@ struct NotchView: View {
                alignment: .top)
         // Invisible gutter beneath the notch so brushing toward it
         // still triggers expansion. We keep .contentShape(Rectangle())
-        // so the whole frame counts as hoverable.
+        // so the whole frame counts as hoverable AND drop-targeted —
+        // the drop hit area is the entire window, not just the visible
+        // notch (which would be a tiny ~178x32 target to aim at).
         .contentShape(Rectangle())
         .animation(.spring(response: 0.42, dampingFraction: 0.78), value: viewModel.expanded)
+        .animation(.easeOut(duration: 0.15), value: isDragHovering)
         .onHover(perform: onHoverChange)
+        // Drop handler covers the FULL window — drag a file anywhere
+        // near the notch and it counts. Auto-expands to Shelf the
+        // moment the drag touches us, so users get a generous drop
+        // target instead of a 178pt-wide notch sliver.
+        .onDrop(of: [.fileURL], isTargeted: dragTargetBinding) { providers in
+            handleFileDrop(providers: providers)
+        }
+    }
+
+    /// Binding that toggles isDragHovering AND auto-expands the notch
+    /// to Shelf the moment a drag enters our window. SwiftUI calls
+    /// this with `true` on enter, `false` on leave.
+    private var dragTargetBinding: Binding<Bool> {
+        Binding(
+            get: { isDragHovering },
+            set: { newValue in
+                isDragHovering = newValue
+                if newValue {
+                    if viewModel.visibleTabs.contains(.shelf) {
+                        viewModel.activeTab = .shelf
+                    }
+                    viewModel.expanded = true
+                    // Cancel any pending hover-collapse timer
+                    collapseWorkItem?.cancel()
+                } else {
+                    // Drag left without dropping — collapse after the
+                    // standard grace period, unless a real mouse-hover
+                    // is keeping us open.
+                    if !viewModel.hovering && !viewModel.showingWelcome {
+                        let work = DispatchWorkItem { [weak vm = viewModel] in
+                            guard let vm = vm else { return }
+                            if !vm.hovering {
+                                withAnimation(.spring(response: 0.42, dampingFraction: 0.85)) {
+                                    vm.expanded = false
+                                }
+                            }
+                        }
+                        collapseWorkItem = work
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + max(0.15, viewModel.collapseDelay),
+                            execute: work)
+                    }
+                }
+            }
+        )
+    }
+
+    private func handleFileDrop(providers: [NSItemProvider]) -> Bool {
+        // Make sure we land on the Shelf tab (in case it wasn't visible
+        // and the drag-hover branch above didn't switch us).
+        if viewModel.visibleTabs.contains(.shelf) {
+            viewModel.activeTab = .shelf
+        }
+        viewModel.expanded = true
+
+        var urls: [URL] = []
+        let group = DispatchGroup()
+        for p in providers {
+            group.enter()
+            _ = p.loadObject(ofClass: URL.self) { url, _ in
+                if let u = url { urls.append(u) }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            viewModel.shelf.add(urls: urls)
+            isDragHovering = false
+        }
+        return true
     }
 
     private func onHoverChange(_ hovering: Bool) {
