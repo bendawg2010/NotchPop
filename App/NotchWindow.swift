@@ -95,25 +95,29 @@ final class NotchWindowController: NSWindowController {
 
     private func applyContentSize() {
         guard let window = window else { return }
-        // The SwiftUI view adds an 18pt invisible hover gutter beneath
-        // the visible notch. The window must extend that far below the
-        // notch so the gutter is real screen space we can hover over.
-        let hoverGutter: CGFloat = 18
+        // 4pt hover gutter (was 18pt — too aggressive, opened on
+        // every brush past the top of the screen). Now you have to
+        // actually be on the notch shape itself.
+        let hoverGutter: CGFloat = 4
         let target = viewModel.targetSize
         let frameWidth  = target.width
         let frameHeight = target.height + hoverGutter
-        let current = window.frame.size
-        if abs(current.width - frameWidth) < 0.5 && abs(current.height - frameHeight) < 0.5 {
-            return
-        }
-        // Pin top edge to screen top.
+
+        // Always center on the SCREEN's midX, never the window's
+        // current midX. The previous code used window.frame.midX which
+        // drifts when the window resizes asymmetrically (e.g. expanding
+        // wider with a live activity), causing the expanded notch to
+        // land off-center from the hardware notch.
+        let screenMidX: CGFloat
         let topY: CGFloat
         if let screen = NSScreen.main {
+            screenMidX = screen.frame.midX
             topY = screen.frame.maxY
         } else {
+            screenMidX = window.frame.midX
             topY = window.frame.maxY
         }
-        let newOriginX = (window.frame.midX - frameWidth / 2)
+        let newOriginX = screenMidX - frameWidth / 2
         let newOriginY = topY - frameHeight
         let newFrame = NSRect(x: newOriginX, y: newOriginY,
                               width: frameWidth, height: frameHeight)

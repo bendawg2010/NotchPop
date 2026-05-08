@@ -18,10 +18,12 @@ struct NotchView: View {
     /// into a big drop target before they release the mouse.
     @State private var isDragHovering: Bool = false
 
-    /// Extra invisible padding below the visible notch — clicks pass
-    /// through but the hover hit-area extends further so users don't
-    /// have to land mouse on a 30px-tall strip.
-    private let hoverGutter: CGFloat = 18
+    /// Extra invisible padding below the visible notch. Was 18pt
+    /// (made the hit zone bigger but triggered accidentally any
+    /// time the user moved past the top of the screen). Now 4pt —
+    /// just enough to absorb sub-pixel mouse rounding without
+    /// extending into "menu bar territory."
+    private let hoverGutter: CGFloat = 4
 
     /// Corner radius for the visible notch. Compact = hardware-matched
     /// (so the drawn shape is indistinguishable from the real notch),

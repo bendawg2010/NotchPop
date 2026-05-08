@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.5</title>
+      <pubDate>Fri, 08 May 2026 01:24:39 +0000</pubDate>
+      <sparkle:version>1.5.5</sparkle:version>
+      <sparkle:shortVersionString>1.5.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.5 — Centered notch + tighter hover + timer live preview + advancing progress bar</h2><ul><li><strong>Notch is now actually centered over the hardware notch.</strong> applyContentSize was using <code>window.frame.midX</code> which drifts as the window resizes asymmetrically. Switched to <code>screen.frame.midX</code> so the visible shape is locked to the screen center, regardless of how wide the live activity makes it.</li><li><strong>Hover is much less twitchy.</strong> The 18pt invisible hover gutter beneath the notch was triggering accidentally any time you moved past the top of the screen. Cut to 4pt — your mouse now has to actually be on the notch shape to open it.</li><li><strong>Timer live preview now actually appears.</strong> The Pomodoro / Countdown live activity wasn't re-rendering when the timer started. Fixed by adding <code>objectWillChange.send()</code> on the relevant Combine sinks (pomodoro.$running, countdown.$running) so SwiftUI knows to re-evaluate the live activity body.</li><li><strong>Music progress bar now advances.</strong> Added a 1-second local elapsed-advance timer that bumps <code>track.elapsed</code> while playing. The 5-second AppleScript probe still re-syncs to the real value periodically.</li><li>Pomodoro <code>remaining</code> and Countdown <code>remaining</code> changes also force re-renders so the live preview's countdown text ticks every second.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.5/NotchPop.dmg"
+        sparkle:version="1.5.5"
+        sparkle:shortVersionString="1.5.5"
+        length="1810309"
+        type="application/octet-stream"
+        sparkle:edSignature="gCQZrrgJsYXjqOj0NeyK4jQZpSknEBlBZ3TIZnI6H1NpXmCDNOiZwuPhs4GhIFj7nGAhE9+jumG5rfbO35C9Aw==" />
+    </item>
+    <item>
       <title>v1.5.4</title>
       <pubDate>Fri, 08 May 2026 01:18:03 +0000</pubDate>
       <sparkle:version>1.5.4</sparkle:version>

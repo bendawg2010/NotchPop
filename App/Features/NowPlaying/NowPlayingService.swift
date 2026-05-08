@@ -144,7 +144,26 @@ final class NowPlayingService: ObservableObject {
                 self.probeInitialState()
             }
         }
+
+        // Local elapsed-time advance — bumps track.elapsed by 1 every
+        // second when isPlaying so the progress bar in the Music tab
+        // and any UI showing "1:45 / 3:12" advances smoothly without
+        // hammering AppleScript every second. The 5s probe still
+        // re-syncs to the real value.
+        elapsedAdvanceTimer?.invalidate()
+        elapsedAdvanceTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            guard self.track.isPlaying, self.track.duration > 0 else { return }
+            DispatchQueue.main.async {
+                let next = min(self.track.duration, self.track.elapsed + 1.0)
+                if next != self.track.elapsed {
+                    self.track.elapsed = next
+                }
+            }
+        }
     }
+
+    private var elapsedAdvanceTimer: Timer?
 
     // MARK: - Notification handlers
 
@@ -633,6 +652,7 @@ final class NowPlayingService: ObservableObject {
 
     deinit {
         pollTimer?.invalidate()
+        elapsedAdvanceTimer?.invalidate()
         DistributedNotificationCenter.default().removeObserver(self)
     }
 }

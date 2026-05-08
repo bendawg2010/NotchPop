@@ -247,11 +247,14 @@ final class NotchViewModel: ObservableObject {
 
         // Auto-switch to Pomodoro tab whenever the timer starts running
         // (only if pomodoroFollowsActive is on AND the tab is visible).
+        // ALSO: send objectWillChange so SwiftUI re-renders the live
+        // activity bar — hasActiveTimer is a computed property on this
+        // model and SwiftUI doesn't observe computed props automatically.
         pomodoro.$running
             .removeDuplicates()
             .sink { [weak self] running in
                 guard let self = self else { return }
-                // Resize the window because the timer pill needs space
+                self.objectWillChange.send()
                 self.onSizeChange?()
                 if self.pomodoroFollowsActive, running, self.visibleTabs.contains(.pomodoro) {
                     self.activeTab = .pomodoro
@@ -259,17 +262,42 @@ final class NotchViewModel: ObservableObject {
             }
             .store(in: &bag)
 
-        // Resize when countdown timer toggles too
+        // Same dance for Countdown timer
         countdown.$running
             .removeDuplicates()
-            .sink { [weak self] _ in self?.onSizeChange?() }
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+                self?.onSizeChange?()
+            }
             .store(in: &bag)
 
-        // Resize when track playback state changes (music pill in/out)
+        // Re-publish whenever the entire track changes — both for the
+        // live activity pill and the now-playing pane (artwork,
+        // elapsed, etc.).
+        nowPlaying.$track
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &bag)
+
+        // Music pill specifically reacts to isPlaying flips — force
+        // a window resize so the pill grows/shrinks the notch.
         nowPlaying.$track
             .map { $0.isPlaying && !$0.title.isEmpty }
             .removeDuplicates()
             .sink { [weak self] _ in self?.onSizeChange?() }
+            .store(in: &bag)
+
+        // Pomodoro phase / remaining time updates so the live activity
+        // countdown text and progress arc refresh every second.
+        pomodoro.$remaining
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &bag)
+        countdown.$remaining
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &bag)
 
         // First-launch onboarding: peek the notch open with a welcome
