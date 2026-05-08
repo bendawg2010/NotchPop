@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.14</title>
+      <pubDate>Fri, 08 May 2026 16:27:43 +0000</pubDate>
+      <sparkle:version>1.5.14</sparkle:version>
+      <sparkle:shortVersionString>1.5.14</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Welcome glow returns.</strong> Replay the welcome animation (Settings → About → Replay welcome animation) and you'll see a hue-cycling pink/purple/blue/mint halo bleeding OUT around the notch — the visual that was supposed to be there since v1.0 but kept getting clipped to the notch frame.</li><li>If you've turned on Reduce Motion (Appearance tab), the glow is static instead of pulsing.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.14/NotchPop.dmg"
+        sparkle:version="1.5.14"
+        sparkle:shortVersionString="1.5.14"
+        length="2009969"
+        type="application/octet-stream"
+        sparkle:edSignature="4YuWss+gdJOEzRT5rB0+wluwI+jQ1EW6OMqfEwfVOtHkvnB/KhPx3tT9OoZW8GNq47awhVB0hTrVM8jU+k0HDA==" />
+    </item>
+    <item>
       <title>v1.5.13</title>
       <pubDate>Fri, 08 May 2026 16:17:07 +0000</pubDate>
       <sparkle:version>1.5.13</sparkle:version>

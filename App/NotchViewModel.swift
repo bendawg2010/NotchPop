@@ -352,6 +352,15 @@ final class NotchViewModel: ObservableObject {
             .sink { [weak self] _ in self?.onSizeChange?() }
             .store(in: &bag)
 
+        // Welcome peek toggles the glow padding around the notch, so
+        // the window has to grow/shrink at those moments too. Without
+        // this sink, the welcome card would render but the gradient
+        // halo would stay clipped to the un-padded notch frame.
+        $showingWelcome
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.onSizeChange?() }
+            .store(in: &bag)
+
         // Charging events temporarily expand the notch (peek)
         charging.$peeking
             .removeDuplicates()
@@ -544,11 +553,31 @@ final class NotchViewModel: ObservableObject {
         CGSize(width: 520, height: 178)
     }
 
+    /// Extra padding around the notch panel during the welcome peek
+    /// so we can render a glowing gradient halo OUTSIDE the actual
+    /// notch shape. User feedback: "the cool first demo glowing
+    /// gradient outside the notch thing still isnt there." Returning
+    /// non-zero here grows the host window beyond the visible notch
+    /// shape; NotchView then renders the glow into that extra space.
+    /// Side padding only; we can't extend ABOVE the screen's top
+    /// edge (the OS clips us there), and asymmetric vertical padding
+    /// would push the notch off the top.
+    var welcomeGlowSidePadding: CGFloat { showingWelcome ? 70 : 0 }
+    var welcomeGlowBottomPadding: CGFloat { showingWelcome ? 70 : 0 }
+
     /// What size the host window should currently be. Includes the
     /// flanking live-activity pills when collapsed if anything's
-    /// active (timer running, music playing).
+    /// active (timer running, music playing). During the welcome
+    /// peek, also reserves room for the gradient glow halo that
+    /// bleeds OUTSIDE the notch shape on first launch / replay.
     var targetSize: CGSize {
-        expanded ? expandedSize : compactSizeWithActivities
+        let base = expanded ? expandedSize : compactSizeWithActivities
+        let sidePad = welcomeGlowSidePadding
+        let bottomPad = welcomeGlowBottomPadding
+        return CGSize(
+            width:  base.width + sidePad * 2,
+            height: base.height + bottomPad
+        )
     }
 
     func persistShelfIfEnabled() {

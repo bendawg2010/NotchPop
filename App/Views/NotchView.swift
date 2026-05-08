@@ -45,14 +45,92 @@ struct NotchView: View {
     /// The current dimensions of the visible black shape — wider
     /// when expanded OR when a live activity is showing (integrated
     /// pill style), narrowest at hardware-notch dimensions otherwise.
+    /// Note: deliberately uses viewModel.expandedSize and not
+    /// targetSize — targetSize now bakes in welcome-glow padding that
+    /// must NOT inflate the actual notch shape.
     private var visibleShapeSize: CGSize {
-        if viewModel.expanded { return viewModel.targetSize }
+        if viewModel.expanded { return viewModel.expandedSize }
         if viewModel.hasAnyLiveActivity { return viewModel.compactSizeWithActivities }
         return viewModel.compactSize
     }
 
+    /// First-launch / replay-welcome glow halo. Renders BEHIND the
+    /// notch shape and bleeds into the welcome-only padding the view
+    /// model adds to targetSize. Strategy:
+    ///   • Layer 1 — large soft pink/blue/purple AngularGradient,
+    ///     hue-rotated by time, blurred 28pt for a bloom feel.
+    ///   • Layer 2 — a tighter inner halo (30% smaller, 14pt blur)
+    ///     so the brightest light hugs the notch silhouette.
+    /// Both pulse opacity together at ~1Hz so the halo "breathes."
+    /// We skip the rotation/pulse when the user has Reduced Motion
+    /// on (Settings → Appearance) — the static gradient is plenty.
+    private var welcomeGlow: some View {
+        TimelineView(.animation) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            // Pulse 0.55 → 0.95 → 0.55 every ~3s
+            let pulse: Double = viewModel.reducedMotion
+                ? 0.85
+                : 0.55 + 0.40 * (sin(t * 2.0) * 0.5 + 0.5)
+            // Hue rotation cycles full 360° every 8s, so pink → purple
+            // → blue → pink. Stops if reduced motion is on.
+            let hue: Double = viewModel.reducedMotion
+                ? 0
+                : (t.truncatingRemainder(dividingBy: 8) / 8) * 360
+
+            ZStack {
+                // OUTER halo — wide, soft, tinted
+                Ellipse()
+                    .fill(AngularGradient(
+                        colors: [
+                            Color(red: 1.00, green: 0.24, blue: 0.67), // hot pink
+                            Color(red: 0.62, green: 0.30, blue: 0.96), // purple
+                            Color(red: 0.17, green: 0.52, blue: 0.97), // blue
+                            Color(red: 0.18, green: 0.82, blue: 0.62), // mint accent
+                            Color(red: 1.00, green: 0.24, blue: 0.67), // back to pink
+                        ],
+                        center: .center))
+                    .hueRotation(.degrees(hue))
+                    .blur(radius: 28)
+                    .opacity(pulse)
+
+                // INNER hot core that hugs the notch silhouette
+                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [
+                            Color(red: 1.00, green: 0.24, blue: 0.67),
+                            Color(red: 0.17, green: 0.52, blue: 0.97),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing))
+                    .hueRotation(.degrees(hue))
+                    .blur(radius: 14)
+                    .padding(28)
+                    .opacity(pulse * 0.9)
+            }
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
+            // Welcome-only glow halo. Renders BEHIND the notch shape
+            // and extends outside its boundary into the welcome-only
+            // padding the view model adds to targetSize. Animates a
+            // hue-cycling blurred gradient + a soft pulse so the
+            // notch obviously catches the eye on first launch (and
+            // any time you click "Replay welcome animation"). User
+            // feedback: "the cool first demo glowing gradient outside
+            // the notch thing still isnt there."
+            if viewModel.showingWelcome {
+                welcomeGlow
+                    .frame(width: visibleShapeSize.width
+                                   + viewModel.welcomeGlowSidePadding * 2,
+                           height: visibleShapeSize.height
+                                   + viewModel.welcomeGlowBottomPadding)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.45)))
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+
             // ONE integrated black notch shape. When something is
             // active (timer / music), the shape grows wider into a
             // pill that contains the activity content (icon + signal).
@@ -88,9 +166,6 @@ struct NotchView: View {
                             .transition(.opacity)
                     }
                 }
-                .frame(width: viewModel.targetSize.width,
-                       height: viewModel.targetSize.height,
-                       alignment: .center)
 
             // Expanded content sits inside the bottom of the shape
             if viewModel.expanded && !viewModel.showingWelcome {
