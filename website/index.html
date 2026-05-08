@@ -34,10 +34,10 @@
       <h1>Your MacBook notch,<br/><span class="grad">but useful.</span></h1>
       <p class="lead">Hover the notch — it pops open. Drag a file toward it, the Shelf opens to catch it. Music, Pomodoro, Timers, World Clock, Notes, Clipboard, System, Calendar, AirPods, Quick Actions, Weather, App Shortcuts — <strong>thirteen swappable widgets</strong> with a live activity pill that flanks the notch when something's running. Free. Open source. Auto-updating. <strong>Blends invisibly with your hardware notch when collapsed.</strong></p>
       <div class="ctas">
-        <a class="btn primary" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download for macOS</a>
+        <a class="btn primary" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg" data-download-trigger="hero">↓ Download for macOS</a>
         <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
       </div>
-      <div class="release-meta"><span class="version-pill">v1.5.24</span> · macOS 14+ · Apple Silicon &amp; Intel · ~1.9 MB DMG · Free · MIT</div>
+      <div class="release-meta"><span class="version-pill">v1.5.25</span> · macOS 14+ · Apple Silicon &amp; Intel · ~1.9 MB DMG · Free · MIT</div>
       <div class="gatekeeper-note" role="note">
         <span class="gatekeeper-note-icon" aria-hidden="true">ⓘ</span>
         <div>
@@ -74,7 +74,7 @@
                 <span class="ne-tab">📋 Clipboard</span>
               </div>
               <div class="ne-meta">
-                <span class="ne-version" aria-label="version 1.5.12">v1.5.24</span>
+                <span class="ne-version" aria-label="version 1.5.12">v1.5.25</span>
                 <span class="ne-battery" aria-label="82% battery">🔋 82%</span>
                 <span class="ne-gear" aria-label="Settings">⚙</span>
               </div>
@@ -300,7 +300,7 @@
           <p>
             Tap the button below. Your browser saves <code>NotchPop.dmg</code>. Double-click it — Finder opens a window with <strong>NotchPop</strong> on the left and <strong>Applications</strong> on the right.
           </p>
-          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download NotchPop.dmg · ~1.9 MB</a>
+          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg" data-download-trigger="install-card">↓ Download NotchPop.dmg · ~1.9 MB</a>
         </div>
 
         <div class="install-card">
@@ -367,6 +367,84 @@ cd NotchPop
     </div>
   </footer>
 
+  <!-- Download warning modal. The first click on any [data-download-trigger]
+       opens this; the actual download starts only after the user reads
+       the warning and the 3-second countdown completes. -->
+  <div id="dlGate" class="dl-gate" hidden role="dialog" aria-modal="true"
+       aria-labelledby="dlGateTitle">
+    <div class="dl-gate-card">
+      <button class="dl-gate-close" aria-label="Close" id="dlGateClose">×</button>
+      <div class="dl-gate-icon" aria-hidden="true">⚠️</div>
+      <h2 id="dlGateTitle" class="dl-gate-title">Before you download</h2>
+      <p class="dl-gate-lead">
+        macOS will say <strong>"NotchPop can't be opened"</strong> or
+        <strong>"NotchPop is damaged"</strong> the first time. This is normal —
+        Apple charges <strong>$99/year</strong> for a Developer ID and a
+        full notarization round trip, and NotchPop is free / open source so
+        we don't pay it.
+      </p>
+      <ol class="dl-gate-steps">
+        <li>Drag <strong>NotchPop.app</strong> into Applications from the DMG</li>
+        <li>Open it once — macOS pops a "can't be opened" dialog. Hit Done.</li>
+        <li>Open <strong>System Settings → Privacy &amp; Security</strong>.</li>
+        <li>Scroll to the bottom and click <strong>"Open Anyway"</strong> next to NotchPop.</li>
+        <li>Reopen NotchPop — confirm "Open" on the second prompt. Done.</li>
+      </ol>
+      <p class="dl-gate-note">You only do this once. Future updates open normally.</p>
+      <a id="dlGateConfirm" class="btn primary dl-gate-btn"
+         href="" data-locked="true">
+        <span class="dl-gate-btn-text">Read above first…</span>
+      </a>
+    </div>
+  </div>
+
+  <style>
+    .dl-gate { position: fixed; inset: 0; background: rgba(8, 4, 18, 0.78);
+               backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+               z-index: 9999; display: grid; place-items: center;
+               animation: dlGateFade 0.18s ease-out; padding: 20px; }
+    @keyframes dlGateFade { from { opacity: 0 } to { opacity: 1 } }
+    .dl-gate[hidden] { display: none !important; }
+    .dl-gate-card {
+        position: relative; width: min(560px, 100%);
+        background: linear-gradient(180deg, #1c1325 0%, #100a18 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 22px; padding: 28px 30px 24px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55),
+                    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+        animation: dlGatePop 0.32s cubic-bezier(0.18, 0.78, 0.36, 1);
+        color: #fff; font-family: inherit; }
+    @keyframes dlGatePop {
+        from { transform: scale(0.94); opacity: 0 }
+        to   { transform: scale(1); opacity: 1 } }
+    .dl-gate-close { position: absolute; top: 14px; right: 14px;
+        background: transparent; border: none; color: rgba(255,255,255,0.55);
+        font-size: 26px; cursor: pointer; width: 36px; height: 36px;
+        border-radius: 8px; line-height: 1; }
+    .dl-gate-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .dl-gate-icon { font-size: 30px; margin-bottom: 4px; }
+    .dl-gate-title { font-size: 26px; font-weight: 800;
+                     letter-spacing: -0.5px; margin: 0 0 10px;
+                     background: linear-gradient(135deg, #FFB454, #FF6B6B, #C147FF);
+                     -webkit-background-clip: text; background-clip: text;
+                     color: transparent; }
+    .dl-gate-lead { font-size: 14px; line-height: 1.5;
+                    color: rgba(255,255,255,0.78); margin: 0 0 14px; }
+    .dl-gate-steps { font-size: 13px; line-height: 1.55;
+                     color: rgba(255,255,255,0.85); margin: 0 0 12px;
+                     padding-left: 22px; }
+    .dl-gate-steps li { margin-bottom: 4px; }
+    .dl-gate-note { font-size: 12px; color: rgba(255,255,255,0.55);
+                    margin: 0 0 18px; }
+    .dl-gate-btn { display: block; text-align: center;
+                   pointer-events: auto; transition: opacity 0.2s ease,
+                   transform 0.18s ease, filter 0.2s ease;
+                   font-size: 15px !important; padding: 13px 22px !important; }
+    .dl-gate-btn[data-locked="true"] { opacity: 0.55; pointer-events: none;
+                                       filter: saturate(0.6); }
+    .dl-gate-btn-text { display: inline-block; font-weight: 800; }
+  </style>
+
   <script>
     document.querySelectorAll(".install-copy-btn").forEach(function (btn) {
       btn.addEventListener("click", async function () {
@@ -385,6 +463,71 @@ cd NotchPop
         }, 1800);
       });
     });
+
+    // Download warning gate. Every link with [data-download-trigger]
+    // is intercepted on first click, opens the modal, starts a 3s
+    // countdown. After the countdown the user can hit the button
+    // inside the modal to actually download. We pass through the
+    // ORIGINAL href the user clicked so links to specific versions
+    // (or the install card's "~1.9 MB" copy) preserve their target.
+    (function () {
+      const gate = document.getElementById('dlGate');
+      const closeBtn = document.getElementById('dlGateClose');
+      const confirmBtn = document.getElementById('dlGateConfirm');
+      const confirmText = confirmBtn && confirmBtn.querySelector('.dl-gate-btn-text');
+      let countdownTimer = null;
+
+      function openGate(href) {
+        gate.removeAttribute('hidden');
+        confirmBtn.setAttribute('data-locked', 'true');
+        confirmBtn.setAttribute('href', href);
+        let remaining = 3;
+        const tick = function () {
+          if (remaining > 0) {
+            confirmText.textContent = 'Read above (' + remaining + 's)…';
+            remaining--;
+          } else {
+            confirmBtn.removeAttribute('data-locked');
+            confirmText.textContent = '↓ I understand · Download NotchPop.dmg';
+            clearInterval(countdownTimer);
+          }
+        };
+        tick();
+        clearInterval(countdownTimer);
+        countdownTimer = setInterval(tick, 1000);
+      }
+
+      function closeGate() {
+        gate.setAttribute('hidden', '');
+        clearInterval(countdownTimer);
+        confirmBtn.setAttribute('data-locked', 'true');
+        if (confirmText) confirmText.textContent = 'Read above first…';
+      }
+
+      document.querySelectorAll('[data-download-trigger]').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          openGate(link.getAttribute('href'));
+        });
+      });
+
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', function (e) {
+          if (confirmBtn.getAttribute('data-locked') === 'true') {
+            e.preventDefault();
+            return;
+          }
+          setTimeout(closeGate, 400);
+        });
+      }
+      if (closeBtn) closeBtn.addEventListener('click', closeGate);
+      if (gate) gate.addEventListener('click', function (e) {
+        if (e.target === gate) closeGate();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !gate.hasAttribute('hidden')) closeGate();
+      });
+    })();
 
     // Auto-loop the hero notch demo. We cycle through:
     //   0  collapsed pill (idle)

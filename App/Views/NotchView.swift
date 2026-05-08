@@ -522,7 +522,21 @@ struct NotchView: View {
     /// reach Settings without going to the menu bar.
     private var settingsGearButton: some View {
         Button {
-            (NSApp.delegate as? AppDelegate)?.openSettings()
+            NSLog("NotchPop: gear-icon clicked, requesting Settings open")
+            // Decoupled from the AppDelegate cast — earlier the user
+            // reported "the settings button doesnt work" even though
+            // (NSApp.delegate as? AppDelegate)?.openSettings() looked
+            // correct. If the cast failed for any reason (build-order
+            // weirdness, SwiftUI isolation) the gear was a no-op.
+            // Notification-based dispatch avoids the cast entirely.
+            NotificationCenter.default.post(
+                name: .npOpenSettingsRequested, object: nil)
+            // Also try the direct call as a belt-and-braces backup,
+            // in case the Notification listener isn't installed yet
+            // (extremely early in launch).
+            if let appDelegate = NSApp.delegate as? AppDelegate {
+                appDelegate.openSettings()
+            }
         } label: {
             Image(systemName: "gearshape.fill")
                 .font(.system(size: 11, weight: .semibold))
@@ -640,6 +654,14 @@ struct NotchView: View {
                         showsWind: viewModel.weatherShowsWind)
         case .appShortcuts:
             AppShortcutsView(service: viewModel.appShortcuts)
+        case .reminders:
+            RemindersView(service: viewModel.reminders)
+        case .habits:
+            HabitsView(service: viewModel.habits)
+        case .calculator:
+            CalculatorView(service: viewModel.calculator)
+        case .network:
+            NetworkInfoView(service: viewModel.network)
         }
     }
 }

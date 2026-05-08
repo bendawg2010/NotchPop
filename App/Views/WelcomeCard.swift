@@ -56,13 +56,24 @@ struct WelcomeCard: View {
                             .stroke(Color.white.opacity(0.14), lineWidth: 1)
                     )
 
-                // Layer 2: scene content
+                // Layer 2: scene content with the NotchPop wordmark
+                // hero on top.
                 VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "rectangle.bottomthird.inset.filled")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundColor(.white.opacity(0.85))
+                        Text("NOTCHPOP")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .tracking(2.4)
+                            .foregroundColor(.white.opacity(0.85))
+                        Spacer(minLength: 0)
+                    }
                     sceneText
                     Spacer()
                     sceneDots
                 }
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
@@ -82,27 +93,39 @@ struct WelcomeCard: View {
     @ViewBuilder
     private var sceneText: some View {
         let scene = scenes[min(sceneIndex, scenes.count - 1)]
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
                 Text(scene.emoji)
-                    .font(.system(size: 16))
+                    .font(.system(size: 26))
                     .transition(.scale.combined(with: .opacity))
                 Text(scene.headline)
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(.system(size: 17, weight: .heavy))
                     .foregroundColor(.white)
                     .transition(.opacity)
             }
+            // Big accent line — gradient-stroked text so it looks
+            // like the gradient halo around the notch leaks into
+            // the headline. User feedback: "thats a weak ah intro"
+            // — the previous 18pt static-white text was the most
+            // milquetoast thing we could've shipped.
             Text(scene.accent)
-                .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundColor(.white)
-                .transition(.opacity)
+                .font(.system(size: 30, weight: .black, design: .rounded))
+                .foregroundStyle(LinearGradient(
+                    colors: [
+                        Color(red: 1.00, green: 0.42, blue: 0.42),
+                        Color(red: 0.95, green: 0.30, blue: 0.85),
+                        Color(red: 0.40, green: 0.65, blue: 0.97),
+                    ],
+                    startPoint: .leading, endPoint: .trailing))
+                .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
+                .shadow(color: Color.white.opacity(0.18), radius: 6)
             Text(scene.caption)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.78))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.85))
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .transition(.opacity)
-                .padding(.top, 1)
+                .padding(.top, 2)
         }
         .id(sceneIndex)  // force fresh transition per scene
     }

@@ -23,36 +23,80 @@ struct SettingsView: View {
     @ObservedObject var viewModel: NotchViewModel
     @State private var draggingTab: NotchTab?
     @State private var showResetConfirm = false
+    @State private var selectedSection: SectionID = .tabs
 
     private var appVersion: String {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
     }
 
-    var body: some View {
-        TabView {
-            tabsSection
-                .tabItem { Label("Tabs", systemImage: "rectangle.stack") }
-            behaviorSection
-                .tabItem { Label("Behavior", systemImage: "slider.horizontal.3") }
-            appearanceSection
-                .tabItem { Label("Appearance", systemImage: "paintpalette") }
-            pomodoroSection
-                .tabItem { Label("Pomodoro", systemImage: "timer") }
-            shortcutsSection
-                .tabItem { Label("Shortcuts", systemImage: "square.grid.3x3.fill") }
-            connectionsSection
-                .tabItem { Label("Connections", systemImage: "bolt.horizontal.fill") }
-            worldClockSection
-                .tabItem { Label("World Clock", systemImage: "globe") }
-            updatesSection
-                .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
-            diagnosticsSection
-                .tabItem { Label("Diagnostics", systemImage: "stethoscope") }
-            aboutSection
-                .tabItem { Label("About", systemImage: "info.circle") }
+    /// Each row in the sidebar maps to a SectionID. Switched from
+    /// SwiftUI's TabView to a NavigationSplitView-style sidebar
+    /// because TabView dropped overflow tabs into a >> "Navigation
+    /// Tab Bar" submenu — user feedback: "you shouldnt have to go
+    /// through the navigate tool bar."
+    enum SectionID: String, Identifiable, CaseIterable {
+        case tabs, behavior, appearance, pomodoro, shortcuts, connections,
+             worldClock, updates, diagnostics, about
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .tabs:        return "Tabs"
+            case .behavior:    return "Behavior"
+            case .appearance:  return "Appearance"
+            case .pomodoro:    return "Pomodoro"
+            case .shortcuts:   return "Shortcuts"
+            case .connections: return "Connections"
+            case .worldClock:  return "World Clock"
+            case .updates:     return "Updates"
+            case .diagnostics: return "Diagnostics"
+            case .about:       return "About"
+            }
         }
-        .frame(width: 540, height: 600)
-        .padding(20)
+        var icon: String {
+            switch self {
+            case .tabs:        return "rectangle.stack"
+            case .behavior:    return "slider.horizontal.3"
+            case .appearance:  return "paintpalette"
+            case .pomodoro:    return "timer"
+            case .shortcuts:   return "square.grid.3x3.fill"
+            case .connections: return "bolt.horizontal.fill"
+            case .worldClock:  return "globe"
+            case .updates:     return "arrow.triangle.2.circlepath"
+            case .diagnostics: return "stethoscope"
+            case .about:       return "info.circle"
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationSplitView {
+            List(SectionID.allCases, selection: $selectedSection) { id in
+                Label(id.label, systemImage: id.icon)
+                    .tag(id)
+            }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 170, ideal: 180, max: 220)
+        } detail: {
+            sectionView(for: selectedSection)
+                .padding(20)
+        }
+        .frame(width: 720, height: 620)
+    }
+
+    @ViewBuilder
+    private func sectionView(for id: SectionID) -> some View {
+        switch id {
+        case .tabs:        tabsSection
+        case .behavior:    behaviorSection
+        case .appearance:  appearanceSection
+        case .pomodoro:    pomodoroSection
+        case .shortcuts:   shortcutsSection
+        case .connections: connectionsSection
+        case .worldClock:  worldClockSection
+        case .updates:     updatesSection
+        case .diagnostics: diagnosticsSection
+        case .about:       aboutSection
+        }
     }
 
     // MARK: - Reusable section header
@@ -323,28 +367,18 @@ struct SettingsView: View {
         .padding(.vertical, 9)
     }
 
-    /// Tab-row arrow with a generous click target. The previous version
-    /// used `.buttonStyle(.borderless)` with no explicit frame, so the
-    /// hit area was just the SF Symbol glyph (~11×11pt) — easy to miss.
-    /// This wraps in a 28×28 rounded-rect, fades visibility on
-    /// disabled state instead of hiding entirely so the row layout
-    /// stays consistent.
+    /// Tab-row arrow with a generous 32×32 click target plus an
+    /// onPressGesture flash so the user gets visual confirmation
+    /// the click registered (user reported "arrows still dont work"
+    /// even after v1.5.21's first fix — turned out the issue was
+    /// they couldn't TELL the click was registering on .first/.last
+    /// tabs because disabled arrows look the same as enabled).
+    /// Now the active arrow has a stronger background + scale-down
+    /// on press, the disabled arrow is much more obviously dim.
     private func arrowButton(symbol: String, disabled: Bool, help: String,
                              action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 11, weight: .semibold))
-                .frame(width: 28, height: 28)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color.gray.opacity(disabled ? 0 : 0.10))
-                )
-                .contentShape(Rectangle())
-                .opacity(disabled ? 0.25 : 1.0)
-        }
-        .buttonStyle(.plain)
-        .disabled(disabled)
-        .help(help)
+        ArrowTapButton(symbol: symbol, disabled: disabled, action: action)
+            .help(help)
     }
 
     private func moveTab(_ tab: NotchTab, by delta: Int) {
@@ -1528,6 +1562,57 @@ struct SettingsView: View {
             }
         } message: {
             Text("Reset all NotchPop settings? This won't delete your file shelf or notes — just preferences.")
+        }
+    }
+
+    /// Sub-view so we can hold @State for press-flash without
+    /// needing one State-per-arrow on the parent.
+    private struct ArrowTapButton: View {
+        let symbol: String
+        let disabled: Bool
+        let action: () -> Void
+        @State private var pressed = false
+        @State private var flashed = false
+
+        var body: some View {
+            Button {
+                guard !disabled else { return }
+                withAnimation(.easeOut(duration: 0.06)) { flashed = true }
+                action()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    withAnimation(.easeIn(duration: 0.18)) { flashed = false }
+                }
+            } label: {
+                Image(systemName: symbol)
+                    .font(.system(size: 13, weight: .heavy))
+                    .frame(width: 32, height: 32)
+                    .background(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill(disabled
+                                  ? Color.gray.opacity(0.04)
+                                  : Color.accentColor.opacity(flashed ? 0.40
+                                                              : (pressed ? 0.28 : 0.14)))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .stroke(Color.accentColor.opacity(disabled ? 0 : 0.35),
+                                    lineWidth: 0.75)
+                    )
+                    .foregroundColor(disabled ? Color.secondary.opacity(0.45) : .accentColor)
+                    .scaleEffect(pressed ? 0.92 : 1.0)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(disabled)
+            .opacity(disabled ? 0.45 : 1.0)
+            .onLongPressGesture(minimumDuration: .infinity,
+                                maximumDistance: 8,
+                                perform: { },
+                                onPressingChanged: { isPressing in
+                withAnimation(.easeOut(duration: 0.06)) {
+                    pressed = isPressing
+                }
+            })
         }
     }
 

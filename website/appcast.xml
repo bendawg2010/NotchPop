@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.25</title>
+      <pubDate>Fri, 08 May 2026 18:43:26 +0000</pubDate>
+      <sparkle:version>1.5.25</sparkle:version>
+      <sparkle:shortVersionString>1.5.25</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>4 new tabs:</strong> Reminders (quick checklist), Habits (daily checkboxes with streak counters), Calculator (NSExpression-based — supports +, −, ×, ÷, parentheses, sqrt, sin, cos, %), Network (Wi-Fi name + signal bars + your local IP). Toggle on in Settings → Tabs.</li><li><strong>Settings is now a sidebar.</strong> User feedback: 'you shouldnt have to go through the navigate tool bar.' SwiftUI's TabView was overflowing into a 'Navigation Tab Bar' submenu once we hit 10+ sections. Switched to NavigationSplitView with a sidebar list of all 10 sections always visible. Window grew from 540×600 to 720×620.</li><li><strong>Off-center bug REVERTED.</strong> v1.5.20's animator().setFrame raced with the async re-apply check (mid-animation reads of window.frame returned interpolated values that the safety check then snapshot-set). Back to sync setFrame.</li><li><strong>Settings gear now via NotificationCenter</strong> instead of a brittle (NSApp.delegate as? AppDelegate) cast.</li><li><strong>Up/down arrows rebuilt as ArrowTapButton</strong> — 32×32 hit area, accent fill, scale-down on hold, brief flash after click so the click is unmistakably registered.</li><li><strong>Welcome MUCH bigger</strong> — glow padding 110pt → 150pt, accent text 18pt → 30pt with pink/magenta/blue gradient fill + soft white shadow, NOTCHPOP wordmark hero on top, emoji 16pt → 26pt, headline 13pt → 17pt.</li><li><strong>Website download warning popup.</strong> Click any Download button → modal opens with the macOS warning explanation (Privacy &amp; Security,  Apple developer account context). 3-second hold before the actual Download button enables.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.25/NotchPop.dmg"
+        sparkle:version="1.5.25"
+        sparkle:shortVersionString="1.5.25"
+        length="2430294"
+        type="application/octet-stream"
+        sparkle:edSignature="tP1XLFHttQkpbeAiK/AUPYPIz3S04Vvb9jcGFk3qluyZwDn1V4ag8Uaf5rjK9R5fpWBpvyzrC/LnfLDeSCTDAQ==" />
+    </item>
+    <item>
       <title>v1.5.24</title>
       <pubDate>Fri, 08 May 2026 18:28:33 +0000</pubDate>
       <sparkle:version>1.5.24</sparkle:version>

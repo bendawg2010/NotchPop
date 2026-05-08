@@ -12,6 +12,11 @@ extension Notification.Name {
     /// Posted when the user toggles the "Show menubar icon" setting.
     /// AppDelegate listens and hides/restores its NSStatusItem.
     static let npMenubarVisibilityChanged = Notification.Name("np.menubarVisibilityChanged")
+    /// Posted when the user clicks the gear icon inside the expanded
+    /// notch. AppDelegate listens and calls openSettings(). Avoids
+    /// the brittle (NSApp.delegate as? AppDelegate)?.openSettings()
+    /// cast that occasionally failed.
+    static let npOpenSettingsRequested = Notification.Name("np.openSettingsRequested")
 }
 
 /// User-pickable accent for gradients and primary buttons. We keep
@@ -88,6 +93,10 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case quickActions = "Quick Actions"
     case weather = "Weather"
     case appShortcuts = "App Shortcuts"
+    case reminders = "Reminders"
+    case habits = "Habits"
+    case calculator = "Calculator"
+    case network = "Network"
 
     var id: String { rawValue }
     var icon: String {
@@ -105,6 +114,10 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .quickActions:  return "bolt.fill"
         case .weather:       return "cloud.sun.fill"
         case .appShortcuts:  return "square.grid.3x3.fill"
+        case .reminders:     return "checklist"
+        case .habits:        return "flame.fill"
+        case .calculator:    return "function"
+        case .network:       return "wifi"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -123,6 +136,10 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .quickActions:  return "Lock screen, sleep displays, screenshot, Mission Control — fast."
         case .weather:       return "Live conditions from Open-Meteo. Free, no API key. °F / °C."
         case .appShortcuts:  return "Pin macOS apps and URLs — click to launch from inside the notch."
+        case .reminders:     return "Quick checklist for today. Type → return → check off."
+        case .habits:        return "Daily checkboxes with streak counters. Build your routine."
+        case .calculator:    return "Inline math — +, −, ×, ÷, parentheses, sqrt, sin, cos, %."
+        case .network:       return "Wi-Fi name + signal bars + your local IP. Refreshes every 10s."
         }
     }
 }
@@ -471,6 +488,10 @@ final class NotchViewModel: ObservableObject {
     let weather = WeatherService()
     let appShortcuts = AppShortcutsService()
     let connections = ConnectionsService()
+    let reminders = RemindersService()
+    let habits = HabitsService()
+    let calculator = CalculatorService()
+    let network = NetworkInfoService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
@@ -945,11 +966,11 @@ final class NotchViewModel: ObservableObject {
     /// shape; NotchView then renders the glow into that extra space.
     /// Side padding only; we can't extend ABOVE the screen's top
     /// edge (the OS clips us there), and asymmetric vertical padding
-    /// would push the notch off the top. Bumped to 110pt in v1.5.17
-    /// so the halo is actually visible — the previous 70pt strip was
-    /// almost entirely consumed by blur fall-off.
-    var welcomeGlowSidePadding: CGFloat { showingWelcome ? 110 : 0 }
-    var welcomeGlowBottomPadding: CGFloat { showingWelcome ? 100 : 0 }
+    /// would push the notch off the top. Bumped to 150pt in v1.5.25
+    /// so the halo is dramatically visible (user said "thats a weak
+    /// ah intro" with 110pt — the bloom needs more room to bleed).
+    var welcomeGlowSidePadding: CGFloat { showingWelcome ? 150 : 0 }
+    var welcomeGlowBottomPadding: CGFloat { showingWelcome ? 130 : 0 }
 
     /// What size the host window should currently be. Includes the
     /// flanking live-activity pills when collapsed if anything's

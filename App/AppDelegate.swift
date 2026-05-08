@@ -36,6 +36,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         NotificationCenter.default.addObserver(
             self, selector: #selector(menubarVisibilityChanged),
             name: .npMenubarVisibilityChanged, object: nil)
+        // Listen for gear-icon-in-the-notch open-settings requests.
+        // Wrapped in a closure-based observer instead of a selector
+        // because Cocoa selectors expect a notification parameter
+        // and openSettings() takes none — the closure form lets us
+        // call our parameterless method directly.
+        NotificationCenter.default.addObserver(
+            forName: .npOpenSettingsRequested,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.openSettings()
+        }
 
         // Initialise Sparkle (lazy SPUStandardUpdaterController fires
         // here; see UpdaterController). Wipe any stale "skipped version"

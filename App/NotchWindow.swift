@@ -229,31 +229,17 @@ final class NotchWindowController: NSWindowController {
               chosenName, NSStringFromRect(chosenFrame),
               NSStringFromRect(newFrame), allScreens)
 
-        // Animate the window resize so it stays in sync with the
-        // SwiftUI content's spring animation. Without this, the
-        // window jumps to the new size INSTANTLY while SwiftUI
-        // animates the inner notch shape over ~0.4s — net effect was
-        // the user-reported "close animation is still really choppy"
-        // because the content rendered at expanded size INSIDE a
-        // suddenly-tiny window for a split second.
-        //
-        // Skip the animation on the FIRST setFrame (when the window
-        // is .zero / has never been positioned) — animating from a
-        // zero frame produces a jarring "appear from corner" zoom.
-        let isInitialPlacement = window.frame.size.width < 1 || window.frame.size.height < 1
-        if isInitialPlacement {
-            window.setFrame(newFrame, display: true, animate: false)
-        } else {
-            NSAnimationContext.runAnimationGroup { ctx in
-                // Match SwiftUI's .spring(response: 0.42) feel —
-                // slightly snappier on the easing curve so the
-                // window outpaces the content marginally and never
-                // crops it.
-                ctx.duration = 0.32
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                ctx.allowsImplicitAnimation = true
-                window.animator().setFrame(newFrame, display: true)
-            }
-        }
+        // Sync setFrame on purpose. v1.5.20 tried to use
+        // window.animator().setFrame inside an NSAnimationContext to
+        // smooth the close-animation chop, but that re-introduced
+        // the off-center bug: the async re-apply check (next runloop
+        // tick) reads window.frame which is STILL animating —
+        // interpolated halfway between old and new — sees that
+        // current != want, and forces a sync setFrame to whatever
+        // the in-progress frame happened to be. Net effect was
+        // "off to the left again" because the snapshot landed
+        // somewhere mid-animation. Going back to sync setFrame so
+        // the frame is always exactly the desired one immediately.
+        window.setFrame(newFrame, display: true, animate: false)
     }
 }
