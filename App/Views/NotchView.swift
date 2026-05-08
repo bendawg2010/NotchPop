@@ -724,6 +724,8 @@ struct NotchView: View {
             HashView()
         case .audioControls:
             AudioControlsView(service: viewModel.audioControls)
+        case .notchPet:
+            NotchPetView(service: viewModel.pet)
         }
     }
 }

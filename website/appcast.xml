@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.29</title>
+      <pubDate>Fri, 08 May 2026 23:42:10 +0000</pubDate>
+      <sparkle:version>1.5.29</sparkle:version>
+      <sparkle:shortVersionString>1.5.29</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Notch Pet — a virtual creature lives in your notch.</strong> Hatches from an egg, evolves through 6 stages (Egg → Hatchling → Kid → Teen → Adult → Sage) as you accumulate XP from completed Pomodoro sessions, breaks, and habits. Three stats — Happiness / Energy / Hunger — decay over time. Three care actions: <strong>Feed</strong> 🍎 (boosts hunger + small XP), <strong>Play</strong> 🎾 (big happiness, drops energy), <strong>Nap</strong> 💤 (restores energy). The pet sleeps automatically late at night, gets hungry if neglected, gets EXCITED when you finish a Pomodoro focus block. Mood-driven sprite — eyes squint when happy, droop when sad, wide when hungry, closed when asleep, sparkles when excited. Sage stage gets a tiny crown. Pure SwiftUI shapes, no external art. Persists everything across launches via UserDefaults. Listens to the same Connections triggers (pomodoroFocusEnd, chargingStart, musicStart) so it reacts in real time to whatever's happening on your Mac.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.29/NotchPop.dmg"
+        sparkle:version="1.5.29"
+        sparkle:shortVersionString="1.5.29"
+        length="2663554"
+        type="application/octet-stream"
+        sparkle:edSignature="Tv2xwI1Cyq9TSfgFFTlXx6fBWeYRi6GfdabA3gXZrbNSYeJzme2UVQm4LizxiD5eDNkTzjW5OqVUFTDIcMamDw==" />
+    </item>
+    <item>
       <title>v1.5.28</title>
       <pubDate>Fri, 08 May 2026 19:13:36 +0000</pubDate>
       <sparkle:version>1.5.28</sparkle:version>

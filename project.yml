@@ -23,8 +23,8 @@ settings:
     # those mutations on the next regen — so every shipped DMG had
     # CFBundleShortVersionString=1.0 internally, breaking Sparkle's
     # version comparison and creating an endless 'update available' loop.
-    MARKETING_VERSION: "1.5.28"
-    CURRENT_PROJECT_VERSION: "26"
+    MARKETING_VERSION: "1.5.29"
+    CURRENT_PROJECT_VERSION: "27"
 
 # Sparkle handles auto-updates. The framework gets pulled in via SPM
 # (Swift Package Manager) — Xcode embeds it in NotchPop.app/Contents/

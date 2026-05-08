@@ -135,6 +135,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case unitConverter = "Units"
     case hash = "Hash"
     case audioControls = "Audio"
+    case notchPet = "Notch Pet"
 
     var id: String { rawValue }
     var icon: String {
@@ -162,6 +163,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .unitConverter: return "ruler.fill"
         case .hash:          return "number"
         case .audioControls: return "speaker.wave.2.fill"
+        case .notchPet:      return "pawprint.fill"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -190,6 +192,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .unitConverter: return "Length / mass / temp / volume / data — pick & convert offline."
         case .hash:          return "MD5 / SHA-1 / SHA-256 / Base64 of any text. Click to copy."
         case .audioControls: return "System volume slider + brightness up/down + mute."
+        case .notchPet:      return "A virtual pet that grows when you complete Pomodoros, gets fed by your habits, evolves at milestones."
         }
     }
 }
@@ -551,6 +554,7 @@ final class NotchViewModel: ObservableObject {
     let network = NetworkInfoService()
     let countdownTo = CountdownToService()
     let audioControls = AudioControlsService()
+    let pet = NotchPetService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
