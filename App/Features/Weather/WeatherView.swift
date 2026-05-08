@@ -10,6 +10,9 @@ import SwiftUI
 
 struct WeatherView: View {
     @ObservedObject var service: WeatherService
+    /// Whether to render the wind-speed line in the footer. Honored
+    /// from NotchViewModel.weatherShowsWind via the call site.
+    var showsWind: Bool = true
 
     var body: some View {
         Group {
@@ -73,7 +76,7 @@ struct WeatherView: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
-                Text("Wind \(Int(snap.windKph.rounded())) km/h · updated \(relativeTime(snap.fetchedAt))")
+                Text(footerLine(snap: snap))
                     .font(.system(size: 9, weight: .medium))
                     .foregroundColor(.white.opacity(0.40))
                     .lineLimit(1)
@@ -216,6 +219,16 @@ struct WeatherView: View {
             return [Color(red: 0.40, green: 0.65, blue: 0.95),
                     Color(red: 0.55, green: 0.58, blue: 0.65)]
         }
+    }
+
+    /// Build the footer line. If showsWind is on, include wind speed
+    /// + relative-time; otherwise just the relative-time.
+    private func footerLine(snap: WeatherSnapshot) -> String {
+        let when = relativeTime(snap.fetchedAt)
+        if showsWind {
+            return "Wind \(Int(snap.windKph.rounded())) km/h · updated \(when)"
+        }
+        return "Updated \(when)"
     }
 
     private func relativeTime(_ d: Date) -> String {

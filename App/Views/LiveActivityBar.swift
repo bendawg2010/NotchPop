@@ -166,7 +166,11 @@ struct LiveActivityBar: View {
 
     private var musicIcon: some View {
         Group {
-            if let art = viewModel.nowPlaying.track.artwork {
+            // Privacy mode: if liveActivityShowsArtwork is off, always
+            // show the generic music note glyph regardless of whether
+            // we have artwork loaded.
+            if viewModel.liveActivityShowsArtwork,
+               let art = viewModel.nowPlaying.track.artwork {
                 Image(nsImage: art)
                     .resizable()
                     .scaledToFill()

@@ -291,6 +291,147 @@ final class NotchViewModel: ObservableObject {
     @Published var chargingPeekEnabled: Bool = true {
         didSet { UserDefaults.standard.set(chargingPeekEnabled, forKey: "np.chargingPeek") }
     }
+    /// Show the timer live-activity pill at all (separate from music).
+    /// Off = even if a Pomodoro/Countdown is running, no flanking pill
+    /// appears. Useful if you find the running timer distracting but
+    /// still want music live activity.
+    @Published var timerLiveActivityEnabled: Bool = true {
+        didSet {
+            UserDefaults.standard.set(timerLiveActivityEnabled, forKey: "np.timerLiveAct")
+            onSizeChange?()
+        }
+    }
+    /// Show the music live-activity pill at all (separate from timer).
+    @Published var musicLiveActivityEnabled: Bool = true {
+        didSet {
+            UserDefaults.standard.set(musicLiveActivityEnabled, forKey: "np.musicLiveAct")
+            onSizeChange?()
+        }
+    }
+    // Note: end-of-timer sound is gated by `soundEffectsEnabled`
+    // (key "np.sound") which TimerSound.play() reads directly. We
+    // expose that toggle from both Behavior and Pomodoro sections so
+    // users can find it from either place.
+
+    // MARK: - Music
+
+    /// Show album artwork on the LEFT of the live activity pill.
+    /// Off = falls back to a generic music.note glyph (privacy mode).
+    @Published var liveActivityShowsArtwork: Bool = true {
+        didSet { UserDefaults.standard.set(liveActivityShowsArtwork, forKey: "np.liveArt") }
+    }
+    /// Marquee scroll speed for long track titles in the Music pane.
+    /// Range 10–80 px/s. Default 30 ≈ 2.5 chars/sec at body size.
+    @Published var marqueeSpeed: Double = 30 {
+        didSet { UserDefaults.standard.set(marqueeSpeed, forKey: "np.marqueeSpeed") }
+    }
+    /// How often to poll the music app for state changes (mostly used
+    /// for Apple Music since Spotify pushes via DistributedNotification).
+    /// Range 1–10s.
+    @Published var musicPollInterval: Double = 5 {
+        didSet { UserDefaults.standard.set(musicPollInterval, forKey: "np.musicPoll") }
+    }
+
+    // MARK: - File shelf
+
+    /// Maximum number of files allowed in the shelf at once. Older
+    /// drops are evicted FIFO when the count would exceed this.
+    @Published var shelfMaxItems: Int = 25 {
+        didSet { UserDefaults.standard.set(shelfMaxItems, forKey: "np.shelfMax") }
+    }
+    /// Show file-icon thumbnails in the shelf cards.
+    @Published var shelfShowsThumbnails: Bool = true {
+        didSet { UserDefaults.standard.set(shelfShowsThumbnails, forKey: "np.shelfThumbs") }
+    }
+    /// Single-click action: 0 = open in default app, 1 = reveal in Finder.
+    @Published var shelfClickAction: Int = 0 {
+        didSet { UserDefaults.standard.set(shelfClickAction, forKey: "np.shelfClick") }
+    }
+
+    // MARK: - Calendar
+
+    /// How many upcoming events to render in the Calendar tab. 1–10.
+    @Published var calendarEventCount: Int = 4 {
+        didSet { UserDefaults.standard.set(calendarEventCount, forKey: "np.calCount") }
+    }
+    /// Time-range filter for the Calendar tab.
+    /// 0 = today, 1 = next 24h (rolling), 2 = next 7 days.
+    @Published var calendarTimeRange: Int = 1 {
+        didSet { UserDefaults.standard.set(calendarTimeRange, forKey: "np.calRange") }
+    }
+    /// Skip all-day events (for users whose calendars are clogged with
+    /// "Out of Office" / birthdays / etc).
+    @Published var calendarHidesAllDay: Bool = false {
+        didSet { UserDefaults.standard.set(calendarHidesAllDay, forKey: "np.calNoAllDay") }
+    }
+
+    // MARK: - Weather
+
+    /// Refresh interval in minutes. Range 5–120.
+    @Published var weatherRefreshMinutes: Int = 15 {
+        didSet { UserDefaults.standard.set(weatherRefreshMinutes, forKey: "np.weatherRefresh") }
+    }
+    /// Show wind-speed line in the Weather pane footer.
+    @Published var weatherShowsWind: Bool = true {
+        didSet { UserDefaults.standard.set(weatherShowsWind, forKey: "np.weatherWind") }
+    }
+
+    // MARK: - Notes
+
+    /// Body font size for the Notes scratchpad. 10–22pt.
+    @Published var notesFontSize: Double = 14 {
+        didSet { UserDefaults.standard.set(notesFontSize, forKey: "np.notesFont") }
+    }
+    /// Use a monospaced font in Notes. Off = system default.
+    @Published var notesMonospaced: Bool = false {
+        didSet { UserDefaults.standard.set(notesMonospaced, forKey: "np.notesMono") }
+    }
+
+    // MARK: - Clipboard
+
+    /// Number of clipboard entries to remember. 5–50.
+    @Published var clipboardMax: Int = 12 {
+        didSet { UserDefaults.standard.set(clipboardMax, forKey: "np.clipMax") }
+    }
+
+    // MARK: - Animation speed
+
+    /// Global animation speed multiplier. 0.5 = half-speed (snappier),
+    /// 1.0 = default, 2.0 = slow-mo demo. Applied as a divisor on
+    /// spring response durations throughout the app.
+    @Published var animationSpeed: Double = 1.0 {
+        didSet { UserDefaults.standard.set(animationSpeed, forKey: "np.animSpeed") }
+    }
+
+    // MARK: - Quiet hours
+
+    /// When true, NotchPop suppresses welcome peeks, charging peeks,
+    /// and live-activity expansions during quietHoursStart…quietHoursEnd.
+    /// Hours are LOCAL HOURS (0–23) — wraparound supported (e.g. 22 to 7
+    /// = "10pm to 7am").
+    @Published var quietHoursEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(quietHoursEnabled, forKey: "np.quiet") }
+    }
+    @Published var quietHoursStart: Int = 22 {
+        didSet { UserDefaults.standard.set(quietHoursStart, forKey: "np.quietStart") }
+    }
+    @Published var quietHoursEnd: Int = 7 {
+        didSet { UserDefaults.standard.set(quietHoursEnd, forKey: "np.quietEnd") }
+    }
+
+    /// True when the local clock is currently inside the user's quiet
+    /// hours window. Wraparound (start > end) is treated as crossing
+    /// midnight.
+    var inQuietHours: Bool {
+        guard quietHoursEnabled else { return false }
+        let h = Calendar.current.component(.hour, from: Date())
+        if quietHoursStart == quietHoursEnd { return false }
+        if quietHoursStart < quietHoursEnd {
+            return h >= quietHoursStart && h < quietHoursEnd
+        }
+        // Wraps midnight (e.g. 22..7 = 22,23,0..6)
+        return h >= quietHoursStart || h < quietHoursEnd
+    }
 
     // MARK: - Children
     let shelf = FileShelf()
@@ -409,6 +550,78 @@ final class NotchViewModel: ObservableObject {
         if d.object(forKey: "np.chargingPeek") != nil {
             self.chargingPeekEnabled = d.bool(forKey: "np.chargingPeek")
         }
+        if d.object(forKey: "np.timerLiveAct") != nil {
+            self.timerLiveActivityEnabled = d.bool(forKey: "np.timerLiveAct")
+        }
+        if d.object(forKey: "np.musicLiveAct") != nil {
+            self.musicLiveActivityEnabled = d.bool(forKey: "np.musicLiveAct")
+        }
+        // Music
+        if d.object(forKey: "np.liveArt") != nil {
+            self.liveActivityShowsArtwork = d.bool(forKey: "np.liveArt")
+        }
+        if d.object(forKey: "np.marqueeSpeed") != nil {
+            let v = d.double(forKey: "np.marqueeSpeed")
+            self.marqueeSpeed = v >= 10 && v <= 80 ? v : 30
+        }
+        if d.object(forKey: "np.musicPoll") != nil {
+            let v = d.double(forKey: "np.musicPoll")
+            self.musicPollInterval = v >= 1 && v <= 10 ? v : 5
+        }
+        // Shelf
+        if d.object(forKey: "np.shelfMax") != nil {
+            self.shelfMaxItems = max(5, min(200, d.integer(forKey: "np.shelfMax")))
+        }
+        if d.object(forKey: "np.shelfThumbs") != nil {
+            self.shelfShowsThumbnails = d.bool(forKey: "np.shelfThumbs")
+        }
+        if d.object(forKey: "np.shelfClick") != nil {
+            self.shelfClickAction = d.integer(forKey: "np.shelfClick")
+        }
+        // Calendar
+        if d.object(forKey: "np.calCount") != nil {
+            self.calendarEventCount = max(1, min(10, d.integer(forKey: "np.calCount")))
+        }
+        if d.object(forKey: "np.calRange") != nil {
+            self.calendarTimeRange = d.integer(forKey: "np.calRange")
+        }
+        if d.object(forKey: "np.calNoAllDay") != nil {
+            self.calendarHidesAllDay = d.bool(forKey: "np.calNoAllDay")
+        }
+        // Weather
+        if d.object(forKey: "np.weatherRefresh") != nil {
+            self.weatherRefreshMinutes = max(5, min(120, d.integer(forKey: "np.weatherRefresh")))
+        }
+        if d.object(forKey: "np.weatherWind") != nil {
+            self.weatherShowsWind = d.bool(forKey: "np.weatherWind")
+        }
+        // Notes
+        if d.object(forKey: "np.notesFont") != nil {
+            let v = d.double(forKey: "np.notesFont")
+            self.notesFontSize = v >= 10 && v <= 22 ? v : 14
+        }
+        if d.object(forKey: "np.notesMono") != nil {
+            self.notesMonospaced = d.bool(forKey: "np.notesMono")
+        }
+        // Clipboard
+        if d.object(forKey: "np.clipMax") != nil {
+            self.clipboardMax = max(5, min(50, d.integer(forKey: "np.clipMax")))
+        }
+        // Animation speed
+        if d.object(forKey: "np.animSpeed") != nil {
+            let v = d.double(forKey: "np.animSpeed")
+            self.animationSpeed = v >= 0.5 && v <= 2.0 ? v : 1.0
+        }
+        // Quiet hours
+        if d.object(forKey: "np.quiet") != nil {
+            self.quietHoursEnabled = d.bool(forKey: "np.quiet")
+        }
+        if d.object(forKey: "np.quietStart") != nil {
+            self.quietHoursStart = max(0, min(23, d.integer(forKey: "np.quietStart")))
+        }
+        if d.object(forKey: "np.quietEnd") != nil {
+            self.quietHoursEnd = max(0, min(23, d.integer(forKey: "np.quietEnd")))
+        }
         // Restore tab order/visibility, falling back to defaults if any
         // raw value is unrecognized. Legacy raw values from old NotchTab
         // cases ("Battery", "Stopwatch", "Timer") get silently dropped;
@@ -442,12 +655,14 @@ final class NotchViewModel: ObservableObject {
             .store(in: &bag)
 
         // Charging events temporarily expand the notch (peek). Honors
-        // Settings → Behavior → "Charging peek" toggle so users can
-        // disable the cheer animation if it's distracting.
+        // Settings → Behavior → "Charging peek" toggle and Quiet Hours
+        // (no peek during the user's no-disturb window).
         charging.$peeking
             .removeDuplicates()
             .sink { [weak self] peeking in
-                guard let self = self, self.chargingPeekEnabled else { return }
+                guard let self = self,
+                      self.chargingPeekEnabled,
+                      !self.inQuietHours else { return }
                 if peeking { withAnimation(.spring()) { self.expanded = true } }
             }
             .store(in: &bag)
@@ -607,15 +822,21 @@ final class NotchViewModel: ObservableObject {
 
     // MARK: - Live activities (NotchNook-style integrated wide pill)
 
-    /// True if a timer (Pomodoro or Countdown) is currently running.
-    /// Pomodoro takes precedence — it's the higher-stakes timer.
+    /// True if a timer (Pomodoro or Countdown) is currently running
+    /// AND the user has the timer live activity enabled. The timer
+    /// keeps RUNNING regardless of this toggle — only the live-
+    /// activity surface depends on it. Pomodoro takes precedence —
+    /// it's the higher-stakes timer.
     var hasActiveTimer: Bool {
-        pomodoro.running || countdown.running
+        timerLiveActivityEnabled && (pomodoro.running || countdown.running)
     }
 
-    /// True if any audio app is currently playing a track.
+    /// True if any audio app is currently playing a track AND the
+    /// user has the music live activity enabled.
     var hasActiveMusic: Bool {
-        nowPlaying.track.isPlaying && !nowPlaying.track.title.isEmpty
+        musicLiveActivityEnabled
+            && nowPlaying.track.isPlaying
+            && !nowPlaying.track.title.isEmpty
     }
 
     /// True if any live-activity content should be shown on the notch.

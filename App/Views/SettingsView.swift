@@ -134,6 +134,129 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
             }
 
+            // ── Per-tab options ──────────────────────────────────
+
+            sectionHeader("Music tab")
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Marquee scroll speed")
+                    Spacer()
+                    Text(String(format: "%.0f px/s", viewModel.marqueeSpeed))
+                        .foregroundColor(.secondary).monospacedDigit()
+                }
+                Slider(value: $viewModel.marqueeSpeed, in: 10...80, step: 5)
+                caption("How fast long track titles scroll across the Music pane. 30 ≈ readable, 80 = aggressive.")
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Apple Music polling interval")
+                    Spacer()
+                    Text(String(format: "%.0f s", viewModel.musicPollInterval))
+                        .foregroundColor(.secondary).monospacedDigit()
+                }
+                Slider(value: $viewModel.musicPollInterval, in: 1...10, step: 1)
+                caption("Lower = more responsive elapsed-time updates, slightly more battery. Spotify pushes via DistributedNotification so this only affects Apple Music.")
+            }
+
+            sectionHeader("Shelf tab")
+            HStack {
+                Text("Maximum items").frame(width: 150, alignment: .leading)
+                Stepper(value: $viewModel.shelfMaxItems, in: 5...200, step: 5) {
+                    Text("\(viewModel.shelfMaxItems) files")
+                        .frame(minWidth: 100, alignment: .leading)
+                }
+                Spacer()
+            }
+            caption("Older drops get evicted FIFO when the count would exceed this.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.shelfShowsThumbnails).labelsHidden()
+            } label: {
+                Text("Show file thumbnails")
+            }
+
+            HStack {
+                Text("Click action").frame(width: 150, alignment: .leading)
+                Picker("", selection: $viewModel.shelfClickAction) {
+                    Text("Open in default app").tag(0)
+                    Text("Reveal in Finder").tag(1)
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 320)
+                Spacer()
+            }
+
+            sectionHeader("Calendar tab")
+            HStack {
+                Text("Events to show").frame(width: 150, alignment: .leading)
+                Stepper(value: $viewModel.calendarEventCount, in: 1...10) {
+                    Text("\(viewModel.calendarEventCount) events")
+                        .frame(minWidth: 100, alignment: .leading)
+                }
+                Spacer()
+            }
+            HStack {
+                Text("Time range").frame(width: 150, alignment: .leading)
+                Picker("", selection: $viewModel.calendarTimeRange) {
+                    Text("Today").tag(0)
+                    Text("Next 24h").tag(1)
+                    Text("Next 7 days").tag(2)
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 320)
+                Spacer()
+            }
+            LabeledContent {
+                Toggle("", isOn: $viewModel.calendarHidesAllDay).labelsHidden()
+            } label: {
+                Text("Hide all-day events")
+            }
+            caption("Useful if your calendars are clogged with 'Out of Office' / birthdays.")
+
+            sectionHeader("Weather tab")
+            HStack {
+                Text("Refresh interval").frame(width: 150, alignment: .leading)
+                Stepper(value: $viewModel.weatherRefreshMinutes, in: 5...120, step: 5) {
+                    Text("\(viewModel.weatherRefreshMinutes) min")
+                        .frame(minWidth: 100, alignment: .leading)
+                }
+                Spacer()
+            }
+            LabeledContent {
+                Toggle("", isOn: $viewModel.weatherShowsWind).labelsHidden()
+            } label: {
+                Text("Show wind speed in footer")
+            }
+
+            sectionHeader("Notes tab")
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Body font size")
+                    Spacer()
+                    Text(String(format: "%.0f pt", viewModel.notesFontSize))
+                        .foregroundColor(.secondary).monospacedDigit()
+                }
+                Slider(value: $viewModel.notesFontSize, in: 10...22, step: 1)
+            }
+            LabeledContent {
+                Toggle("", isOn: $viewModel.notesMonospaced).labelsHidden()
+            } label: {
+                Text("Use monospaced font")
+            }
+
+            sectionHeader("Clipboard tab")
+            HStack {
+                Text("History size").frame(width: 150, alignment: .leading)
+                Stepper(value: $viewModel.clipboardMax, in: 5...50, step: 1) {
+                    Text("\(viewModel.clipboardMax) entries")
+                        .frame(minWidth: 100, alignment: .leading)
+                }
+                Spacer()
+            }
+            caption("Number of recent copies to remember. Older entries get evicted when the count exceeds this.")
+
             footerCredit
         }
     }
@@ -250,9 +373,30 @@ struct SettingsView: View {
             LabeledContent {
                 Toggle("", isOn: $viewModel.liveActivitiesEnabled).labelsHidden()
             } label: {
-                Text("Live activities flanking the notch (music + timer)")
+                Text("Live activities flanking the notch (master)")
             }
             caption("When music is playing or a timer is running, slim pills appear on either side of the collapsed notch — track info on the right, countdown on the left. Tap either to open it.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.timerLiveActivityEnabled).labelsHidden()
+            } label: {
+                Text("Show timer in live activity")
+            }
+            caption("Hide the running-timer pill specifically. The timer keeps running — only the flanking surface goes away. User feedback: 'there should be an option to hide the timer.'")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.musicLiveActivityEnabled).labelsHidden()
+            } label: {
+                Text("Show music in live activity")
+            }
+            caption("Hide the now-playing pill. Music keeps playing; the in-notch info just disappears.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.liveActivityShowsArtwork).labelsHidden()
+            } label: {
+                Text("Show album artwork in live activity")
+            }
+            caption("Off = falls back to a generic music note glyph (privacy mode for shoulder-surfing scenarios).")
 
             LabeledContent {
                 Toggle("", isOn: $viewModel.pomodoroFollowsActive).labelsHidden()
@@ -346,6 +490,38 @@ struct SettingsView: View {
                 Text("Show menubar icon")
             }
             caption("Off = no menubar icon (rely on the notch + auto-launch). Settings reachable via the gear inside the expanded notch.")
+
+            // ── Quiet hours ──────────────────────────────────────
+            sectionHeader("Quiet hours")
+            caption("Suppress welcome peeks, charging peeks, and live-activity expansions during a chosen time window.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.quietHoursEnabled).labelsHidden()
+            } label: {
+                Text("Enable quiet hours")
+            }
+
+            HStack {
+                Text("From").frame(width: 80, alignment: .leading)
+                Picker("", selection: $viewModel.quietHoursStart) {
+                    ForEach(0..<24, id: \.self) { h in
+                        Text(String(format: "%02d:00", h)).tag(h)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 100)
+                Text("to").frame(width: 30, alignment: .center)
+                Picker("", selection: $viewModel.quietHoursEnd) {
+                    ForEach(0..<24, id: \.self) { h in
+                        Text(String(format: "%02d:00", h)).tag(h)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 100)
+                Spacer()
+            }
+            .opacity(viewModel.quietHoursEnabled ? 1 : 0.55)
+            caption("Wraparound supported (e.g. 22:00 to 07:00 means 'overnight').")
 
             // ── Hover timing ─────────────────────────────────────
             sectionHeader("Hover timing")
@@ -477,6 +653,17 @@ struct SettingsView: View {
                 Text("Reduce motion")
             }
             caption("Skips spring animations on the welcome peek and stops the Pomodoro ring's gradient orbit. Useful for vestibular sensitivity or older Macs.")
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Animation speed")
+                    Spacer()
+                    Text(String(format: "%.2f×", viewModel.animationSpeed))
+                        .foregroundColor(.secondary).monospacedDigit()
+                }
+                Slider(value: $viewModel.animationSpeed, in: 0.5...2.0, step: 0.05)
+                caption("0.5× = snappier (animations finish in half the time). 2.0× = slow-mo demo. Default 1.0× matches the original timing.")
+            }
 
             footerCredit
         }

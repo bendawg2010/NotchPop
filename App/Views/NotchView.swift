@@ -501,7 +501,9 @@ struct NotchView: View {
                            uses24Hour: viewModel.clockUses24Hour,
                            showsSeconds: viewModel.clockShowsSeconds)
         case .notes:
-            NotesView(service: viewModel.notes)
+            NotesView(service: viewModel.notes,
+                      fontSize: CGFloat(viewModel.notesFontSize),
+                      monospaced: viewModel.notesMonospaced)
         case .clipboard:
             ClipboardView(service: viewModel.clipboard)
         case .systemStats:
@@ -513,7 +515,8 @@ struct NotchView: View {
         case .quickActions:
             QuickActionsView(viewModel: viewModel)
         case .weather:
-            WeatherView(service: viewModel.weather)
+            WeatherView(service: viewModel.weather,
+                        showsWind: viewModel.weatherShowsWind)
         }
     }
 }

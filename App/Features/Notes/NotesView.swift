@@ -9,6 +9,11 @@ import SwiftUI
 
 struct NotesView: View {
     @ObservedObject var service: NotesService
+    /// Body font size — pulled from NotchViewModel.notesFontSize.
+    /// Defaults to the historical 12.5pt if the caller doesn't pass one.
+    var fontSize: CGFloat = 12.5
+    /// Use a monospaced font (default = system rounded body).
+    var monospaced: Bool = false
 
     var body: some View {
         VStack(spacing: 4) {
@@ -31,19 +36,26 @@ struct NotesView: View {
 
     private var editor: some View {
         TextEditor(text: $service.text)
-            .font(.system(size: 12.5, weight: .medium))
+            .font(noteFont)
             .foregroundColor(.white)
             .scrollContentBackground(.hidden)
             .background(Color.clear)
             .overlay(alignment: .topLeading) {
                 if service.text.isEmpty {
                     Text("Jot a quick note…")
-                        .font(.system(size: 12.5, weight: .medium))
+                        .font(noteFont)
                         .foregroundColor(Color.white.opacity(0.35))
                         .padding(14)
                         .allowsHitTesting(false)
                 }
             }
+    }
+
+    private var noteFont: Font {
+        if monospaced {
+            return .system(size: fontSize, weight: .medium, design: .monospaced)
+        }
+        return .system(size: fontSize, weight: .medium)
     }
 
     private var footer: some View {

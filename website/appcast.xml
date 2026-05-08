@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.18</title>
+      <pubDate>Fri, 08 May 2026 17:32:00 +0000</pubDate>
+      <sparkle:version>1.5.18</sparkle:version>
+      <sparkle:shortVersionString>1.5.18</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Hide the timer.</strong> New per-track toggle in Settings → Behavior so you can hide the running-timer pill without disabling music live activity (or vice versa). The timer keeps running — only the flanking surface goes away.</li><li><strong>End-of-timer sound.</strong> Already shipped under Settings → Pomodoro → Sound, but now also surfaced via the master &quot;Live activities&quot; section so it's findable from Behavior too. Pomodoro phase end + Countdown timer end both call TimerSound.play() which respects your sound choice.</li><li><strong>15+ new options:</strong> show artwork in live activity (privacy mode), marquee scroll speed, Apple Music polling interval, shelf max items + thumbnails + click-action, calendar event count + time-range + hide all-day, weather refresh interval + wind toggle, notes font size + monospaced, clipboard history size, animation speed multiplier, and quiet hours (suppress peeks during a chosen time window).</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.18/NotchPop.dmg"
+        sparkle:version="1.5.18"
+        sparkle:shortVersionString="1.5.18"
+        length="2140555"
+        type="application/octet-stream"
+        sparkle:edSignature="yrx7KQ49bbGU0nlshlOsQHkDyImV671gzWvDU+ySLoAeYYwA04QIDfORJPpR1RPG7Gfdl7z+INAjmBRtrsnyDA==" />
+    </item>
+    <item>
       <title>v1.5.17</title>
       <pubDate>Fri, 08 May 2026 17:24:50 +0000</pubDate>
       <sparkle:version>1.5.17</sparkle:version>
