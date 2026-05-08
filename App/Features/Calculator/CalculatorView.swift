@@ -62,6 +62,7 @@ struct CalculatorView: View {
     @State private var input: String = ""
     @State private var lastResult: String?
     @State private var lastError: Bool = false
+    @FocusState private var inputFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -81,16 +82,44 @@ struct CalculatorView: View {
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
+        .onAppear {
+            // Auto-focus so the user can just start typing the
+            // moment the tab opens. User feedback: "make it easier
+            // to type on calc."
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                inputFocused = true
+            }
+        }
+        .onTapGesture {
+            // Tap anywhere in the panel re-focuses the input — no
+            // hunting for the field.
+            inputFocused = true
+        }
     }
 
     private var inputRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Image(systemName: "function")
-                .foregroundColor(.white.opacity(0.55))
-            TextField("3 * (5 + 2)…", text: $input, onCommit: evaluate)
+                .font(.system(size: 14, weight: .heavy))
+                .foregroundColor(.white.opacity(0.62))
+            TextField("3 * (5 + 2)…", text: $input)
                 .textFieldStyle(.plain)
+                .focused($inputFocused)
                 .foregroundColor(.white)
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .font(.system(size: 16, weight: .heavy, design: .monospaced))
+                .padding(.horizontal, 10)
+                .frame(height: 32)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.white.opacity(inputFocused ? 0.14 : 0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .stroke(inputFocused
+                                ? Color.accentColor.opacity(0.55)
+                                : Color.white.opacity(0.10),
+                                lineWidth: 1)
+                )
                 .onSubmit { evaluate() }
             if let r = lastResult {
                 Button {
@@ -98,12 +127,35 @@ struct CalculatorView: View {
                     NSPasteboard.general.setString(r, forType: .string)
                 } label: {
                     Image(systemName: "doc.on.doc")
-                        .font(.system(size: 10, weight: .heavy))
-                        .foregroundColor(.white.opacity(0.65))
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(width: 30, height: 30)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.white.opacity(0.10))
+                        )
                 }
                 .buttonStyle(.plain)
                 .help("Copy result")
             }
+            Button {
+                evaluate()
+            } label: {
+                Image(systemName: "equal")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundColor(.white)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(LinearGradient(
+                                colors: [Color(red: 1.00, green: 0.24, blue: 0.67),
+                                         Color(red: 0.17, green: 0.52, blue: 0.97)],
+                                startPoint: .leading, endPoint: .trailing))
+                    )
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.return, modifiers: [])
+            .help("Evaluate")
         }
     }
 

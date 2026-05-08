@@ -19,6 +19,38 @@ extension Notification.Name {
     static let npOpenSettingsRequested = Notification.Name("np.openSettingsRequested")
 }
 
+/// User-pickable expanded-notch background. Collapsed mode is always
+/// solid black so the drawn shape blends with the hardware notch
+/// cutout — but when the notch expands we render the user's chosen
+/// background underneath the content for that little hit of
+/// personality. Each case knows how to produce its own SwiftUI view
+/// via `view()`.
+enum NotchBackground: String, CaseIterable, Identifiable, Codable {
+    case classicBlack
+    case galaxy
+    case sunset
+    case ocean
+    case aurora
+    case midnight
+    case carbon
+    case rosegold
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .classicBlack: return "Classic black"
+        case .galaxy:       return "Galaxy"
+        case .sunset:       return "Sunset"
+        case .ocean:        return "Ocean"
+        case .aurora:       return "Aurora"
+        case .midnight:     return "Midnight"
+        case .carbon:       return "Carbon"
+        case .rosegold:     return "Rose gold"
+        }
+    }
+}
+
 /// User-pickable accent for gradients and primary buttons. We keep
 /// the existing pink→blue brand gradient as the default but let users
 /// swap to a single solid accent if they prefer something quieter.
@@ -97,6 +129,12 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case habits = "Habits"
     case calculator = "Calculator"
     case network = "Network"
+    case randomGen = "Random"
+    case qrCode = "QR Code"
+    case countdownTo = "Countdown To"
+    case unitConverter = "Units"
+    case hash = "Hash"
+    case audioControls = "Audio"
 
     var id: String { rawValue }
     var icon: String {
@@ -118,6 +156,12 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .habits:        return "flame.fill"
         case .calculator:    return "function"
         case .network:       return "wifi"
+        case .randomGen:     return "dice.fill"
+        case .qrCode:        return "qrcode"
+        case .countdownTo:   return "calendar.badge.clock"
+        case .unitConverter: return "ruler.fill"
+        case .hash:          return "number"
+        case .audioControls: return "speaker.wave.2.fill"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -140,6 +184,12 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .habits:        return "Daily checkboxes with streak counters. Build your routine."
         case .calculator:    return "Inline math — +, −, ×, ÷, parentheses, sqrt, sin, cos, %."
         case .network:       return "Wi-Fi name + signal bars + your local IP. Refreshes every 10s."
+        case .randomGen:     return "Password, UUID, dice, hex color, coin flip — one tap copies."
+        case .qrCode:        return "Type a URL or text → instant QR. Save to Desktop or copy."
+        case .countdownTo:   return "Days/hours/min until a future date you set. Live ticking."
+        case .unitConverter: return "Length / mass / temp / volume / data — pick & convert offline."
+        case .hash:          return "MD5 / SHA-1 / SHA-256 / Base64 of any text. Click to copy."
+        case .audioControls: return "System volume slider + brightness up/down + mute."
         }
     }
 }
@@ -256,6 +306,13 @@ final class NotchViewModel: ObservableObject {
     /// Show seconds in clock displays. Off by default (cleaner).
     @Published var clockShowsSeconds: Bool = false {
         didSet { UserDefaults.standard.set(clockShowsSeconds, forKey: "np.clockSec") }
+    }
+    /// User-chosen background that paints behind the expanded notch
+    /// content (collapsed mode stays solid black so it blends with
+    /// the hardware cutout). User feedback: "make it easier to
+    /// customize like custom backrounds colors, galaxy one for me:)"
+    @Published var expandedBackground: NotchBackground = .classicBlack {
+        didSet { UserDefaults.standard.set(expandedBackground.rawValue, forKey: "np.bg") }
     }
     /// Reduce motion: kills welcome animation, gradient ring rotation,
     /// and any other purely-decorative animation. Useful for users with
@@ -492,14 +549,23 @@ final class NotchViewModel: ObservableObject {
     let habits = HabitsService()
     let calculator = CalculatorService()
     let network = NetworkInfoService()
+    let countdownTo = CountdownToService()
+    let audioControls = AudioControlsService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
     /// UserDefaults so reordering / hiding sticks across launches.
-    /// Default = Music / Pomodoro / Timers / Notes / Shelf — the order
-    /// puts the most-used widgets first and Shelf last (it auto-shows
-    /// when the user drags a file in anyway).
-    @Published var visibleTabs: [NotchTab] = [.nowPlaying, .pomodoro, .timers, .notes, .shelf] {
+    /// Default set was overhauled in v1.5.26 to surface the most
+    /// helpful widgets out-of-the-box: Music, Pomodoro, Quick
+    /// Actions, Notes, Calculator, Reminders, Shelf, Weather. The
+    /// less-used / more-specialized ones (Habits, Network, QR,
+    /// Hash, Unit Converter, Random, Audio, AirPods, World Clock,
+    /// Calendar, App Shortcuts, Countdown To, Clipboard, System)
+    /// are still one toggle away in Settings → Tabs.
+    @Published var visibleTabs: [NotchTab] = [
+        .nowPlaying, .pomodoro, .quickActions, .notes,
+        .calculator, .reminders, .shelf, .weather
+    ] {
         didSet {
             let raw = visibleTabs.map { $0.rawValue }
             UserDefaults.standard.set(raw, forKey: "np.visibleTabs")
@@ -566,6 +632,10 @@ final class NotchViewModel: ObservableObject {
         }
         if d.object(forKey: "np.reduceMotion") != nil {
             self.reducedMotion = d.bool(forKey: "np.reduceMotion")
+        }
+        if let raw = d.string(forKey: "np.bg"),
+           let parsed = NotchBackground(rawValue: raw) {
+            self.expandedBackground = parsed
         }
         if d.object(forKey: "np.dragExpand") != nil {
             self.expandOnDragHover = d.bool(forKey: "np.dragExpand")

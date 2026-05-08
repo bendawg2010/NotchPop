@@ -712,6 +712,17 @@ struct SettingsView: View {
             }
             caption("Adds :ss to clock displays. Off by default for a cleaner look.")
 
+            // ── Notch background ─────────────────────────────────
+            sectionHeader("Expanded notch background")
+            caption("The collapsed notch always stays solid black so it blends with the hardware cutout — but when expanded you can pick a custom backdrop. Galaxy includes twinkling stars and nebula glows.")
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2),
+                      spacing: 8) {
+                ForEach(NotchBackground.allCases) { bg in
+                    backgroundSwatch(bg)
+                }
+            }
+
             // ── Motion ───────────────────────────────────────────
             sectionHeader("Motion")
 
@@ -735,6 +746,46 @@ struct SettingsView: View {
 
             footerCredit
         }
+    }
+
+    private func backgroundSwatch(_ choice: NotchBackground) -> some View {
+        let selected = viewModel.expandedBackground == choice
+        return Button {
+            viewModel.expandedBackground = choice
+        } label: {
+            HStack(spacing: 10) {
+                ZStack {
+                    NotchBackgroundView(background: choice, animated: false)
+                    if choice == .classicBlack {
+                        Color.black
+                    }
+                }
+                .frame(width: 56, height: 26)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .stroke(selected ? Color.accentColor : Color.gray.opacity(0.3),
+                                lineWidth: selected ? 2 : 1)
+                )
+                Text(choice.label)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.primary)
+                Spacer()
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.accentColor)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(selected
+                          ? Color.accentColor.opacity(0.12)
+                          : Color.gray.opacity(0.08))
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func accentSwatch(_ choice: AccentChoice) -> some View {

@@ -7,6 +7,40 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.27</title>
+      <pubDate>Fri, 08 May 2026 19:04:21 +0000</pubDate>
+      <sparkle:version>1.5.27</sparkle:version>
+      <sparkle:shortVersionString>1.5.27</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Auto-download fallback for when Sparkle gives up.</strong> The independent launch check now AUTO-DOWNLOADS the new DMG to ~/Downloads/NotchPop-vX.Y.Z.dmg and OPENS it (auto-mounts so you see the standard drag-to-Applications view). No more 'click notification → click download → find file → open' chain. User feedback: 'auto open is still VERY broken' — Sparkle is no longer the only update path. Skip if the file's already in Downloads. Failure falls back to the old GitHub-link notification.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.27/NotchPop.dmg"
+        sparkle:version="1.5.27"
+        sparkle:shortVersionString="1.5.27"
+        length="2603311"
+        type="application/octet-stream"
+        sparkle:edSignature="dxDYIF5H3JEruOVJ3yVu+HMwlz+Hn5Nu7/MzddmFnUcsXGAIfTMTqZlAIpuDngxV8Gcq+bCZc/WeQBuho0DFBQ==" />
+    </item>
+    <item>
+      <title>v1.5.26</title>
+      <pubDate>Fri, 08 May 2026 18:59:36 +0000</pubDate>
+      <sparkle:version>1.5.26</sparkle:version>
+      <sparkle:shortVersionString>1.5.26</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>10 NEW modules</strong> — Random Generators, QR Code (live preview + Save to Desktop), Reminders, Habits (inline-add — typing in the notch no longer closes it), Calculator (auto-focus + bigger input + ⌘-Return), Network (Wi-Fi name/bars/IP), Countdown To (live ticking days/hrs/min/sec to a future date), Unit Converter (length/mass/temp/volume/data, fully offline), Hash (MD5/SHA-1/SHA-256/Base64), Audio Controls (system volume slider + brightness + mute).</li><li><strong>Custom expanded-notch backgrounds</strong> — 8 presets in Settings → Appearance: Classic black (default), <strong>Galaxy</strong> (deep blue/purple/pink with twinkling stars + nebula glows), Sunset, Ocean, Aurora (animated drift), Midnight, Carbon, Rose gold. Collapsed mode stays solid black so the hardware-notch blend is preserved.</li><li><strong>Tab bar scrolls now</strong> — was overflowing with 23 tabs. Now wrapped in a horizontal ScrollView with auto-scroll-to-active. Right-side block (gear / battery / version) has explicit layoutPriority + fixedSize so it can NEVER be pushed off the edge, no matter how many tabs are visible. User: 'still covered and cant even get to the settings bar.'</li><li><strong>Right-click the live activity pill</strong> for one-click toggles: 'Hide timer in live activity', 'Hide music in live activity', 'Disable live activities entirely', 'Open Settings'. The toggles existed since v1.5.18 but were buried in Settings — now reachable in one click on the pill itself. User: 'remember when i asked for a button that toggles if you can see the music thing and timer things to be hidden?'</li><li><strong>Sound on timer finish</strong> already wired since v1.5.x — TimerSound.play() on Pomodoro phase end + Countdown completion, gated by Settings → Pomodoro → 'Play sound when a timer ends' (also surfaced from the Pomodoro tab's duration popover for one-click access).</li><li><strong>Defaults overhauled</strong> — most-helpful 8 tabs visible out of the box: Music, Pomodoro, Quick Actions, Notes, Calculator, Reminders, Shelf, Weather.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.26/NotchPop.dmg"
+        sparkle:version="1.5.26"
+        sparkle:shortVersionString="1.5.26"
+        length="2599458"
+        type="application/octet-stream"
+        sparkle:edSignature="1fBeXmkFA0RPpEgc9DpI19qj4JU1ub4Wo5kRmJbGJo8/f/GGxDGZsj4bTO90NcY+ri6fd56M+uf0Ex6AmrHcCw==" />
+    </item>
+    <item>
       <title>v1.5.25</title>
       <pubDate>Fri, 08 May 2026 18:43:26 +0000</pubDate>
       <sparkle:version>1.5.25</sparkle:version>

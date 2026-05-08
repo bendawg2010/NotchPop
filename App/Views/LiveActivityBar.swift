@@ -53,6 +53,34 @@ struct LiveActivityBar: View {
                height: viewModel.targetSize.height)
         .contentShape(Rectangle())
         .onTapGesture { tapped() }
+        // Right-click the live-activity pill → quick toggles for
+        // hiding it. User feedback: "remember when i asked for a
+        // button that toggles if you can see the music thing and
+        // timer things to be hidden?" — the toggles ARE in
+        // Settings → Behavior (timerLiveActivityEnabled,
+        // musicLiveActivityEnabled) but were buried. Now reachable
+        // in one click on the pill itself.
+        .contextMenu {
+            if viewModel.hasActiveTimer {
+                Button("Hide timer in live activity") {
+                    viewModel.timerLiveActivityEnabled = false
+                }
+            }
+            if viewModel.hasActiveMusic {
+                Button("Hide music in live activity") {
+                    viewModel.musicLiveActivityEnabled = false
+                }
+            }
+            Divider()
+            Button("Disable live activities entirely") {
+                viewModel.liveActivitiesEnabled = false
+            }
+            Divider()
+            Button("Open Settings → Behavior…") {
+                NotificationCenter.default.post(
+                    name: .npOpenSettingsRequested, object: nil)
+            }
+        }
     }
 
     /// 1.5pt-tall progress line at the bottom of the live activity

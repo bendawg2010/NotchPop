@@ -195,20 +195,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         completionHandler([.banner, .sound])
     }
 
-    /// Handle taps on our notifications. The "new version available"
-    /// banner carries np.action=openDMGURL with np.dmgURL — open it
-    /// in the default browser so the user can grab the DMG directly
-    /// (escape hatch when Sparkle is stuck).
+    /// Handle taps on our notifications. Two actions supported:
+    ///   • openDMGURL    — open the GitHub-release DMG URL in browser
+    ///   • openLocalFile — open a local file path (used for auto-
+    ///                     downloaded DMGs in ~/Downloads). If the
+    ///                     DMG was already auto-mounted by macOS,
+    ///                     this re-reveals it.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler:
                                     @escaping () -> Void) {
         defer { completionHandler() }
         let info = response.notification.request.content.userInfo
-        guard (info["np.action"] as? String) == "openDMGURL",
-              let urlStr = info["np.dmgURL"] as? String,
-              let url = URL(string: urlStr) else { return }
-        NSWorkspace.shared.open(url)
+        switch info["np.action"] as? String {
+        case "openDMGURL":
+            if let urlStr = info["np.dmgURL"] as? String,
+               let url = URL(string: urlStr) {
+                NSWorkspace.shared.open(url)
+            }
+        case "openLocalFile":
+            if let path = info["np.localPath"] as? String {
+                let url = URL(fileURLWithPath: path)
+                NSWorkspace.shared.open(url)
+            }
+        default: break
+        }
     }
 
     @objc private func menubarVisibilityChanged() {

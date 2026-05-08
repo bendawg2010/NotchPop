@@ -203,6 +203,28 @@ struct NotchView: View {
                     .fill(Color.black)
                     .frame(width: visibleShapeSize.width,
                            height: visibleShapeSize.height)
+                    .overlay(
+                        // Custom background only when expanded — the
+                        // collapsed shape stays solid black so it
+                        // blends with the hardware notch cutout.
+                        // Clipped to the NotchShape so the gradient
+                        // respects the rounded bottom corners.
+                        Group {
+                            if viewModel.expanded
+                                && viewModel.expandedBackground != .classicBlack {
+                                NotchBackgroundView(
+                                    background: viewModel.expandedBackground,
+                                    animated: !viewModel.reducedMotion
+                                )
+                                .clipShape(
+                                    NotchShape(bottomCornerRadius: bottomCornerRadius)
+                                )
+                                .frame(width: visibleShapeSize.width,
+                                       height: visibleShapeSize.height)
+                                .transition(.opacity)
+                            }
+                        }
+                    )
                     .opacity(shouldRender ? 1 : 0)
             )
                 .overlay {
@@ -501,19 +523,47 @@ struct NotchView: View {
     /// we mount a Settings gear, a compact battery indicator, and a
     /// version label so they're always visible without needing tabs.
     /// Honors Settings → Behavior toggles for inline battery / version.
+    /// User feedback: "when you have all modules loaded you cant get
+    /// to some of them" — with 17+ tabs they overflowed the 520pt
+    /// expanded width. Tab list is now wrapped in a horizontal
+    /// ScrollView so every visible tab is reachable.
     private var tabBar: some View {
-        HStack(spacing: 4) {
-            ForEach(viewModel.visibleTabs) { tab in
-                tabButton(tab)
+        HStack(spacing: 6) {
+            ScrollViewReader { reader in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        ForEach(viewModel.visibleTabs) { tab in
+                            tabButton(tab).id(tab)
+                        }
+                    }
+                    .padding(.trailing, 6)
+                }
+                .layoutPriority(0) // shrinks first; right-side block
+                                   // (gear/battery/version) keeps full width
+                .onChange(of: viewModel.activeTab) { newTab in
+                    // Auto-scroll the active tab into view so the
+                    // user always sees the highlighted button.
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        reader.scrollTo(newTab, anchor: .center)
+                    }
+                }
             }
-            Spacer(minLength: 6)
-            settingsGearButton
-            if viewModel.showInlineBattery {
-                InlineBatteryIndicator(monitor: viewModel.charging)
+            // Right-side block has a fixed-priority layout so the
+            // ScrollView shrinks to whatever room remains — meaning
+            // the gear is always reachable even with 23 tabs
+            // enabled. User feedback: "still covered and cant even
+            // get to the settings bar."
+            HStack(spacing: 4) {
+                settingsGearButton
+                if viewModel.showInlineBattery {
+                    InlineBatteryIndicator(monitor: viewModel.charging)
+                }
+                if viewModel.showVersionLabel {
+                    versionLabel
+                }
             }
-            if viewModel.showVersionLabel {
-                versionLabel
-            }
+            .layoutPriority(1)
+            .fixedSize(horizontal: true, vertical: false)
         }
     }
 
@@ -662,6 +712,18 @@ struct NotchView: View {
             CalculatorView(service: viewModel.calculator)
         case .network:
             NetworkInfoView(service: viewModel.network)
+        case .randomGen:
+            RandomGenView()
+        case .qrCode:
+            QRCodeView()
+        case .countdownTo:
+            CountdownToView(service: viewModel.countdownTo)
+        case .unitConverter:
+            UnitConverterView()
+        case .hash:
+            HashView()
+        case .audioControls:
+            AudioControlsView(service: viewModel.audioControls)
         }
     }
 }

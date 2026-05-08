@@ -9,13 +9,16 @@ import SwiftUI
 
 struct HabitsView: View {
     @ObservedObject var service: HabitsService
-    @State private var showingAdd: Bool = false
+    @State private var isAdding: Bool = false
     @State private var newTitle: String = ""
     @State private var newEmoji: String = "🔥"
+    @FocusState private var titleFocused: Bool
 
     var body: some View {
         Group {
-            if service.habits.isEmpty {
+            if isAdding {
+                inlineAddRow
+            } else if service.habits.isEmpty {
                 emptyState
             } else {
                 habitsRow
@@ -31,7 +34,79 @@ struct HabitsView: View {
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
-        .popover(isPresented: $showingAdd) { addPopover }
+    }
+
+    /// User feedback: "when you go to type a habit it closes the
+    /// notch." That was caused by the .popover() — popovers open in
+    /// their own window, the mouse leaves our notch panel, onHover
+    /// fires false, collapse timer kicks in. Inline add row stays
+    /// inside the notch so the cursor never leaves and the notch
+    /// stays open.
+    private var inlineAddRow: some View {
+        HStack(spacing: 8) {
+            TextField("🔥", text: $newEmoji)
+                .textFieldStyle(.plain)
+                .multilineTextAlignment(.center)
+                .frame(width: 36, height: 30)
+                .font(.system(size: 18))
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.white.opacity(0.10))
+                )
+            TextField("Habit name (e.g. Drink water)", text: $newTitle)
+                .textFieldStyle(.plain)
+                .focused($titleFocused)
+                .foregroundColor(.white)
+                .font(.system(size: 13, weight: .medium))
+                .padding(.horizontal, 10)
+                .frame(height: 30)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.white.opacity(0.10))
+                )
+                .onSubmit { commitNew() }
+            Button("Save") { commitNew() }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button {
+                cancelAdd()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundColor(.white.opacity(0.65))
+                    .frame(width: 26, height: 26)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.white.opacity(0.10))
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .onAppear {
+            // Auto-focus the title field so the user can start
+            // typing immediately. Tiny delay because @FocusState
+            // can be ignored if applied during view setup.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                titleFocused = true
+            }
+        }
+    }
+
+    private func commitNew() {
+        service.add(title: newTitle, emoji: newEmoji.isEmpty ? "🔥" : newEmoji)
+        newTitle = ""
+        newEmoji = "🔥"
+        isAdding = false
+    }
+
+    private func cancelAdd() {
+        newTitle = ""
+        newEmoji = "🔥"
+        isAdding = false
     }
 
     private var emptyState: some View {
@@ -68,7 +143,7 @@ struct HabitsView: View {
 
     private var addButton: some View {
         Button {
-            showingAdd = true
+            isAdding = true
         } label: {
             VStack(spacing: 2) {
                 Image(systemName: "plus")
@@ -92,33 +167,6 @@ struct HabitsView: View {
         .help("Add a habit")
     }
 
-    private var addPopover: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Add a habit").font(.headline)
-            HStack {
-                TextField("Emoji", text: $newEmoji)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 70)
-                    .multilineTextAlignment(.center)
-                TextField("Habit name (e.g. Drink water)", text: $newTitle)
-                    .textFieldStyle(.roundedBorder)
-            }
-            HStack {
-                Spacer()
-                Button("Cancel") { showingAdd = false }
-                Button("Add") {
-                    service.add(title: newTitle, emoji: newEmoji)
-                    newTitle = ""
-                    newEmoji = "🔥"
-                    showingAdd = false
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-        }
-        .padding(16)
-        .frame(width: 320)
-    }
 }
 
 private struct HabitTile: View {

@@ -107,12 +107,19 @@ final class UpdaterController: NSObject {
         controller.checkForUpdates(sender)
     }
 
-    /// Side-channel update check that bypasses Sparkle entirely —
-    /// just fetches the appcast, parses the top entry, compares to
-    /// the current bundle version. If a newer one exists, posts a
-    /// system notification with a deep link to the DMG. Runs once at
-    /// launch as a safety net for users where Sparkle's internal
-    /// state has gone sideways.
+    /// True when an auto-download is in flight. Prevents firing two
+    /// downloads of the same version on rapid checks.
+    private var autoDownloadInFlight: Bool = false
+
+    /// Side-channel update check that bypasses Sparkle entirely.
+    /// Fetches the appcast, parses the top entry, compares to the
+    /// current bundle version. If a newer one exists, AUTO-DOWNLOADS
+    /// the DMG to ~/Downloads/NotchPop-vX.Y.Z.dmg, OPENS the DMG
+    /// (auto-mounting it for the drag-to-Applications experience),
+    /// and posts a notification. User feedback: "auto open is still
+    /// VERY broken" — the previous notification-only approach
+    /// required the user to click → confirm → download → wait →
+    /// find the file → open. Now NotchPop does all of it.
     func runIndependentVersionCheck() {
         guard let url = URL(string: "https://notchpop.pages.dev/appcast.xml?t=\(Int(Date().timeIntervalSince1970))") else { return }
         var req = URLRequest(url: url, timeoutInterval: 10)
@@ -131,29 +138,115 @@ final class UpdaterController: NSObject {
             let current = (Bundle.main.infoDictionary?["CFBundleShortVersionString"]
                            as? String) ?? "0.0"
             if latest.compare(current, options: .numeric) == .orderedDescending {
-                NSLog("NotchPop: independent check found newer version \(latest) > \(current)")
+                NSLog("NotchPop: independent check found newer version \(latest) > \(current) — auto-downloading")
                 DispatchQueue.main.async {
-                    self.notifyWithDeepLink(version: latest)
+                    self.autoDownloadAndOpen(version: latest)
                 }
             }
         }.resume()
     }
 
-    /// Like notify() but the notification carries a userInfo entry
-    /// with the GitHub-release DMG URL so the click handler in
-    /// AppDelegate can open it. Means a user whose Sparkle is stuck
-    /// can click the system notification banner to download the
-    /// new version manually.
-    private func notifyWithDeepLink(version: String) {
-        let dmgURL = "https://github.com/bendawg2010/NotchPop/releases/download/v\(version)/NotchPop.dmg"
+    /// Download a specific version's DMG to ~/Downloads, then open
+    /// it (auto-mounts it in Finder so the user sees the standard
+    /// drag-to-Applications view). Posts a notification at each
+    /// stage.
+    private func autoDownloadAndOpen(version: String) {
+        if autoDownloadInFlight { return }
+        autoDownloadInFlight = true
+
+        let dmgURLString = "https://github.com/bendawg2010/NotchPop/releases/download/v\(version)/NotchPop.dmg"
+        guard let dmgURL = URL(string: dmgURLString) else {
+            autoDownloadInFlight = false
+            return
+        }
+        let fm = FileManager.default
+        guard let downloads = fm.urls(for: .downloadsDirectory,
+                                       in: .userDomainMask).first else {
+            autoDownloadInFlight = false
+            return
+        }
+        // Skip if we already have THIS version's DMG downloaded.
+        let dest = downloads.appendingPathComponent("NotchPop-v\(version).dmg")
+        if fm.fileExists(atPath: dest.path) {
+            NSLog("NotchPop: \(dest.lastPathComponent) already in Downloads — opening")
+            NSWorkspace.shared.open(dest)
+            notify(title: "NotchPop \(version) ready",
+                   body: "Drag NotchPop to Applications in the open window.")
+            autoDownloadInFlight = false
+            return
+        }
+
+        // Notify the user we're starting (so they understand if
+        // Finder pops a window on their behalf 5-10 seconds later).
+        notify(title: "Downloading NotchPop \(version)…",
+               body: "We'll open the installer when it's done. Drag NotchPop to Applications.")
+
+        let task = URLSession.shared.downloadTask(with: dmgURL) { [weak self] tempURL, response, error in
+            defer { self?.autoDownloadInFlight = false }
+            guard let self = self else { return }
+            if let error = error {
+                NSLog("NotchPop auto-download failed: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.notifyDownloadFailure(version: version, dmgURLString: dmgURLString)
+                }
+                return
+            }
+            guard let tempURL = tempURL else {
+                DispatchQueue.main.async {
+                    self.notifyDownloadFailure(version: version, dmgURLString: dmgURLString)
+                }
+                return
+            }
+            do {
+                if fm.fileExists(atPath: dest.path) {
+                    try fm.removeItem(at: dest)
+                }
+                try fm.moveItem(at: tempURL, to: dest)
+            } catch {
+                NSLog("NotchPop auto-download move failed: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.notifyDownloadFailure(version: version, dmgURLString: dmgURLString)
+                }
+                return
+            }
+            NSLog("NotchPop: auto-download complete → \(dest.path) — opening")
+            DispatchQueue.main.async {
+                NSWorkspace.shared.open(dest)
+                self.notifyDownloadDone(version: version, file: dest)
+            }
+        }
+        task.resume()
+    }
+
+    /// Notify when the DMG is downloaded and Finder is opening it.
+    /// userInfo carries the file:// URL so clicking the banner
+    /// re-reveals it if the user dismissed Finder.
+    private func notifyDownloadDone(version: String, file: URL) {
         let content = UNMutableNotificationContent()
-        content.title = "NotchPop \(version) is available"
-        content.body = "Sparkle's been weird? Click here to download the DMG directly. Drag to Applications, replace, done."
+        content.title = "NotchPop \(version) downloaded"
+        content.body = "We're opening the DMG now. Drag NotchPop to Applications, replace the old one."
+        content.sound = .default
+        content.userInfo = ["np.action": "openLocalFile",
+                            "np.localPath": file.path]
+        let req = UNNotificationRequest(
+            identifier: "notchpop.update.done." + UUID().uuidString,
+            content: content,
+            trigger: nil)
+        UNUserNotificationCenter.current().add(req)
+    }
+
+    /// Fallback notification if the auto-download fails for any
+    /// reason — user can click and we'll open the GitHub release in
+    /// the browser so they can grab the DMG manually.
+    private func notifyDownloadFailure(version: String, dmgURLString: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "Couldn't auto-download NotchPop \(version)"
+        content.body = "Click here to grab it from GitHub manually."
         content.sound = .default
         content.userInfo = ["np.action": "openDMGURL",
-                            "np.dmgURL": dmgURL]
+                            "np.dmgURL": dmgURLString]
         let req = UNNotificationRequest(
-            identifier: "notchpop.update.deeplink." + UUID().uuidString,
+            identifier: "notchpop.update.fail." + UUID().uuidString,
             content: content,
             trigger: nil)
         UNUserNotificationCenter.current().add(req)
