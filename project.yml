@@ -23,8 +23,8 @@ settings:
     # those mutations on the next regen — so every shipped DMG had
     # CFBundleShortVersionString=1.0 internally, breaking Sparkle's
     # version comparison and creating an endless 'update available' loop.
-    MARKETING_VERSION: "1.5.11"
-    CURRENT_PROJECT_VERSION: "6"
+    MARKETING_VERSION: "1.5.12"
+    CURRENT_PROJECT_VERSION: "7"
 
 # Sparkle handles auto-updates. The framework gets pulled in via SPM
 # (Swift Package Manager) — Xcode embeds it in NotchPop.app/Contents/
@@ -81,7 +81,16 @@ targets:
         # Check every 4 hours by default (the user can change in Settings).
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 14400
-        SUAutomaticallyUpdate: true
+        # FALSE on purpose. SUAutomaticallyUpdate=true silently downloads
+        # the new DMG and queues the swap for the next relaunch — but
+        # for some users on macOS 14/15 the swap never lands (Sparkle's
+        # XPC autoupdate service hits a code-signing edge case for
+        # ad-hoc-signed builds). The user gets trapped in a state where
+        # Sparkle keeps reporting "you're up to date" because the
+        # download is staged, while CFBundleShortVersionString stays on
+        # the old version forever. Explicit prompts every time means
+        # the user actually sees each new version land.
+        SUAutomaticallyUpdate: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.benburnette.NotchPop

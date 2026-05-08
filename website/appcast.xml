@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.12</title>
+      <pubDate>Fri, 08 May 2026 16:07:10 +0000</pubDate>
+      <sparkle:version>1.5.12</sparkle:version>
+      <sparkle:shortVersionString>1.5.12</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Fixed auto-update getting stuck.</strong> Sparkle no longer silently queues installs that never land — every new version prompts you explicitly. If you were trapped on an old version, this update fixes that.</li><li>New <strong>Force Update Now</strong> menubar item that wipes Sparkle's cached state and re-checks immediately. Use it any time auto-update gets weird.</li><li>Skipped-version markers from prior releases are now wiped on launch, so accidentally clicking 'Skip This Version' on an old release doesn't trap you forever.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.12/NotchPop.dmg"
+        sparkle:version="1.5.12"
+        sparkle:shortVersionString="1.5.12"
+        length="1941342"
+        type="application/octet-stream"
+        sparkle:edSignature="V05sp1GKXrTmC/M+K+wH5iwr/Ry3fFXFNuF/AqCyCX8ppOKf8jamSXYC5LYW1aEjfbDtjlS3h7QoNx/pLLatBg==" />
+    </item>
+    <item>
       <title>v1.5.11</title>
       <pubDate>Fri, 08 May 2026 15:29:15 +0000</pubDate>
       <sparkle:version>1.5.11</sparkle:version>

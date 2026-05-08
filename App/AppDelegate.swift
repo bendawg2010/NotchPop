@@ -25,8 +25,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeScreenChanges()
 
         // Initialise Sparkle (lazy SPUStandardUpdaterController fires
-        // here; see UpdaterController). Then check whether we just got
-        // updated since last launch — if so, push a system notification.
+        // here; see UpdaterController). Wipe any stale "skipped version"
+        // marker BEFORE the controller wakes up, so a user who once
+        // clicked "Skip This Version" on an old release isn't trapped
+        // forever. Then check whether we just got updated since last
+        // launch — if so, push a system notification.
+        updater.clearSkippedVersionsOnLaunch()
         _ = updater.controller
         updater.notifyIfJustUpdated()
     }
@@ -56,6 +60,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             action: #selector(UpdaterController.checkForUpdates(_:)),
             keyEquivalent: "u")
         updateItem.target = updater
+        // Force-update escape hatch — wipes Sparkle's cached state
+        // (skipped versions, last-check time, HTTP cache) and re-checks
+        // immediately. Use when Sparkle insists you're "up to date"
+        // while the version stamp says otherwise.
+        let forceUpdateItem = menu.addItem(
+            withTitle: "Force Update Now",
+            action: #selector(UpdaterController.forceUpdateNow(_:)),
+            keyEquivalent: "")
+        forceUpdateItem.target = updater
         menu.addItem(.separator())
         menu.addItem(withTitle: "Clear file shelf",
                      action: #selector(clearShelf), keyEquivalent: "")

@@ -12,7 +12,9 @@
 //   SUPublicEDKey              → ed25519 verifier (private key in Keychain)
 //   SUEnableAutomaticChecks    → true
 //   SUScheduledCheckInterval   → 14400 (4 hours)
-//   SUAutomaticallyUpdate      → true (silent install on relaunch)
+//   SUAutomaticallyUpdate      → false (explicit prompts; silent install
+//                                 trapped users on stale versions when
+//                                 the relaunch swap failed)
 //
 // On top of Sparkle's built-in modal sheet, we ALSO post system
 // notifications via UNUserNotificationCenter at each step of the
@@ -49,9 +51,53 @@ final class UpdaterController: NSObject {
         controller.checkForUpdates(sender)
     }
 
+    /// "Force update now" — wipes Sparkle's cached state (skipped
+    /// version, queued silent install, time-of-last-check) and asks the
+    /// updater to check immediately. Use this when a user reports
+    /// being trapped on an old version (Sparkle saying "you're up to
+    /// date" while the menubar shows the stale CFBundleShortVersionString).
+    @objc func forceUpdateNow(_ sender: Any?) {
+        NSLog("NotchPop: forceUpdateNow — wiping Sparkle cached state")
+        let defaults = UserDefaults.standard
+        // SUSkippedVersion: set when user clicked "Skip This Version".
+        // SUSkippedMinorVersion: same idea on Sparkle 2.x.
+        // SULastCheckTime: forces Sparkle to actually hit the appcast
+        //   instead of returning a cached "no update" answer.
+        // SUFeedLastModifiedString / Etag: HTTP cache; clearing avoids
+        //   getting a 304 Not Modified from Cloudflare's CDN.
+        for key in [
+            "SUSkippedVersion",
+            "SUSkippedMinorVersion",
+            "SULastCheckTime",
+            "SUFeedLastModifiedString",
+            "SUFeedLastETagString",
+            "SUUpdaterLastCheckTime",
+        ] {
+            defaults.removeObject(forKey: key)
+        }
+        defaults.synchronize()
+        controller.checkForUpdates(sender)
+    }
+
     /// Live binding for the menu item — disabled while Sparkle is busy.
     var canCheckForUpdates: Bool {
         controller.updater.canCheckForUpdates
+    }
+
+    /// Called once at launch — wipes Sparkle's "skipped version" key
+    /// so a user who accidentally clicked "Skip This Version" on an
+    /// old release isn't trapped forever. We deliberately do NOT
+    /// touch SULastCheckTime here (Sparkle uses it to throttle) —
+    /// just the skip lists.
+    func clearSkippedVersionsOnLaunch() {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: "SUSkippedVersion") != nil
+            || defaults.object(forKey: "SUSkippedMinorVersion") != nil {
+            NSLog("NotchPop: clearing stale SUSkippedVersion/SUSkippedMinorVersion at launch")
+            defaults.removeObject(forKey: "SUSkippedVersion")
+            defaults.removeObject(forKey: "SUSkippedMinorVersion")
+            defaults.synchronize()
+        }
     }
 
     // MARK: - Notification helper
