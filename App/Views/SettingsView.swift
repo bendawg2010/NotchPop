@@ -142,6 +142,10 @@ struct SettingsView: View {
 
                 Toggle("Launch NotchPop at login", isOn: $viewModel.launchAtLogin)
                 Toggle("Hide notch in fullscreen apps", isOn: $viewModel.hideInFullscreen)
+                Toggle("Live activities flanking the notch (music + timer)",
+                       isOn: $viewModel.liveActivitiesEnabled)
+                Text("When music is playing or a timer is running, slim pills appear on either side of the collapsed notch — track info on the right, countdown on the left. Tap either to open it.")
+                    .font(.caption2).foregroundColor(.secondary)
                 Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
                 Toggle("Sound effects (Pomodoro chime, etc.)", isOn: $viewModel.soundEffectsEnabled)
                 Toggle("Remember file shelf between launches", isOn: $viewModel.persistShelfBetweenLaunches)

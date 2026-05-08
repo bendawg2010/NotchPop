@@ -6,6 +6,23 @@
     <title>NotchPop</title>
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
+    <item>
+      <title>v1.5.2</title>
+      <pubDate>Fri, 08 May 2026 01:04:53 +0000</pubDate>
+      <sparkle:version>1.5.2</sparkle:version>
+      <sparkle:shortVersionString>1.5.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.2 — Live activities</h2><ul><li><strong>🎵 Music pill</strong> — when something is playing in Apple Music or Spotify, a slim pill appears just to the right of the collapsed notch with album art + scrolling track title. Tap to open the Music tab.</li><li><strong>⏱ Timer pill</strong> — when Pomodoro or Countdown is running, the time-remaining pill sits to the left of the notch. Pomodoro takes priority and shows the phase emoji + a tiny progress arc. Tap to open the Pomodoro/Timers tab.</li><li>Toggle the whole feature in <strong>Settings → Behavior → Live activities</strong>.</li><li>This is the first auto-updated release — if you're on v1.5.1 you should see this install itself within ~4 hours, with system notifications.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.2/NotchPop.dmg"
+        sparkle:version="1.5.2"
+        sparkle:shortVersionString="1.5.2"
+        length="1804641"
+        type="application/octet-stream"
+        sparkle:edSignature="bWupFl4VzfJP2VinWXVXY93s32kZ5ONv+zXS6mYsWIsCqiYkgXkED1L7/gM310njtHQHgQkBIkLKkIu9IesVBg==" />
+    </item>
     <language>en</language>
 
     <!--

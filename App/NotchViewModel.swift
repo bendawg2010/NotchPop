@@ -125,6 +125,15 @@ final class NotchViewModel: ObservableObject {
         // 0 = use auto-detected hardware value (8.5). Positive = override.
         didSet { UserDefaults.standard.set(notchCornerRadiusOverride, forKey: "np.notchRadius") }
     }
+    /// Show iPhone-Dynamic-Island-style live activities flanking the
+    /// collapsed notch — track info on the right, running timer on
+    /// the left. Tap either to expand the notch + jump to that tab.
+    @Published var liveActivitiesEnabled: Bool = true {
+        didSet {
+            UserDefaults.standard.set(liveActivitiesEnabled, forKey: "np.liveActivities")
+            onSizeChange?()
+        }
+    }
 
     // MARK: - Children
     let shelf = FileShelf()
@@ -191,6 +200,9 @@ final class NotchViewModel: ObservableObject {
         self.notchWidthOffset = d.double(forKey: "np.notchWidthOff")
         self.notchHeightExtension = d.double(forKey: "np.notchHeightExt")
         self.notchCornerRadiusOverride = d.double(forKey: "np.notchRadius")
+        if d.object(forKey: "np.liveActivities") != nil {
+            self.liveActivitiesEnabled = d.bool(forKey: "np.liveActivities")
+        }
         // Restore tab order/visibility, falling back to defaults if any
         // raw value is unrecognized. Legacy raw values from old NotchTab
         // cases ("Battery", "Stopwatch", "Timer") get silently dropped;
@@ -238,11 +250,26 @@ final class NotchViewModel: ObservableObject {
         pomodoro.$running
             .removeDuplicates()
             .sink { [weak self] running in
-                guard let self = self, self.pomodoroFollowsActive, running else { return }
-                if self.visibleTabs.contains(.pomodoro) {
+                guard let self = self else { return }
+                // Resize the window because the timer pill needs space
+                self.onSizeChange?()
+                if self.pomodoroFollowsActive, running, self.visibleTabs.contains(.pomodoro) {
                     self.activeTab = .pomodoro
                 }
             }
+            .store(in: &bag)
+
+        // Resize when countdown timer toggles too
+        countdown.$running
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.onSizeChange?() }
+            .store(in: &bag)
+
+        // Resize when track playback state changes (music pill in/out)
+        nowPlaying.$track
+            .map { $0.isPlaying && !$0.title.isEmpty }
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.onSizeChange?() }
             .store(in: &bag)
 
         // First-launch onboarding: peek the notch open with a welcome
@@ -294,6 +321,43 @@ final class NotchViewModel: ObservableObject {
         )
     }
 
+    // MARK: - Live activities
+
+    /// True if a timer (Pomodoro or Countdown) is currently running.
+    /// Pomodoro takes precedence — it's the higher-stakes timer.
+    var hasActiveTimer: Bool {
+        pomodoro.running || countdown.running
+    }
+
+    /// True if any audio app is currently playing a track.
+    var hasActiveMusic: Bool {
+        nowPlaying.track.isPlaying && !nowPlaying.track.title.isEmpty
+    }
+
+    /// Width reserved on the LEFT of the notch for the timer pill
+    /// when one is running and live activities are enabled.
+    var leftActivityWidth: CGFloat {
+        guard liveActivitiesEnabled, hasActiveTimer, !expanded else { return 0 }
+        return 90
+    }
+
+    /// Width reserved on the RIGHT of the notch for the music pill
+    /// when audio is playing and live activities are enabled.
+    var rightActivityWidth: CGFloat {
+        guard liveActivitiesEnabled, hasActiveMusic, !expanded else { return 0 }
+        return 180
+    }
+
+    /// Total compact-mode window width including any live activity
+    /// pills flanking the notch.
+    var compactSizeWithActivities: CGSize {
+        let base = compactSize
+        return CGSize(
+            width: base.width + leftActivityWidth + rightActivityWidth,
+            height: base.height
+        )
+    }
+
     /// Corner radius for the COLLAPSED notch shape. 0 in the override
     /// means "use auto-detected", anything else is an explicit user
     /// pick (typically 6-12pt for fine-tuning blend with the hardware).
@@ -311,9 +375,11 @@ final class NotchViewModel: ObservableObject {
         CGSize(width: 520, height: 178)
     }
 
-    /// What size the host window should currently be.
+    /// What size the host window should currently be. Includes the
+    /// flanking live-activity pills when collapsed if anything's
+    /// active (timer running, music playing).
     var targetSize: CGSize {
-        expanded ? expandedSize : compactSize
+        expanded ? expandedSize : compactSizeWithActivities
     }
 
     func persistShelfIfEnabled() {

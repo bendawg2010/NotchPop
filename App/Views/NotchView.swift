@@ -38,28 +38,37 @@ struct NotchView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Pure-black notch silhouette — NO border, NO opacity.
-            // When collapsed, dimensions match the hardware notch
-            // exactly so the drawn shape is indistinguishable from
-            // the physical cutout above it. When expanded, the shape
-            // grows downward + outward with a continuous-corner curve.
+            // Live activities — only rendered when collapsed AND
+            // something's active (timer / music). They flank the
+            // notch on left + right respectively, sharing the same
+            // window so they hover-highlight together.
+            if !viewModel.expanded
+               && viewModel.liveActivitiesEnabled
+               && (viewModel.leftActivityWidth > 0 || viewModel.rightActivityWidth > 0) {
+                LiveActivityBar(viewModel: viewModel)
+                    .frame(width: viewModel.targetSize.width,
+                           height: viewModel.targetSize.height)
+            }
+
+            // The actual notch shape. When collapsed, drawn at the
+            // hardware-matched compactSize and centered horizontally in
+            // the (potentially wider) target frame so live-activity
+            // pills can flank it without shifting the notch off-center.
+            // When expanded, fills the full targetSize.
             NotchShape(bottomCornerRadius: bottomCornerRadius)
                 .fill(Color.black)
-                .frame(width: viewModel.targetSize.width,
-                       height: viewModel.targetSize.height)
+                .frame(width: viewModel.expanded ? viewModel.targetSize.width : viewModel.compactSize.width,
+                       height: viewModel.expanded ? viewModel.targetSize.height : viewModel.compactSize.height)
                 .opacity(shouldRender ? 1 : 0)
-                // When the user starts dragging a file from Finder
-                // toward the notch, auto-expand + switch to Shelf.
-                // Per user feedback: "when you drag a file it should
-                // show shelf".
+                .frame(width: viewModel.targetSize.width,
+                       height: viewModel.targetSize.height,
+                       alignment: .center)
+                // Drag-from-Finder onto the notch → auto-expand + Shelf
                 .onDrop(of: [.fileURL], isTargeted: nil) { providers in
                     if viewModel.visibleTabs.contains(.shelf) {
                         viewModel.activeTab = .shelf
                         viewModel.expanded = true
                     }
-                    // Forward the drop to the FileShelf service so
-                    // the file lands in the shelf even if the user
-                    // released on the collapsed notch.
                     var urls: [URL] = []
                     let group = DispatchGroup()
                     for p in providers {
