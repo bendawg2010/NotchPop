@@ -123,34 +123,102 @@ struct PomodoroView: View {
         return "\(mins)m"
     }
 
-    /// Inline duration editor — ±/+ steppers for the CURRENT phase
-    /// only. Settings still has steppers for all four durations.
+    /// Quick-pick presets per phase. Tapping a chip sets the duration
+    /// AND closes the popover so a single click starts you on a 50min
+    /// focus session. Per user feedback "you should be able to edit
+    /// the timers faster with more options."
+    private var focusPresets:    [Int] { [15, 20, 25, 30, 45, 50, 60, 90] }
+    private var shortPresets:    [Int] { [1, 3, 5, 7, 10, 15] }
+    private var longPresets:     [Int] { [10, 15, 20, 25, 30, 45] }
+
+    private var currentDuration: Int {
+        switch service.phase {
+        case .focus, .idle: return service.focusMinutes
+        case .shortBreak:   return service.shortBreakMinutes
+        case .longBreak:    return service.longBreakMinutes
+        }
+    }
+
+    private var currentPresets: [Int] {
+        switch service.phase {
+        case .focus, .idle: return focusPresets
+        case .shortBreak:   return shortPresets
+        case .longBreak:    return longPresets
+        }
+    }
+
+    private func setDuration(_ minutes: Int) {
+        switch service.phase {
+        case .focus, .idle: service.focusMinutes = minutes
+        case .shortBreak:   service.shortBreakMinutes = minutes
+        case .longBreak:    service.longBreakMinutes = minutes
+        }
+    }
+
+    /// Inline duration editor — quick-pick chips on top, ±/+ stepper
+    /// below for fine-grained control. Closes on chip tap.
     private var durationEditor: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Edit \(service.phase.label.lowercased()) duration")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Set \(service.phase.label.lowercased()) duration")
+                    .font(.headline)
+                Spacer()
+            }
+
+            // Quick-pick chips, 4 per row
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4),
+                      spacing: 6) {
+                ForEach(currentPresets, id: \.self) { mins in
+                    Button {
+                        setDuration(mins)
+                        showDurationEditor = false
+                    } label: {
+                        Text("\(mins)m")
+                            .font(.system(size: 12, weight: .heavy, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 7)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(currentDuration == mins
+                                          ? AnyShapeStyle(LinearGradient(colors: [
+                                              Color(red: 1.00, green: 0.24, blue: 0.67),
+                                              Color(red: 0.17, green: 0.52, blue: 0.77),
+                                          ], startPoint: .leading, endPoint: .trailing))
+                                          : AnyShapeStyle(Color.secondary.opacity(0.12))
+                                    )
+                            )
+                            .foregroundColor(currentDuration == mins ? .white : .primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Divider()
+
+            // Fine-grained stepper for any duration the chips don't cover
             switch service.phase {
             case .focus, .idle:
-                Stepper("Focus: \(service.focusMinutes) min",
+                Stepper("Custom: \(service.focusMinutes) min",
                         value: Binding(get: { service.focusMinutes },
                                        set: { service.focusMinutes = $0 }),
-                        in: 5...120)
+                        in: 1...180)
             case .shortBreak:
-                Stepper("Short break: \(service.shortBreakMinutes) min",
+                Stepper("Custom: \(service.shortBreakMinutes) min",
                         value: Binding(get: { service.shortBreakMinutes },
                                        set: { service.shortBreakMinutes = $0 }),
                         in: 1...30)
             case .longBreak:
-                Stepper("Long break: \(service.longBreakMinutes) min",
+                Stepper("Custom: \(service.longBreakMinutes) min",
                         value: Binding(get: { service.longBreakMinutes },
                                        set: { service.longBreakMinutes = $0 }),
-                        in: 5...60)
+                        in: 1...90)
             }
-            Text("Other durations live in Settings → Pomodoro.")
+
+            Text("All four durations + the long-break cycle live in Settings → Pomodoro.")
                 .font(.caption2).foregroundColor(.secondary)
         }
         .padding(16)
-        .frame(width: 240)
+        .frame(width: 280)
     }
 
     private var ringView: some View {

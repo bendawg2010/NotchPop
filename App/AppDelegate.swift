@@ -63,6 +63,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Reset Pomodoro",
                      action: #selector(resetPomodoro), keyEquivalent: "")
             .target = self
+        menu.addItem(withTitle: "Replay welcome animation",
+                     action: #selector(replayWelcome), keyEquivalent: "")
+            .target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "About NotchPop",
                      action: #selector(openAbout), keyEquivalent: "")
@@ -120,5 +123,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func resetPomodoro() {
         viewModel.pomodoro.reset()
+    }
+
+    @objc private func replayWelcome() {
+        viewModel.runWelcomePeek()
     }
 }

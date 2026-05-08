@@ -110,17 +110,45 @@ final class NotchWindowController: NSWindowController {
         // land off-center from the hardware notch.
         let screenMidX: CGFloat
         let topY: CGFloat
+        let chosenScreenName: String
+        let chosenScreenFrame: NSRect
         if let screen = ScreenHelper.notchedScreen() {
             screenMidX = screen.frame.midX
             topY = screen.frame.maxY
+            chosenScreenName = screen.localizedName
+            chosenScreenFrame = screen.frame
         } else {
             screenMidX = window.frame.midX
             topY = window.frame.maxY
+            chosenScreenName = "FALLBACK (notchedScreen returned nil)"
+            chosenScreenFrame = .zero
         }
         let newOriginX = screenMidX - frameWidth / 2
         let newOriginY = topY - frameHeight
         let newFrame = NSRect(x: newOriginX, y: newOriginY,
                               width: frameWidth, height: frameHeight)
+        // Diagnostic — check Console.app for these to debug centering
+        // issues on user reports. Lists every screen so we can see
+        // whether ScreenHelper picked the right one.
+        let allScreens = NSScreen.screens.enumerated().map { idx, s in
+            "[\(idx)] \(s.localizedName) frame=\(s.frame) safeTop=\(s.safeAreaInsets.top)"
+        }.joined(separator: " | ")
+        NSLog("NotchPop centering: chose '%@' frame=%@ → newFrame=%@ | all screens: %@",
+              chosenScreenName,
+              NSStringFromRect(chosenScreenFrame),
+              NSStringFromRect(newFrame),
+              allScreens)
         window.setFrame(newFrame, display: true, animate: false)
+        // Force a second pass after the system finishes its async
+        // window placement — sometimes macOS overrides the frame for
+        // borderless panels with .canJoinAllSpaces collectionBehavior.
+        DispatchQueue.main.async {
+            let cur = window.frame
+            if abs(cur.origin.x - newOriginX) > 0.5 || abs(cur.origin.y - newOriginY) > 0.5 {
+                NSLog("NotchPop: re-applying frame after macOS override (was %@, want %@)",
+                      NSStringFromRect(cur), NSStringFromRect(newFrame))
+                window.setFrame(newFrame, display: true, animate: false)
+            }
+        }
     }
 }

@@ -14,6 +14,14 @@
 import AppKit
 import SwiftUI
 
+/// NSPanel subclass that allows becoming key + main even though it's
+/// a panel. Default NSPanel behavior is non-key for utility windows;
+/// for our settings dialog we DO want it focusable.
+private final class SettingsPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 final class SettingsWindowController: NSWindowController {
     private let viewModel: NotchViewModel
 
@@ -21,67 +29,59 @@ final class SettingsWindowController: NSWindowController {
         self.viewModel = viewModel
         let host = NSHostingController(rootView: SettingsView(viewModel: viewModel))
 
-        let window = NSWindow(
+        // NSPanel surfaces reliably in LSUIElement (accessory) apps
+        // without requiring an activation-policy flip. The previous
+        // NSWindow approach needed setActivationPolicy(.regular) to
+        // become key — that race-conditioned with makeKeyAndOrderFront
+        // on some macOS versions and the window silently failed to
+        // appear.
+        let panel = SettingsPanel(
             contentRect: NSRect(x: 0, y: 0, width: 540, height: 600),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
-        window.title = "NotchPop Settings"
-        window.contentViewController = host
-        window.center()
-        window.isReleasedWhenClosed = false
-        window.titlebarAppearsTransparent = false
-        // Move to whichever Space the user is currently on — without
-        // this, the settings window can be created on a hidden space
-        // and the user just thinks "it didn't open."
-        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
-        window.hidesOnDeactivate = false
-        // Restore on every launch so the user can reopen at the same
-        // size if they resized.
-        window.setFrameAutosaveName("NotchPopSettings")
+        panel.title = "NotchPop Settings"
+        panel.contentViewController = host
+        panel.center()
+        panel.isReleasedWhenClosed = false
+        panel.titlebarAppearsTransparent = false
+        // Move to whichever Space the user is currently on
+        panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = false
+        panel.isFloatingPanel = false
+        panel.worksWhenModal = true
+        panel.setFrameAutosaveName("NotchPopSettings")
 
-        super.init(window: window)
+        super.init(window: panel)
     }
 
     required init?(coder: NSCoder) { fatalError("not implemented") }
 
-    /// Bring the settings window to the foreground. Since we're an
-    /// LSUIElement (accessory) app, we have to flip the activation
-    /// policy temporarily so the window can become key. We restore
-    /// .accessory when the window closes (handled in AppDelegate).
+    /// Show the settings panel. NSPanel surfaces in accessory apps
+    /// without requiring activation-policy flips, so this is much
+    /// simpler than the v1.5.10 NSWindow path.
     func present() {
         NSLog("NotchPop: SettingsWindowController.present() called")
         guard let window = window else {
-            NSLog("NotchPop: ERROR — settings window is nil")
+            NSLog("NotchPop: ERROR — settings panel is nil")
             return
         }
-
-        // Activation policy MUST flip first. Defer the rest so the
-        // policy change actually takes effect before we try to make
-        // the window key — without this, on some macOS versions the
-        // makeKeyAndOrderFront call is silently ignored because the
-        // app is still in .accessory mode.
-        NSApp.setActivationPolicy(.regular)
-
-        DispatchQueue.main.async {
-            // Boost the window's level temporarily so it surfaces
-            // above the notch (which is at .statusBar+1 level). After
-            // first appearance we drop back to normal.
-            window.level = .floating
-
-            if !window.isVisible {
-                window.center()
-            }
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-
-            // Drop level back to normal after a beat so the settings
-            // window doesn't permanently float over everything.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                window.level = .normal
-            }
-            NSLog("NotchPop: Settings window ordered front, frame: \(window.frame)")
+        if !window.isVisible {
+            window.center()
         }
+        // Boost level briefly so the panel comes ABOVE the notch panel
+        // (which is at .statusBar+1). Dropping back to .normal after a
+        // beat means the settings window doesn't permanently float
+        // above other apps.
+        window.level = .floating
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            window.level = .normal
+        }
+        NSLog("NotchPop: Settings panel ordered front, isVisible=\(window.isVisible), frame=\(window.frame)")
     }
 }
