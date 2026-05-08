@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.10</title>
+      <pubDate>Fri, 08 May 2026 14:04:59 +0000</pubDate>
+      <sparkle:version>1.5.10</sparkle:version>
+      <sparkle:shortVersionString>1.5.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.10 — Settings window: belt-and-suspenders</h2><p>v1.5.9 built a manual NSWindow + NSHostingController for Settings — but apparently the window was being created but never SURFACED on your machine. Three more fixes in this version:</p><ul><li><strong>collectionBehavior includes .moveToActiveSpace</strong> — without this, on multi-Space setups the settings window can be created on a hidden Space and look like it 'didn't open.'</li><li><strong>window.level temporarily boosted to .floating</strong> while ordering front, then dropped back to .normal after 0.3s — guarantees the window comes ABOVE the notch panel (which sits at .statusBar+1).</li><li><strong>Activation policy flip is deferred to next runloop tick</strong> via DispatchQueue.main.async — on some macOS versions, makeKeyAndOrderFront silently fails if the policy is still mid-transition from .accessory to .regular.</li><li><strong>NSLog diagnostics</strong> at every step (openSettings invoked, controller created, window ordered front with frame). If Settings still doesn't open after this, open Console.app and search for 'NotchPop' — the logs will show exactly where the chain breaks.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.10/NotchPop.dmg"
+        sparkle:version="1.5.10"
+        sparkle:shortVersionString="1.5.10"
+        length="1947400"
+        type="application/octet-stream"
+        sparkle:edSignature="Zo8wyjLZ4whGD6mu0vTJyHOsJJwmVq1mz+eYNNGgdNAW3jhjv9VdHSwfjjs+qFr+vBINvh2SQF/DNK/FE77WAQ==" />
+    </item>
+    <item>
       <title>v1.5.9</title>
       <pubDate>Fri, 08 May 2026 13:40:28 +0000</pubDate>
       <sparkle:version>1.5.9</sparkle:version>

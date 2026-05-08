@@ -99,6 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openSettings() {
+        NSLog("NotchPop: AppDelegate.openSettings() invoked")
         // SwiftUI's Settings scene needs an NSMainMenu to wire up the
         // showSettingsWindow: action, which we don't have as an
         // LSUIElement (menu-bar) app. The previous sendAction approach
@@ -107,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // bypasses the whole Settings scene mechanism — works every
         // time, no menu-bar dependency.
         if settingsController == nil {
+            NSLog("NotchPop: creating SettingsWindowController")
             settingsController = SettingsWindowController(viewModel: viewModel)
         }
         settingsController?.present()
