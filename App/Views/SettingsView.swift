@@ -147,8 +147,9 @@ struct SettingsView: View {
                 Text("When music is playing or a timer is running, slim pills appear on either side of the collapsed notch — track info on the right, countdown on the left. Tap either to open it.")
                     .font(.caption2).foregroundColor(.secondary)
                 Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
-                Toggle("Sound effects (Pomodoro chime, etc.)", isOn: $viewModel.soundEffectsEnabled)
                 Toggle("Remember file shelf between launches", isOn: $viewModel.persistShelfBetweenLaunches)
+                Text("Timer-end sound options are in Settings → Pomodoro.")
+                    .font(.caption2).foregroundColor(.secondary)
 
                 Divider().padding(.vertical, 4)
                 Text("Hover timing").font(.system(size: 13, weight: .semibold))
@@ -276,6 +277,35 @@ struct SettingsView: View {
                    isOn: Binding(get: { viewModel.pomodoro.strictMode },
                                  set: { viewModel.pomodoro.strictMode = $0 }))
             Text("Pause is disabled mid-focus. Skip and Reset still work.")
+                .font(.caption2).foregroundColor(.secondary)
+
+            Divider().padding(.vertical, 4)
+
+            // Sound options — apply to BOTH Pomodoro and the Countdown
+            // timer (the standalone "set 7 minutes for the oven" one).
+            Toggle("Play sound when a timer ends",
+                   isOn: $viewModel.soundEffectsEnabled)
+            HStack {
+                Text("Sound").frame(width: 100, alignment: .leading)
+                Picker("", selection: $viewModel.timerSoundName) {
+                    ForEach(TimerSound.choices, id: \.self) { name in
+                        Text(name).tag(name)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 180)
+                Button {
+                    // Preview ALWAYS plays, regardless of master toggle —
+                    // the user is actively asking to hear it.
+                    TimerSound.playRaw(name: viewModel.timerSoundName)
+                } label: {
+                    Label("Preview", systemImage: "speaker.wave.2.fill")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .opacity(viewModel.soundEffectsEnabled ? 1 : 0.55)
+            Text("Used by both Pomodoro phase ends and the Countdown timer.")
                 .font(.caption2).foregroundColor(.secondary)
 
             Spacer()

@@ -103,6 +103,12 @@ final class NotchViewModel: ObservableObject {
     @Published var soundEffectsEnabled: Bool = true {
         didSet { UserDefaults.standard.set(soundEffectsEnabled, forKey: "np.sound") }
     }
+    /// Which named system sound the timers play when they end. Set of
+    /// choices lives in TimerSound.choices. "Glass" by default — same
+    /// chime as macOS's built-in Calendar alerts.
+    @Published var timerSoundName: String = "Glass" {
+        didSet { UserDefaults.standard.set(timerSoundName, forKey: "np.timerSoundName") }
+    }
     /// Auto-show pomodoro tab when timer starts.
     @Published var pomodoroFollowsActive: Bool = true {
         didSet { UserDefaults.standard.set(pomodoroFollowsActive, forKey: "np.pomFollows") }
@@ -193,6 +199,10 @@ final class NotchViewModel: ObservableObject {
         }
         if d.object(forKey: "np.sound") != nil {
             self.soundEffectsEnabled = d.bool(forKey: "np.sound")
+        }
+        if let saved = d.string(forKey: "np.timerSoundName"),
+           TimerSound.choices.contains(saved) {
+            self.timerSoundName = saved
         }
         if d.object(forKey: "np.pomFollows") != nil {
             self.pomodoroFollowsActive = d.bool(forKey: "np.pomFollows")

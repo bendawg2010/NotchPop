@@ -209,7 +209,9 @@ final class PomodoroService: ObservableObject {
     }
 
     private func notifyCompleted(of completed: PomodoroPhase) {
-        NSSound.beep()
+        // Respects the user's "Sound on timer end" toggle + sound choice
+        // in Settings → Pomodoro. No-op if they've muted notifications.
+        TimerSound.play()
         let content = UNMutableNotificationContent()
         switch completed {
         case .focus:

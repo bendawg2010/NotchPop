@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.6</title>
+      <pubDate>Fri, 08 May 2026 01:29:14 +0000</pubDate>
+      <sparkle:version>1.5.6</sparkle:version>
+      <sparkle:shortVersionString>1.5.6</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.6 — Timer end-sound (with picker + preview)</h2><ul><li><strong>Bug fix:</strong> the existing 'Sound effects' toggle wasn't actually wired to the timers — both Pomodoro and Countdown were unconditionally calling <code>NSSound.beep()</code> regardless of the setting. Now they go through a shared <code>TimerSound</code> helper that honors the toggle.</li><li><strong>Sound picker</strong> in Settings → Pomodoro: choose between <strong>Beep</strong> (the system alert sound) and 11 of macOS's built-in named sounds — Glass, Submarine, Bell, Hero, Funk, Frog, Pop, Sosumi, Tink, Ping, Purr. Default is <em>Glass</em> (same chime macOS uses for Calendar alerts).</li><li><strong>Preview button</strong> next to the picker — clicking it always plays the chosen sound, even if the master toggle is off, so you can audition before committing.</li><li>The single setting applies to <strong>both Pomodoro phase ends and the Countdown timer</strong>.</li><li>Cleaned up Settings: the old 'Sound effects' toggle in Behavior was redundant; removed it with a pointer to Pomodoro pane instead.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.6/NotchPop.dmg"
+        sparkle:version="1.5.6"
+        sparkle:shortVersionString="1.5.6"
+        length="1818459"
+        type="application/octet-stream"
+        sparkle:edSignature="Ty8tPDQqTONmfKyMGuMhONiteG9N4JP55QIg9swYGy9/vGNsgBkecbgbwDKo2FoNKS416V3KLF0x/2TDGNkbCA==" />
+    </item>
+    <item>
       <title>v1.5.5</title>
       <pubDate>Fri, 08 May 2026 01:24:39 +0000</pubDate>
       <sparkle:version>1.5.5</sparkle:version>

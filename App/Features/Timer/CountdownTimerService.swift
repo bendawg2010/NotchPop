@@ -87,7 +87,9 @@ final class CountdownTimerService: ObservableObject {
     }
 
     private func notifyDone() {
-        NSSound.beep()
+        // Same sound system as Pomodoro — see TimerSound.swift. Honors
+        // np.sound toggle + np.timerSoundName preference.
+        TimerSound.play()
         let c = UNMutableNotificationContent()
         c.title = "Timer done"
         c.body = "Your \(formatDuration(setDuration)) timer just finished."
