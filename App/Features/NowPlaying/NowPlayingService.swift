@@ -252,6 +252,15 @@ final class NowPlayingService: ObservableObject {
         if let durMs = info["Duration"] as? Double {
             t.duration = durMs / 1000.0
         }
+        // Spotify sometimes ships "Player Position" in seconds. When
+        // present, use it; the publish() guard preserves the existing
+        // elapsed if it's missing or zero.
+        if let pos = info["Player Position"] as? Double, pos > 0 {
+            t.elapsed = pos
+        } else if let posMs = info["Position"] as? Double, posMs > 0 {
+            // Older Spotify builds key it differently and use ms.
+            t.elapsed = posMs / 1000.0
+        }
 
         active = .spotify
         let token = UUID()
@@ -649,11 +658,30 @@ final class NowPlayingService: ObservableObject {
         // match — otherwise the UI flickers when a Position-only update
         // arrives without artwork bundled. The artwork fetcher will replace
         // it shortly if the song actually changed.
+        //
+        // ALSO preserve `elapsed` when the song hasn't changed AND the
+        // incoming track has elapsed == 0. The 5-second probe and most
+        // Spotify notifications don't include "Player Position", so they
+        // build a track with elapsed defaulting to 0. Without this guard
+        // the live-ticking elapsed would reset to 0 every 5 seconds —
+        // user-visible bug: "music goes up 5 then back to 0 then over
+        // and over." Probes that DO include a non-zero elapsed (Apple
+        // Music's Player Position field) overwrite normally so we still
+        // resync to truth when there's a real authoritative value.
         var next = t
-        if next.artwork == nil,
-           track.title == next.title,
-           track.artist == next.artist {
-            next.artwork = track.artwork
+        let sameSong = (track.title == next.title)
+                    && (track.artist == next.artist)
+                    && !next.title.isEmpty
+        if sameSong {
+            if next.artwork == nil { next.artwork = track.artwork }
+            if next.elapsed == 0 && track.elapsed > 0 {
+                next.elapsed = track.elapsed
+            }
+            // Also preserve duration if the new value would clobber a
+            // good one with zero (e.g., Spotify state-only notification).
+            if next.duration == 0 && track.duration > 0 {
+                next.duration = track.duration
+            }
         }
         if Thread.isMainThread {
             self.track = next

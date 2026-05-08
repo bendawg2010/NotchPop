@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.20</title>
+      <pubDate>Fri, 08 May 2026 17:49:07 +0000</pubDate>
+      <sparkle:version>1.5.20</sparkle:version>
+      <sparkle:shortVersionString>1.5.20</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Music elapsed bug fixed.</strong> Track time was rolling 0→5→0→5 forever because the 5-second probe and most Spotify notifications didn't include 'Player Position' — they built a fresh track with elapsed=0 and overwrote the live-ticking value. publish() now preserves elapsed (and duration) when title+artist match the previous track and the incoming value is zero. Spotify's 'Player Position' / 'Position' fields are also parsed if present.</li><li><strong>Close animation no longer choppy.</strong> Window resize is now animated via NSAnimationContext (0.32s ease-in-out) so it stays in sync with SwiftUI's spring. Before, the window jumped to its new size INSTANTLY while SwiftUI animated the inner shape over ~0.4s — content rendered at expanded size inside a suddenly-tiny window for a beat.</li><li><strong>Welcome is way slower and cooler.</strong> The glow now ramps in via a 1.6s smoothstep envelope (slowly grows from a tight pulse around the notch to the full bloom), pulses gently, then fades out over the last 1s of the welcome window. Hue cycle dropped from 8s to 5s so you actually see the pink → purple → blue → mint rainbow during a typical 8s welcome.</li><li><strong>Auto-replays welcome on every version bump.</strong> Each time you install a new version (or upgrade via Force Update Now), the welcome plays automatically once. No more 'I had to replay it.'</li><li><strong>Welcome default duration bumped 5.5s → 8s</strong> with the new 3–15s slider range.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.20/NotchPop.dmg"
+        sparkle:version="1.5.20"
+        sparkle:shortVersionString="1.5.20"
+        length="2147617"
+        type="application/octet-stream"
+        sparkle:edSignature="am+IBbxLo4ntuOCzcrXfyPzT3HtRRKN6jjWHFRUg1kdq4powKJMASI5QMGnP3dBqOnXTIkfTPn76K6ZVcVj5Aw==" />
+    </item>
+    <item>
       <title>v1.5.19</title>
       <pubDate>Fri, 08 May 2026 17:36:30 +0000</pubDate>
       <sparkle:version>1.5.19</sparkle:version>

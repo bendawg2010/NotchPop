@@ -446,7 +446,7 @@ struct SettingsView: View {
                     Text(String(format: "%.1f s", viewModel.welcomePeekDuration))
                         .foregroundColor(.secondary).monospacedDigit()
                 }
-                Slider(value: $viewModel.welcomePeekDuration, in: 3...12, step: 0.5)
+                Slider(value: $viewModel.welcomePeekDuration, in: 3...15, step: 0.5)
                 caption("How long the welcome card stays open on first launch + replay. Default 5.5s matches the 3-scene cycle.")
             }
 

@@ -56,30 +56,48 @@ struct NotchView: View {
 
     /// Welcome-only glow halo. Renders as a colored backdrop that
     /// bleeds into the welcome-only padding the view model adds to
-    /// targetSize. The previous Ellipse-with-blur approach was too
-    /// subtle — the blur faded to near-zero opacity at the 70pt edges.
-    /// This version uses three layered hue-rotating shapes:
-    ///   • Wide soft Ellipse (full padding extent)
-    ///   • Mid-size RoundedRectangle hugging the notch
-    ///   • Tight bright RoundedRectangle as the "core"
-    /// All three pulse together. Combined with the shadow halo on the
-    /// notch shape itself (see shadow modifiers below), the halo is
-    /// unmistakable now.
+    /// targetSize. Uses three layered hue-rotating shapes plus an
+    /// envelope (ramp-in → hold → ramp-out) driven by time-since-
+    /// welcome-started.
+    ///
+    /// Per user feedback: "you should be wayy slower it should be
+    /// super cool like it should slowly get to the full gradient and
+    /// do an animation." The envelope hits ~95% intensity over 1.6
+    /// seconds, holds, then fades out over 1.0s in the last second
+    /// of the welcome window. The hue cycle is 5s so users see the
+    /// full rainbow during a default 8s welcome.
     private var welcomeGlow: some View {
         TimelineView(.animation) { context in
             let t = context.date.timeIntervalSinceReferenceDate
-            // Pulse 0.65 → 1.00 → 0.65 every ~3s. Higher floor than
-            // before so the halo is always strongly visible.
+            // Envelope: ramp from 0 → full over the first 1.6s of
+            // showing the welcome. We track welcomeStartedAt in the
+            // view model so this survives the TimelineView re-renders.
+            let elapsed = max(0, t - viewModel.welcomeStartedAt)
+            let rampIn = min(1.0, elapsed / 1.6)
+            let easedRamp = rampIn * rampIn * (3 - 2 * rampIn) // smoothstep
+            let totalDuration = viewModel.welcomePeekDuration
+            let timeRemaining = max(0, totalDuration - elapsed)
+            let rampOut = min(1.0, timeRemaining / 1.0) // last 1s fades out
+            let envelope = easedRamp * rampOut
+
+            // Pulse 0.78 → 1.00 → 0.78 every 2.4s during hold. Floor
+            // bumped from 0.65 because the slow ramp-in already gives
+            // a sense of "growing" — pulse should be subtle on top.
             let pulse: Double = viewModel.reducedMotion
-                ? 0.95
-                : 0.65 + 0.35 * (sin(t * 1.6) * 0.5 + 0.5)
-            // Hue cycle: pink → purple → blue → mint → pink, 8s loop.
+                ? 1.0
+                : 0.78 + 0.22 * (sin(t * 2.6) * 0.5 + 0.5)
+            // Hue cycle: 5s loop so the full pink → purple → blue →
+            // mint → pink rainbow plays during the welcome window.
             let hue: Double = viewModel.reducedMotion
                 ? 0
-                : (t.truncatingRemainder(dividingBy: 8) / 8) * 360
+                : (t.truncatingRemainder(dividingBy: 5) / 5) * 360
+
+            // The eased ramp doubles as a SCALE multiplier for the
+            // glow — starts tight to the shape, blooms outward as
+            // the welcome ramps up. "Slowly get to the full gradient."
+            let scale: CGFloat = 0.85 + 0.15 * CGFloat(easedRamp)
 
             ZStack {
-                // OUTER bloom — fills the entire welcome padding.
                 Ellipse()
                     .fill(AngularGradient(
                         colors: [
@@ -92,9 +110,8 @@ struct NotchView: View {
                         center: .center))
                     .hueRotation(.degrees(hue))
                     .blur(radius: 32)
-                    .opacity(pulse * 0.95)
+                    .opacity(envelope * pulse * 0.95)
 
-                // MID halo — tighter, brighter, hugs the notch.
                 RoundedRectangle(cornerRadius: 36, style: .continuous)
                     .fill(LinearGradient(
                         colors: [
@@ -107,9 +124,8 @@ struct NotchView: View {
                     .hueRotation(.degrees(hue))
                     .blur(radius: 22)
                     .padding(20)
-                    .opacity(pulse * 0.85)
+                    .opacity(envelope * pulse * 0.85)
 
-                // INNER core — sharp gradient, low blur, hottest.
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .fill(LinearGradient(
                         colors: [
@@ -121,8 +137,9 @@ struct NotchView: View {
                     .hueRotation(.degrees(hue))
                     .blur(radius: 12)
                     .padding(48)
-                    .opacity(pulse * 0.7)
+                    .opacity(envelope * pulse * 0.7)
             }
+            .scaleEffect(scale)
         }
     }
 

@@ -228,6 +228,32 @@ final class NotchWindowController: NSWindowController {
         NSLog("NotchPop centering: chose '%@' frame=%@ → newFrame=%@ | all screens: %@",
               chosenName, NSStringFromRect(chosenFrame),
               NSStringFromRect(newFrame), allScreens)
-        window.setFrame(newFrame, display: true, animate: false)
+
+        // Animate the window resize so it stays in sync with the
+        // SwiftUI content's spring animation. Without this, the
+        // window jumps to the new size INSTANTLY while SwiftUI
+        // animates the inner notch shape over ~0.4s — net effect was
+        // the user-reported "close animation is still really choppy"
+        // because the content rendered at expanded size INSIDE a
+        // suddenly-tiny window for a split second.
+        //
+        // Skip the animation on the FIRST setFrame (when the window
+        // is .zero / has never been positioned) — animating from a
+        // zero frame produces a jarring "appear from corner" zoom.
+        let isInitialPlacement = window.frame.size.width < 1 || window.frame.size.height < 1
+        if isInitialPlacement {
+            window.setFrame(newFrame, display: true, animate: false)
+        } else {
+            NSAnimationContext.runAnimationGroup { ctx in
+                // Match SwiftUI's .spring(response: 0.42) feel —
+                // slightly snappier on the easing curve so the
+                // window outpaces the content marginally and never
+                // crops it.
+                ctx.duration = 0.32
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                ctx.allowsImplicitAnimation = true
+                window.animator().setFrame(newFrame, display: true)
+            }
+        }
     }
 }

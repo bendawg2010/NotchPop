@@ -146,6 +146,14 @@ final class NotchViewModel: ObservableObject {
     /// expanded view shows the welcome card instead of normal tabs.
     @Published var showingWelcome: Bool = false
 
+    /// `Date.timeIntervalSinceReferenceDate` when the current welcome
+    /// peek started. Drives the welcome glow's ramp-in / hold / ramp-
+    /// out envelope so the gradient slowly grows into full intensity
+    /// instead of popping in. Per user feedback: "you should be wayy
+    /// slower it should be super cool like it should slowly get to
+    /// the full gradient and do an animation."
+    @Published var welcomeStartedAt: TimeInterval = 0
+
     // Settings — persisted across launches via UserDefaults.
     @Published var nowPlayingEnabled: Bool = true {
         didSet { UserDefaults.standard.set(nowPlayingEnabled, forKey: "np.nowPlayingEnabled") }
@@ -259,9 +267,10 @@ final class NotchViewModel: ObservableObject {
     @Published var autoCollapseAfterTabSelect: Bool = false {
         didSet { UserDefaults.standard.set(autoCollapseAfterTabSelect, forKey: "np.autoCollapseAfterTab") }
     }
-    /// How many seconds the welcome peek stays open. Default 5.5 to
-    /// match the 3 × 1.5s scene cycle plus breathing room. Bound 3–12.
-    @Published var welcomePeekDuration: Double = 5.5 {
+    /// How many seconds the welcome peek stays open. Default 8.0 —
+    /// long enough for the slow ramp-in (~1.6s), full hold of the
+    /// gradient cycle, and ramp-out (~1s). Bound 3–15.
+    @Published var welcomePeekDuration: Double = 8.0 {
         didSet { UserDefaults.standard.set(welcomePeekDuration, forKey: "np.welcomeDur") }
     }
     /// Show the menubar icon. Off = no icon (relies on auto-launch +
@@ -536,7 +545,7 @@ final class NotchViewModel: ObservableObject {
         }
         if d.object(forKey: "np.welcomeDur") != nil {
             let v = d.double(forKey: "np.welcomeDur")
-            self.welcomePeekDuration = v >= 3 && v <= 12 ? v : 5.5
+            self.welcomePeekDuration = v >= 3 && v <= 15 ? v : 8.0
         }
         if d.object(forKey: "np.menubar") != nil {
             self.showMenuBarIcon = d.bool(forKey: "np.menubar")
@@ -734,11 +743,23 @@ final class NotchViewModel: ObservableObject {
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &bag)
 
-        // First-launch onboarding: peek the notch open with a welcome
-        // card for 5 seconds so the user actually discovers it exists.
-        if !UserDefaults.standard.bool(forKey: "np.didFirstLaunch") {
+        // First-launch onboarding + per-version replay: peek the
+        // notch open with the welcome card whenever the current
+        // bundle version differs from np.lastWelcomeVersion. Covers
+        // both fresh installs (nil != "1.5.20") and upgrades
+        // ("1.5.16" != "1.5.20"). Per user feedback: "the welcome
+        // intro didnt start i had to replay it" — they upgraded,
+        // didn't see the welcome on the new version, had to
+        // manually replay it.
+        let currentVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"]
+                              as? String) ?? "0"
+        let lastWelcomeVersion = UserDefaults.standard.string(forKey: "np.lastWelcomeVersion")
+        if lastWelcomeVersion != currentVersion {
             UserDefaults.standard.set(true, forKey: "np.didFirstLaunch")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            UserDefaults.standard.set(currentVersion, forKey: "np.lastWelcomeVersion")
+            // Defer slightly so the window has finished its initial
+            // placement before the welcome animation kicks in.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
                 self?.runWelcomePeek()
             }
         }
@@ -757,6 +778,10 @@ final class NotchViewModel: ObservableObject {
         // welcome glow" values.
         expanded = false
         showingWelcome = false
+        // Mark when this peek started so the welcome glow's ramp-in /
+        // ramp-out envelope can sample (now - welcomeStartedAt) for
+        // the eased opacity curve.
+        welcomeStartedAt = Date.timeIntervalSinceReferenceDate
         // Give the SwiftUI run-loop a single tick so the prior frame
         // is committed before we kick off the new animation. Without
         // this the targetSize change races with the welcome glow's
