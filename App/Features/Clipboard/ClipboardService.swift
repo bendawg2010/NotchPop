@@ -90,10 +90,34 @@ final class ClipboardService: ObservableObject {
     /// Push the entry's text back onto the system pasteboard and
     /// promote it to position 0. We mark suppressNextChange so the
     /// resulting changeCount bump doesn't re-add the same string.
+    ///
+    /// User-reported bug ("it just didnt copy"): the previous version
+    /// used `clearContents() + setString(_, forType: .string)` only.
+    /// That two-step sequence races with macOS's pasteboard server
+    /// under our `.nonactivatingPanel` window — `setString` can
+    /// return false silently and the pasteboard ends up holding
+    /// nothing (the cleared state from step 1). The `setString`
+    /// return value was also being ignored.
+    ///
+    /// Fix: use `declareTypes` (the older but more reliable API
+    /// that explicitly registers our intent to write a string) and
+    /// fall back to `writeObjects(_:)` if `setString` returns false.
+    /// Then verify the write took by reading back; if it didn't,
+    /// retry once after a 50ms beat. Logs to Console for debugging.
     func copy(_ entry: ClipboardEntry) {
         suppressNextChange = true
-        pasteboard.clearContents()
-        pasteboard.setString(entry.text, forType: .string)
+        let ok = writeStringRobustly(entry.text)
+        if !ok {
+            NSLog("NotchPop clipboard: copy failed on first attempt — retrying")
+            // Brief beat then retry once. Sometimes another process
+            // is mid-write to the pasteboard server (e.g. Universal
+            // Clipboard sync) and a second try lands cleanly.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                guard let self = self else { return }
+                _ = self.writeStringRobustly(entry.text)
+                self.lastChangeCount = self.pasteboard.changeCount
+            }
+        }
         lastChangeCount = pasteboard.changeCount
 
         if let idx = entries.firstIndex(of: entry), idx != 0 {
@@ -101,6 +125,36 @@ final class ClipboardService: ObservableObject {
             entries.insert(entry, at: 0)
             persist()
         }
+    }
+
+    /// Write a string to the system pasteboard using the most
+    /// reliable AppKit path. Returns true on success. We try in
+    /// order:
+    ///   1. clearContents + declareTypes + setString — the
+    ///      pre-NSPasteboardWriting era's standard combo.
+    ///   2. clearContents + writeObjects([NSString]) — modern API,
+    ///      occasionally better-behaved when (1) returns false.
+    @discardableResult
+    private func writeStringRobustly(_ text: String) -> Bool {
+        pasteboard.clearContents()
+        pasteboard.declareTypes([.string], owner: nil)
+        let setOK = pasteboard.setString(text, forType: .string)
+        if setOK {
+            // Verify the read-back round-trips so we KNOW it took.
+            if let readback = pasteboard.string(forType: .string),
+               readback == text {
+                return true
+            }
+        }
+        // Fallback: writeObjects.
+        pasteboard.clearContents()
+        let woOK = pasteboard.writeObjects([text as NSString])
+        if woOK,
+           let readback = pasteboard.string(forType: .string),
+           readback == text {
+            return true
+        }
+        return false
     }
 
     func remove(_ entry: ClipboardEntry) {

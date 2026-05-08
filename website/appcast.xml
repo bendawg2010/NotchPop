@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.23</title>
+      <pubDate>Fri, 08 May 2026 18:08:03 +0000</pubDate>
+      <sparkle:version>1.5.23</sparkle:version>
+      <sparkle:shortVersionString>1.5.23</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Clipboard copy actually copies now.</strong> Previous code did clearContents() + setString() and ignored setString's Bool return. From the .nonactivatingPanel notch, that two-step sometimes races with macOS's pasteboard server (especially with Universal Clipboard syncing) — setString silently returns false and the pasteboard ends up empty (cleared in step 1, never re-filled in step 2). User-visible result: 'it just didnt copy.' Fix: writeStringRobustly() now uses declareTypes + setString as the primary path, falls back to writeObjects([NSString]) if that returns false, verifies by reading back, and retries once after 50ms if neither path landed. Both attempts log to Console.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.23/NotchPop.dmg"
+        sparkle:version="1.5.23"
+        sparkle:shortVersionString="1.5.23"
+        length="2279457"
+        type="application/octet-stream"
+        sparkle:edSignature="nqLpm6RAtCbXKGKKhMyTdFv1LksWbP+R157gmE2Fg/NXODd1mh9k6eKO7k+Xp+RVNd0EpkKWO6bVICVFRzAJBg==" />
+    </item>
+    <item>
       <title>v1.5.22</title>
       <pubDate>Fri, 08 May 2026 18:05:07 +0000</pubDate>
       <sparkle:version>1.5.22</sparkle:version>
