@@ -31,8 +31,29 @@ struct ScreenInfo: Equatable {
 }
 
 enum ScreenHelper {
+    /// Returns the screen we should pin the notch UI to. Critical bug
+    /// fix: NSScreen.main returns whatever screen has KEYBOARD focus,
+    /// which shifts as the user switches windows between displays. So
+    /// the notch UI was wandering to whichever monitor was last clicked.
+    /// We always want the screen that HAS THE NOTCH (built-in MBP
+    /// display), regardless of where the active window lives.
+    static func notchedScreen() -> NSScreen? {
+        // 1. Prefer a screen with an actual hardware notch
+        if let notched = NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 }) {
+            return notched
+        }
+        // 2. Fall back to the primary screen (origin == .zero in macOS
+        //    is the screen with the menu bar — the laptop's display
+        //    even when an external monitor is connected).
+        if let primary = NSScreen.screens.first(where: { $0.frame.origin == .zero }) {
+            return primary
+        }
+        // 3. Last resort
+        return NSScreen.main
+    }
+
     static func current() -> ScreenInfo {
-        guard let screen = NSScreen.main else { return .fallback }
+        guard let screen = notchedScreen() else { return .fallback }
         let inset = screen.safeAreaInsets.top
         let hasNotch = inset > 0
 

@@ -16,6 +16,15 @@ settings:
     ENABLE_HARDENED_RUNTIME: NO
     OTHER_CODE_SIGN_FLAGS: "--timestamp=none"
     GENERATE_INFOPLIST_FILE: NO
+    # SOURCE OF TRUTH for the app version. release.sh updates this line
+    # via sed, then xcodegen regenerates Info.plist with $(MARKETING_VERSION)
+    # interpolated into CFBundleShortVersionString. The pre-v1.5.7 release
+    # script set Info.plist directly with PlistBuddy, but xcodegen wiped
+    # those mutations on the next regen — so every shipped DMG had
+    # CFBundleShortVersionString=1.0 internally, breaking Sparkle's
+    # version comparison and creating an endless 'update available' loop.
+    MARKETING_VERSION: "1.5.7"
+    CURRENT_PROJECT_VERSION: "2"
 
 # Sparkle handles auto-updates. The framework gets pulled in via SPM
 # (Swift Package Manager) — Xcode embeds it in NotchPop.app/Contents/
@@ -41,6 +50,12 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: NotchPop
+        # CRITICAL: these MUST be in info.properties — xcodegen
+        # regenerates Info.plist on every build, blowing away anything
+        # set by external tools (PlistBuddy, sed). Both reference build
+        # settings so updating MARKETING_VERSION in one place propagates.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: true

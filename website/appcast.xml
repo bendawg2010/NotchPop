@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.7</title>
+      <pubDate>Fri, 08 May 2026 01:42:22 +0000</pubDate>
+      <sparkle:version>1.5.7</sparkle:version>
+      <sparkle:shortVersionString>1.5.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.7 — CRITICAL fix: auto-update was infinitely looping</h2><h3>The bug</h3><p>Every release I've shipped (v1.5.1 through v1.5.6) had <code>CFBundleShortVersionString = 1.0</code> internally. release.sh was bumping Info.plist with PlistBuddy, but xcodegen regenerates Info.plist on every build from project.yml — and project.yml didn't list a version, so each build reset it to 1.0. Sparkle saw users on '1.0', told them v1.5.6 was available, installed v1.5.6 (which also reported 1.0), and said 'update available!' all over again. Endless loop.</p><h3>The fix</h3><ul><li>Added <code>MARKETING_VERSION</code> as a build setting in project.yml — it's now the source of truth.</li><li>Added <code>CFBundleShortVersionString: $(MARKETING_VERSION)</code> to project.yml's info.properties so xcodegen interpolates it.</li><li>release.sh now <code>sed</code>s MARKETING_VERSION in project.yml directly, so the next xcodegen+xcodebuild produces a bundle that ACTUALLY reports the right version.</li><li>Verified: NotchPop.app/Contents/Info.plist for this build correctly shows 1.5.7.</li></ul><h3>Centering also fixed</h3><p>NotchPop was using <code>NSScreen.main</code> which returns whichever screen has keyboard focus — so the notch UI wandered to whichever monitor you last clicked. Now ScreenHelper.notchedScreen() prefers the screen with an actual hardware notch (your built-in MacBook display), falling back to the primary screen.</p><h3>What you'll notice after this update</h3><p><strong>This is the LAST time you'll see 'update available' on a loop.</strong> From v1.5.7 onward, Sparkle correctly knows you're on v1.5.7 and will only prompt when there's a genuinely newer release.</p>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.7/NotchPop.dmg"
+        sparkle:version="1.5.7"
+        sparkle:shortVersionString="1.5.7"
+        length="1819079"
+        type="application/octet-stream"
+        sparkle:edSignature="aOj1kH8ZeBn/KceetOm/8oLbaWLuurnepbS1KqOGtaUj6TMC1m3EBAE67wHcyb4m/keGLg/5LWC17Ez141mhCw==" />
+    </item>
+    <item>
       <title>v1.5.6</title>
       <pubDate>Fri, 08 May 2026 01:29:14 +0000</pubDate>
       <sparkle:version>1.5.6</sparkle:version>

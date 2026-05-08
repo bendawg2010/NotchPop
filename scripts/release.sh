@@ -33,10 +33,25 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
-# ---- Bump Info.plist version --------------------------------------
-PLIST="App/Info.plist"
-echo "→ Setting CFBundleShortVersionString = $VERSION"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
+# ---- Bump version in project.yml (the source of truth) ------------
+# Pre-v1.5.7 we mutated Info.plist directly with PlistBuddy. That
+# silently regressed every release — xcodegen regenerated Info.plist
+# on the next `xcodegen generate` and reset the version to whatever
+# project.yml said (which was nothing → defaulted to 1.0). Sparkle
+# saw users on '1.0' forever, infinite update loop. Now we bump
+# MARKETING_VERSION in project.yml; xcodegen interpolates it into
+# CFBundleShortVersionString via $(MARKETING_VERSION).
+echo "→ Setting MARKETING_VERSION = $VERSION in project.yml"
+sed -i '' 's/^\(    MARKETING_VERSION: "\)[^"]*\("\)/\1'"$VERSION"'\2/' project.yml
+
+# Also bump CURRENT_PROJECT_VERSION (the build number CFBundleVersion).
+# Sparkle uses CFBundleShortVersionString for comparison, but newer
+# Sparkle versions ALSO check CFBundleVersion as a tiebreaker, so we
+# increment monotonically.
+CURRENT_BUILD=$(grep -E '^\s*CURRENT_PROJECT_VERSION:' project.yml | sed -E 's/.*"([0-9]+)".*/\1/')
+NEW_BUILD=$((CURRENT_BUILD + 1))
+echo "→ Bumping CURRENT_PROJECT_VERSION $CURRENT_BUILD → $NEW_BUILD"
+sed -i '' 's/^\(    CURRENT_PROJECT_VERSION: "\)[0-9]*\("\)/\1'"$NEW_BUILD"'\2/' project.yml
 
 # ---- Build the app + DMG ------------------------------------------
 echo "→ Building NotchPop.app"

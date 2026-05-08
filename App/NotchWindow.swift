@@ -85,7 +85,7 @@ final class NotchWindowController: NSWindowController {
         // Pin window so the visible notch sits centered on the screen's
         // top edge. Even on non-notched MBPs we still pin top-center to
         // mimic the same UI.
-        if let screen = NSScreen.main {
+        if let screen = ScreenHelper.notchedScreen() {
             let frame = window.frame
             let x = screen.frame.midX - frame.width / 2
             let y = screen.frame.maxY - frame.height
@@ -110,7 +110,7 @@ final class NotchWindowController: NSWindowController {
         // land off-center from the hardware notch.
         let screenMidX: CGFloat
         let topY: CGFloat
-        if let screen = NSScreen.main {
+        if let screen = ScreenHelper.notchedScreen() {
             screenMidX = screen.frame.midX
             topY = screen.frame.maxY
         } else {
