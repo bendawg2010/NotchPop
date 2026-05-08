@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.17</title>
+      <pubDate>Fri, 08 May 2026 17:24:50 +0000</pubDate>
+      <sparkle:version>1.5.17</sparkle:version>
+      <sparkle:shortVersionString>1.5.17</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Welcome glow is finally visible.</strong> Replaced the subtle Ellipse-blur (which faded to ~zero opacity at the edges) with a 3-color SwiftUI .shadow() halo applied directly to the notch shape — shadows render outside the view frame and aren't clipped, so this guarantees the bloom shows up regardless of layout. Plus a 3-layer ZStack gradient backdrop with bigger 110pt side / 100pt bottom padding.</li><li><strong>Replay welcome no longer lands off-center.</strong> When you click Replay, the view model now snaps to a clean baseline first (expanded=false, showingWelcome=false), waits one runloop tick, then flips showingWelcome=true, then 50ms later flips expanded=true with a spring. Avoids the race where applyContentSize ran with mid-flip state and centered for the wrong target size.</li><li><strong>Welcome closes with an animation now.</strong> Both showingWelcome=false and expanded=false are wrapped in a single withAnimation block so the glow padding and the panel shrink together.</li><li><strong>Tab bar no longer truncates.</strong> When you have more than 4 visible tabs, inactive tabs go icon-only with the active tab keeping its label. Override in Settings → Behavior → 'Always show tab labels'.</li><li><strong>Album cover plays/pauses on click.</strong> Plus the breathing animation got 4× more visible (1% → 4% scale change).</li><li><strong>7 new settings:</strong> Always show tab labels, auto-collapse after tab select, welcome peek duration (3–12s slider), show menubar icon, show inline battery, show version label, charging peek toggle.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.17/NotchPop.dmg"
+        sparkle:version="1.5.17"
+        sparkle:shortVersionString="1.5.17"
+        length="2103719"
+        type="application/octet-stream"
+        sparkle:edSignature="4NrOiCV6yMQ0AuqCJQqqsTxot51EXKHfwWsbMk9uLi0JdIalbIN0WOXH5YmHxhh+NtKRgY4aZieYbs/ROwE4BQ==" />
+    </item>
+    <item>
       <title>v1.5.16</title>
       <pubDate>Fri, 08 May 2026 16:47:43 +0000</pubDate>
       <sparkle:version>1.5.16</sparkle:version>

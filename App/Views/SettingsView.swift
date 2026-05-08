@@ -278,6 +278,75 @@ struct SettingsView: View {
             }
             caption("Off = only mouse-out collapses. Useful if you keep accidentally clicking through to apps behind.")
 
+            LabeledContent {
+                Toggle("", isOn: $viewModel.autoCollapseAfterTabSelect).labelsHidden()
+            } label: {
+                Text("Collapse the notch after tapping a tab")
+            }
+            caption("Glance-and-go workflow — the notch shrinks back ~600ms after you pick a tab.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.alwaysShowTabLabels).labelsHidden()
+            } label: {
+                Text("Always show tab labels")
+            }
+            caption("Off = labels auto-hide on inactive tabs when more than 4 are visible (avoids 'Pomo… / N… / S…' truncation). On = labels always shown — text may truncate with all 12 tabs enabled.")
+
+            // ── Welcome animation ────────────────────────────────
+            sectionHeader("Welcome animation")
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Welcome peek duration")
+                    Spacer()
+                    Text(String(format: "%.1f s", viewModel.welcomePeekDuration))
+                        .foregroundColor(.secondary).monospacedDigit()
+                }
+                Slider(value: $viewModel.welcomePeekDuration, in: 3...12, step: 0.5)
+                caption("How long the welcome card stays open on first launch + replay. Default 5.5s matches the 3-scene cycle.")
+            }
+
+            HStack {
+                Button {
+                    viewModel.runWelcomePeek()
+                } label: {
+                    Label("Replay welcome animation now", systemImage: "play.circle.fill")
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+
+            // ── Top-bar widgets ──────────────────────────────────
+            sectionHeader("Expanded notch top bar")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.showInlineBattery).labelsHidden()
+            } label: {
+                Text("Show inline battery indicator")
+            }
+            caption("The compact battery glyph in the top-right of the expanded notch. Off = cleaner top bar.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.showVersionLabel).labelsHidden()
+            } label: {
+                Text("Show version label")
+            }
+            caption("The tiny 'v1.5.x' stamp next to the battery. Off if you find it cluttered.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.chargingPeekEnabled).labelsHidden()
+            } label: {
+                Text("Peek the notch when charging starts")
+            }
+            caption("Plug in and the notch briefly expands with a charging cheer animation. Off = no peek.")
+
+            LabeledContent {
+                Toggle("", isOn: $viewModel.showMenuBarIcon).labelsHidden()
+            } label: {
+                Text("Show menubar icon")
+            }
+            caption("Off = no menubar icon (rely on the notch + auto-launch). Settings reachable via the gear inside the expanded notch.")
+
             // ── Hover timing ─────────────────────────────────────
             sectionHeader("Hover timing")
 

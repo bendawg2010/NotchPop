@@ -20,9 +20,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Hide Dock icon — we want to live in the notch + menubar only.
         NSApp.setActivationPolicy(.accessory)
 
-        installStatusItem()
+        if viewModel.showMenuBarIcon {
+            installStatusItem()
+        }
         installNotchWindow()
         observeScreenChanges()
+        // Listen for the showMenuBarIcon toggle so we can show/hide
+        // the menubar item live without needing a relaunch.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(menubarVisibilityChanged),
+            name: .npMenubarVisibilityChanged, object: nil)
 
         // Initialise Sparkle (lazy SPUStandardUpdaterController fires
         // here; see UpdaterController). Wipe any stale "skipped version"
@@ -140,5 +147,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func replayWelcome() {
         viewModel.runWelcomePeek()
+    }
+
+    @objc private func menubarVisibilityChanged() {
+        if viewModel.showMenuBarIcon {
+            if statusItem == nil { installStatusItem() }
+        } else {
+            if let item = statusItem {
+                NSStatusBar.system.removeStatusItem(item)
+                statusItem = nil
+            }
+        }
     }
 }

@@ -8,6 +8,12 @@ import AppKit
 import Combine
 import SwiftUI
 
+extension Notification.Name {
+    /// Posted when the user toggles the "Show menubar icon" setting.
+    /// AppDelegate listens and hides/restores its NSStatusItem.
+    static let npMenubarVisibilityChanged = Notification.Name("np.menubarVisibilityChanged")
+}
+
 /// User-pickable accent for gradients and primary buttons. We keep
 /// the existing pink→blue brand gradient as the default but let users
 /// swap to a single solid accent if they prefer something quieter.
@@ -240,6 +246,51 @@ final class NotchViewModel: ObservableObject {
     @Published var clickOutsideToCollapse: Bool = true {
         didSet { UserDefaults.standard.set(clickOutsideToCollapse, forKey: "np.clickOutside") }
     }
+    /// Force every tab to always show its label, even when there are
+    /// many tabs visible (which would normally truncate). Off = the
+    /// adaptive icon-only-with-active-label behavior introduced in
+    /// v1.5.17. On = labels always shown — text MAY truncate on
+    /// 14" MBPs with all 12 tabs enabled.
+    @Published var alwaysShowTabLabels: Bool = false {
+        didSet { UserDefaults.standard.set(alwaysShowTabLabels, forKey: "np.alwaysLabels") }
+    }
+    /// When true, picking a tab from the tab bar collapses the notch
+    /// after a short beat. Useful for the "glance and go" workflow.
+    @Published var autoCollapseAfterTabSelect: Bool = false {
+        didSet { UserDefaults.standard.set(autoCollapseAfterTabSelect, forKey: "np.autoCollapseAfterTab") }
+    }
+    /// How many seconds the welcome peek stays open. Default 5.5 to
+    /// match the 3 × 1.5s scene cycle plus breathing room. Bound 3–12.
+    @Published var welcomePeekDuration: Double = 5.5 {
+        didSet { UserDefaults.standard.set(welcomePeekDuration, forKey: "np.welcomeDur") }
+    }
+    /// Show the menubar icon. Off = no icon (relies on auto-launch +
+    /// the notch itself for app interaction). Settings can be
+    /// reached by replaying the welcome → gear from the expanded
+    /// notch, or by relaunching the app.
+    @Published var showMenuBarIcon: Bool = true {
+        didSet {
+            UserDefaults.standard.set(showMenuBarIcon, forKey: "np.menubar")
+            NotificationCenter.default.post(name: .npMenubarVisibilityChanged, object: nil)
+        }
+    }
+    /// Show the inline battery indicator in the top-right of the
+    /// expanded notch. Off = hidden (some users find it cluttered).
+    @Published var showInlineBattery: Bool = true {
+        didSet { UserDefaults.standard.set(showInlineBattery, forKey: "np.inlineBattery") }
+    }
+    /// Show the inline version stamp in the top-right of the expanded
+    /// notch. Off = cleaner look.
+    @Published var showVersionLabel: Bool = true {
+        didSet { UserDefaults.standard.set(showVersionLabel, forKey: "np.versionLabel") }
+    }
+    /// Auto-show the notch peek when charging starts. Some users find
+    /// the charging cheer animation distracting; this lets them
+    /// disable it without losing the charging-state telemetry
+    /// elsewhere.
+    @Published var chargingPeekEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(chargingPeekEnabled, forKey: "np.chargingPeek") }
+    }
 
     // MARK: - Children
     let shelf = FileShelf()
@@ -336,6 +387,28 @@ final class NotchViewModel: ObservableObject {
         if d.object(forKey: "np.clickOutside") != nil {
             self.clickOutsideToCollapse = d.bool(forKey: "np.clickOutside")
         }
+        if d.object(forKey: "np.alwaysLabels") != nil {
+            self.alwaysShowTabLabels = d.bool(forKey: "np.alwaysLabels")
+        }
+        if d.object(forKey: "np.autoCollapseAfterTab") != nil {
+            self.autoCollapseAfterTabSelect = d.bool(forKey: "np.autoCollapseAfterTab")
+        }
+        if d.object(forKey: "np.welcomeDur") != nil {
+            let v = d.double(forKey: "np.welcomeDur")
+            self.welcomePeekDuration = v >= 3 && v <= 12 ? v : 5.5
+        }
+        if d.object(forKey: "np.menubar") != nil {
+            self.showMenuBarIcon = d.bool(forKey: "np.menubar")
+        }
+        if d.object(forKey: "np.inlineBattery") != nil {
+            self.showInlineBattery = d.bool(forKey: "np.inlineBattery")
+        }
+        if d.object(forKey: "np.versionLabel") != nil {
+            self.showVersionLabel = d.bool(forKey: "np.versionLabel")
+        }
+        if d.object(forKey: "np.chargingPeek") != nil {
+            self.chargingPeekEnabled = d.bool(forKey: "np.chargingPeek")
+        }
         // Restore tab order/visibility, falling back to defaults if any
         // raw value is unrecognized. Legacy raw values from old NotchTab
         // cases ("Battery", "Stopwatch", "Timer") get silently dropped;
@@ -368,11 +441,13 @@ final class NotchViewModel: ObservableObject {
             .sink { [weak self] _ in self?.onSizeChange?() }
             .store(in: &bag)
 
-        // Charging events temporarily expand the notch (peek)
+        // Charging events temporarily expand the notch (peek). Honors
+        // Settings → Behavior → "Charging peek" toggle so users can
+        // disable the cheer animation if it's distracting.
         charging.$peeking
             .removeDuplicates()
             .sink { [weak self] peeking in
-                guard let self = self else { return }
+                guard let self = self, self.chargingPeekEnabled else { return }
                 if peeking { withAnimation(.spring()) { self.expanded = true } }
             }
             .store(in: &bag)
@@ -459,26 +534,53 @@ final class NotchViewModel: ObservableObject {
     /// When `reducedMotion` is on we skip the animation entirely — peek
     /// open without the spring, hold for the same duration, then close.
     func runWelcomePeek() {
-        showingWelcome = true
-        if reducedMotion {
-            expanded = true
-        } else {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
-                expanded = true
+        // CRITICAL: when the user clicks Replay from Settings the notch
+        // is already collapsed, but `expanded` may have been left in a
+        // half-state from a previous peek mid-animation. Snap to a
+        // clean baseline before flipping the welcome flags so the
+        // window-size math doesn't fold in stale "compactSize +
+        // welcome glow" values.
+        expanded = false
+        showingWelcome = false
+        // Give the SwiftUI run-loop a single tick so the prior frame
+        // is committed before we kick off the new animation. Without
+        // this the targetSize change races with the welcome glow's
+        // padding kick-in and the notch can land off-center.
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.showingWelcome = true
+            // Tiny delay between the showingWelcome flip and the
+            // expanded flip so the window has time to grow with the
+            // welcome glow padding before the SwiftUI content swaps
+            // to the welcome card. Two state changes in the same
+            // run-loop tick used to land the notch off-center on
+            // Replay because the FIRST applyContentSize ran with
+            // expanded=false (compactSize) but showingWelcome=true.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                if self.reducedMotion {
+                    self.expanded = true
+                } else {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+                        self.expanded = true
+                    }
+                }
             }
         }
-        // 3 scenes × 1.5s + breathing room. Match WelcomeCard's
-        // sceneIndex schedule.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) { [weak self] in
+        // 3 scenes × 1.5s + breathing room (default). Configurable
+        // in Settings → Behavior → "Welcome peek duration".
+        DispatchQueue.main.asyncAfter(deadline: .now() + welcomePeekDuration) { [weak self] in
             guard let self = self else { return }
-            self.showingWelcome = false
-            if !self.hovering {
-                if self.reducedMotion {
-                    self.expanded = false
-                } else {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                        self.expanded = false
-                    }
+            // Animate BOTH state changes together so the welcome glow
+            // padding shrinks at the same time the notch shape does
+            // — the previous code flipped showingWelcome synchronously
+            // (no animation), making the window jump abruptly.
+            if self.reducedMotion {
+                self.showingWelcome = false
+                if !self.hovering { self.expanded = false }
+            } else {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) {
+                    self.showingWelcome = false
+                    if !self.hovering { self.expanded = false }
                 }
             }
         }
@@ -568,9 +670,11 @@ final class NotchViewModel: ObservableObject {
     /// shape; NotchView then renders the glow into that extra space.
     /// Side padding only; we can't extend ABOVE the screen's top
     /// edge (the OS clips us there), and asymmetric vertical padding
-    /// would push the notch off the top.
-    var welcomeGlowSidePadding: CGFloat { showingWelcome ? 70 : 0 }
-    var welcomeGlowBottomPadding: CGFloat { showingWelcome ? 70 : 0 }
+    /// would push the notch off the top. Bumped to 110pt in v1.5.17
+    /// so the halo is actually visible — the previous 70pt strip was
+    /// almost entirely consumed by blur fall-off.
+    var welcomeGlowSidePadding: CGFloat { showingWelcome ? 110 : 0 }
+    var welcomeGlowBottomPadding: CGFloat { showingWelcome ? 100 : 0 }
 
     /// What size the host window should currently be. Includes the
     /// flanking live-activity pills when collapsed if anything's

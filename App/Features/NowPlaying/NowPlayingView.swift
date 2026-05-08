@@ -80,10 +80,26 @@ struct NowPlayingView: View {
 
     private var playingContent: some View {
         HStack(spacing: 12) {
-            artworkView
-                .frame(width: 60, height: 60)
-                .background(Color.white.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            // Click anywhere on the artwork to toggle play/pause.
+            // User feedback: "the music album cover doesnt play" — the
+            // artwork was a static thumbnail with a barely-perceptible
+            // 1% scale pulse, no interaction. It now toggles playback
+            // and breathes 4% on each beat so you can see it's alive.
+            Button {
+                service.togglePlayPause()
+            } label: {
+                artworkView
+                    .frame(width: 60, height: 60)
+                    .background(Color.white.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Color.white.opacity(service.track.isPlaying ? 0.20 : 0.08),
+                                    lineWidth: 0.75)
+                    )
+            }
+            .buttonStyle(.plain)
+            .help(service.track.isPlaying ? "Pause" : "Play")
 
             VStack(alignment: .leading, spacing: 3) {
                 MarqueeTitle(text: service.track.title)
@@ -130,10 +146,12 @@ struct NowPlayingView: View {
         // animation flag. When isPlaying flips off the time-derived
         // scale just freezes wherever the curve was — the next time
         // it flips on we resume from there. Cheap and self-cleaning.
+        // Bumped to 4% scale change in v1.5.17 — the previous 1%
+        // was too subtle to notice (user reported "doesnt play").
         TimelineView(.animation) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
             let scale: CGFloat = service.track.isPlaying
-                ? 1.0 + 0.01 * CGFloat(easeInOutSine(phase01(t, period: 1.5)))
+                ? 1.0 + 0.04 * CGFloat(easeInOutSine(phase01(t, period: 1.4)))
                 : 1.0
             artworkContent
                 .scaleEffect(scale)

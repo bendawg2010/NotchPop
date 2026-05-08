@@ -54,59 +54,96 @@ struct NotchView: View {
         return viewModel.compactSize
     }
 
-    /// First-launch / replay-welcome glow halo. Renders BEHIND the
-    /// notch shape and bleeds into the welcome-only padding the view
-    /// model adds to targetSize. Strategy:
-    ///   • Layer 1 — large soft pink/blue/purple AngularGradient,
-    ///     hue-rotated by time, blurred 28pt for a bloom feel.
-    ///   • Layer 2 — a tighter inner halo (30% smaller, 14pt blur)
-    ///     so the brightest light hugs the notch silhouette.
-    /// Both pulse opacity together at ~1Hz so the halo "breathes."
-    /// We skip the rotation/pulse when the user has Reduced Motion
-    /// on (Settings → Appearance) — the static gradient is plenty.
+    /// Welcome-only glow halo. Renders as a colored backdrop that
+    /// bleeds into the welcome-only padding the view model adds to
+    /// targetSize. The previous Ellipse-with-blur approach was too
+    /// subtle — the blur faded to near-zero opacity at the 70pt edges.
+    /// This version uses three layered hue-rotating shapes:
+    ///   • Wide soft Ellipse (full padding extent)
+    ///   • Mid-size RoundedRectangle hugging the notch
+    ///   • Tight bright RoundedRectangle as the "core"
+    /// All three pulse together. Combined with the shadow halo on the
+    /// notch shape itself (see shadow modifiers below), the halo is
+    /// unmistakable now.
     private var welcomeGlow: some View {
         TimelineView(.animation) { context in
             let t = context.date.timeIntervalSinceReferenceDate
-            // Pulse 0.55 → 0.95 → 0.55 every ~3s
+            // Pulse 0.65 → 1.00 → 0.65 every ~3s. Higher floor than
+            // before so the halo is always strongly visible.
             let pulse: Double = viewModel.reducedMotion
-                ? 0.85
-                : 0.55 + 0.40 * (sin(t * 2.0) * 0.5 + 0.5)
-            // Hue rotation cycles full 360° every 8s, so pink → purple
-            // → blue → pink. Stops if reduced motion is on.
+                ? 0.95
+                : 0.65 + 0.35 * (sin(t * 1.6) * 0.5 + 0.5)
+            // Hue cycle: pink → purple → blue → mint → pink, 8s loop.
             let hue: Double = viewModel.reducedMotion
                 ? 0
                 : (t.truncatingRemainder(dividingBy: 8) / 8) * 360
 
             ZStack {
-                // OUTER halo — wide, soft, tinted
+                // OUTER bloom — fills the entire welcome padding.
                 Ellipse()
                     .fill(AngularGradient(
                         colors: [
-                            Color(red: 1.00, green: 0.24, blue: 0.67), // hot pink
-                            Color(red: 0.62, green: 0.30, blue: 0.96), // purple
-                            Color(red: 0.17, green: 0.52, blue: 0.97), // blue
-                            Color(red: 0.18, green: 0.82, blue: 0.62), // mint accent
-                            Color(red: 1.00, green: 0.24, blue: 0.67), // back to pink
+                            Color(red: 1.00, green: 0.24, blue: 0.67),
+                            Color(red: 0.62, green: 0.30, blue: 0.96),
+                            Color(red: 0.17, green: 0.52, blue: 0.97),
+                            Color(red: 0.18, green: 0.82, blue: 0.62),
+                            Color(red: 1.00, green: 0.24, blue: 0.67),
                         ],
                         center: .center))
                     .hueRotation(.degrees(hue))
-                    .blur(radius: 28)
-                    .opacity(pulse)
+                    .blur(radius: 32)
+                    .opacity(pulse * 0.95)
 
-                // INNER hot core that hugs the notch silhouette
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                // MID halo — tighter, brighter, hugs the notch.
+                RoundedRectangle(cornerRadius: 36, style: .continuous)
                     .fill(LinearGradient(
                         colors: [
                             Color(red: 1.00, green: 0.24, blue: 0.67),
+                            Color(red: 0.62, green: 0.30, blue: 0.96),
                             Color(red: 0.17, green: 0.52, blue: 0.97),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing))
                     .hueRotation(.degrees(hue))
-                    .blur(radius: 14)
-                    .padding(28)
-                    .opacity(pulse * 0.9)
+                    .blur(radius: 22)
+                    .padding(20)
+                    .opacity(pulse * 0.85)
+
+                // INNER core — sharp gradient, low blur, hottest.
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [
+                            Color(red: 1.00, green: 0.42, blue: 0.42),
+                            Color(red: 0.95, green: 0.30, blue: 0.85),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing))
+                    .hueRotation(.degrees(hue))
+                    .blur(radius: 12)
+                    .padding(48)
+                    .opacity(pulse * 0.7)
             }
+        }
+    }
+
+    /// Multi-color shadow halo applied DIRECTLY to the notch shape
+    /// during welcome. SwiftUI shadows render outside the view's
+    /// frame and aren't clipped — so this gives us a guaranteed-
+    /// visible bloom around the actual silhouette of the notch
+    /// regardless of any layout subtleties. Stacking three shadows
+    /// at different radii produces a layered halo.
+    @ViewBuilder
+    private func notchShadowHalo<V: View>(_ content: V) -> some View {
+        if viewModel.showingWelcome {
+            content
+                .shadow(color: Color(red: 1.00, green: 0.24, blue: 0.67).opacity(0.85),
+                        radius: 18, x: 0, y: 4)
+                .shadow(color: Color(red: 0.62, green: 0.30, blue: 0.96).opacity(0.65),
+                        radius: 32, x: 0, y: 8)
+                .shadow(color: Color(red: 0.17, green: 0.52, blue: 0.97).opacity(0.55),
+                        radius: 50, x: 0, y: 14)
+        } else {
+            content
         }
     }
 
@@ -137,11 +174,19 @@ struct NotchView: View {
             // The hardware notch sits in the middle of this pill —
             // since both are pure black, it reads as one continuous
             // shape. NotchNook does the same.
-            NotchShape(bottomCornerRadius: bottomCornerRadius)
-                .fill(Color.black)
-                .frame(width: visibleShapeSize.width,
-                       height: visibleShapeSize.height)
-                .opacity(shouldRender ? 1 : 0)
+            //
+            // During welcome we apply a 3-color shadow halo via the
+            // notchShadowHalo helper — shadows render OUTSIDE the
+            // view frame and aren't clipped, so this guarantees a
+            // visible bloom around the actual silhouette regardless
+            // of any layout subtleties.
+            notchShadowHalo(
+                NotchShape(bottomCornerRadius: bottomCornerRadius)
+                    .fill(Color.black)
+                    .frame(width: visibleShapeSize.width,
+                           height: visibleShapeSize.height)
+                    .opacity(shouldRender ? 1 : 0)
+            )
                 .overlay {
                     // Drop ring while a drag is over us
                     if isDragHovering {
@@ -335,6 +380,7 @@ struct NotchView: View {
     /// Tab bar runs along the top of the expanded notch; on the right
     /// we mount a Settings gear, a compact battery indicator, and a
     /// version label so they're always visible without needing tabs.
+    /// Honors Settings → Behavior toggles for inline battery / version.
     private var tabBar: some View {
         HStack(spacing: 4) {
             ForEach(viewModel.visibleTabs) { tab in
@@ -342,8 +388,12 @@ struct NotchView: View {
             }
             Spacer(minLength: 6)
             settingsGearButton
-            InlineBatteryIndicator(monitor: viewModel.charging)
-            versionLabel
+            if viewModel.showInlineBattery {
+                InlineBatteryIndicator(monitor: viewModel.charging)
+            }
+            if viewModel.showVersionLabel {
+                versionLabel
+            }
         }
     }
 
@@ -377,28 +427,62 @@ struct NotchView: View {
             .help("NotchPop v\(v) — Check for Updates from the menubar (⌘U)")
     }
 
+    /// True when the tab bar would overflow if every tab showed its
+    /// label. Each labeled tab is roughly 78pt wide; with 4 right-side
+    /// pieces (gear + battery + version) reserving ~96pt, we have
+    /// ~392pt for tabs. Once we have more than 4 visible tabs, switch
+    /// to icon-only-with-active-label to dodge the truncation user
+    /// reported ("Pomo... / N... / S... / Mu...").
+    /// Honors the alwaysShowTabLabels override from Settings → Behavior.
+    private var compactTabBar: Bool {
+        if viewModel.alwaysShowTabLabels { return false }
+        return viewModel.visibleTabs.count > 4
+    }
+
     private func tabButton(_ tab: NotchTab) -> some View {
         let on = viewModel.activeTab == tab
+        // In compact mode, only the ACTIVE tab shows its label —
+        // every other tab is icon-only. This keeps the active tab's
+        // identity legible while letting all icons fit.
+        let showLabel = !compactTabBar || on
+
         return Button {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
                 viewModel.activeTab = tab
             }
+            // Optional: collapse after a tab switch — workflow for
+            // users who use the notch as a "glance and dismiss"
+            // surface rather than a long-lived expanded panel.
+            if viewModel.autoCollapseAfterTabSelect {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak vm = viewModel] in
+                    guard let vm = vm, !vm.hovering, !vm.showingWelcome else { return }
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.85)) {
+                        vm.expanded = false
+                    }
+                }
+            }
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 11, weight: .semibold))
-                Text(tab.rawValue)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
+                if showLabel {
+                    Text(tab.rawValue)
+                        .font(.system(size: 11, weight: .semibold))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, showLabel ? 10 : 7)
             .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(on ? Color.white.opacity(0.12) : Color.clear)
+                    .fill(on ? Color.white.opacity(0.14) : Color.clear)
             )
-            .foregroundColor(on ? .white : .white.opacity(0.55))
+            .foregroundColor(on ? .white : .white.opacity(0.62))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .help(tab.rawValue)
     }
 
     @ViewBuilder
