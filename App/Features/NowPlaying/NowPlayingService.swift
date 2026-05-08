@@ -89,6 +89,8 @@ final class NowPlayingService: ObservableObject {
     private let iTunesNotification     = Notification.Name("com.apple.iTunes.playerInfo")
     private let spotifyNotification    = Notification.Name("com.apple.Spotify.PlayerStateChanged")
 
+    private var pollTimer: Timer?
+
     func start() {
         let center = DistributedNotificationCenter.default()
 
@@ -108,11 +110,25 @@ final class NowPlayingService: ObservableObject {
             self?.handleSpotifyNotification(note)
         }
 
-        // Probe both apps in case one is already playing when we launch —
-        // distributed notifications don't replay history, so without this
-        // the notch would stay blank until the user hits next/pause.
+        // Initial probe — distributed notifications don't replay history,
+        // so without this the notch stays blank if music was already
+        // playing when we launched.
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.probeInitialState()
+        }
+
+        // Periodic re-probe — covers cases where:
+        //   • Music started AFTER NotchPop launched and the distributed
+        //     notification didn't fire (some media-key paths skip it).
+        //   • The user switched between Apple Music and Spotify during
+        //     a session and we haven't seen a notification since.
+        //   • The current track's elapsed time advances — we update it.
+        // Cheap: runs every 5s, only does work if a music app is running.
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            DispatchQueue.global(qos: .utility).async {
+                self?.probeInitialState()
+            }
         }
     }
 
@@ -197,8 +213,17 @@ final class NowPlayingService: ObservableObject {
 
     /// Both Music and Spotify expose AppleScript dictionaries that let us
     /// read the current track without launching the app. The `if it is
-    /// running` guard is critical — referencing `current track` on a
+    /// `running` guard is critical — referencing `current track` on a
     /// non-running app would launch it, which is exactly what we don't want.
+    ///
+    /// IMPORTANT: previous version used `\u{1F}` (ASCII 0x1F) as a field
+    /// separator inside the AppleScript source. AppleScript's parser
+    /// silently treated the embedded control character as whitespace,
+    /// which made the probe return empty strings. Switched to a
+    /// printable token separator `|||DG|||` that survives AppleScript
+    /// concatenation cleanly.
+    private static let probeSep = "|||DG|||"
+
     private func probeInitialState() {
         // Apple Music first.
         let musicSource = """
@@ -208,12 +233,16 @@ final class NowPlayingService: ObservableObject {
         if isRunning then
             tell application "Music"
                 if player state is not stopped then
-                    set t to name of current track
-                    set a to artist of current track
-                    set al to album of current track
-                    set d to duration of current track
-                    set ps to (player state as text)
-                    return t & "\u{1F}" & a & "\u{1F}" & al & "\u{1F}" & d & "\u{1F}" & ps
+                    try
+                        set t to name of current track
+                        set a to artist of current track
+                        set al to album of current track
+                        set d to duration of current track
+                        set ps to (player state as text)
+                        return t & "\(Self.probeSep)" & a & "\(Self.probeSep)" & al & "\(Self.probeSep)" & d & "\(Self.probeSep)" & ps
+                    on error
+                        return ""
+                    end try
                 end if
             end tell
         end if
@@ -223,8 +252,7 @@ final class NowPlayingService: ObservableObject {
             applyProbeResult(result, source: .appleMusic)
         }
 
-        // Then Spotify (only if Music isn't already active — we don't
-        // want to clobber an in-flight notification we just handled).
+        // Then Spotify (only if Music isn't already active).
         let spotifySource = """
         tell application "System Events"
             set isRunning to (exists (processes where name is "Spotify"))
@@ -232,12 +260,16 @@ final class NowPlayingService: ObservableObject {
         if isRunning then
             tell application "Spotify"
                 if player state is not stopped then
-                    set t to name of current track
-                    set a to artist of current track
-                    set al to album of current track
-                    set d to duration of current track
-                    set ps to (player state as text)
-                    return t & "\u{1F}" & a & "\u{1F}" & al & "\u{1F}" & d & "\u{1F}" & ps
+                    try
+                        set t to name of current track
+                        set a to artist of current track
+                        set al to album of current track
+                        set d to duration of current track
+                        set ps to (player state as text)
+                        return t & "\(Self.probeSep)" & a & "\(Self.probeSep)" & al & "\(Self.probeSep)" & d & "\(Self.probeSep)" & ps
+                    on error
+                        return ""
+                    end try
                 end if
             end tell
         end if
@@ -250,18 +282,20 @@ final class NowPlayingService: ObservableObject {
     }
 
     private func applyProbeResult(_ raw: String, source: ActivePlayer) {
-        let parts = raw.split(separator: "\u{1F}", omittingEmptySubsequences: false)
-        guard parts.count >= 5 else { return }
+        let parts = raw.components(separatedBy: Self.probeSep)
+        guard parts.count >= 5 else {
+            NSLog("NotchPop: probe returned malformed result: \(raw)")
+            return
+        }
 
         var t = NowPlayingTrack.empty
-        t.title  = String(parts[0])
-        t.artist = String(parts[1])
-        t.album  = String(parts[2])
-        // Music returns duration in seconds (Double); Spotify in seconds too.
+        t.title  = parts[0]
+        t.artist = parts[1]
+        t.album  = parts[2]
         if let d = Double(parts[3]) {
             t.duration = d
         }
-        let state = String(parts[4]).lowercased()
+        let state = parts[4].lowercased()
         t.isPlaying = state.contains("playing")
 
         active = source
@@ -269,12 +303,11 @@ final class NowPlayingService: ObservableObject {
         artworkFetchToken = token
         publish(t)
 
+        NSLog("NotchPop: probe found \(source) — \(t.title) — \(t.artist)")
+
         if source == .appleMusic {
             fetchAppleMusicArtwork(matching: token)
         }
-        // For Spotify, an artwork URL only comes through the notification
-        // path. The probe will be replaced by a real notification within
-        // a few seconds (or whenever the user touches transport).
     }
 
     // MARK: - Artwork fetching
@@ -400,6 +433,7 @@ final class NowPlayingService: ObservableObject {
     }
 
     deinit {
+        pollTimer?.invalidate()
         DistributedNotificationCenter.default().removeObserver(self)
     }
 }

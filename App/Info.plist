@@ -26,9 +26,21 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>NotchPop reads what's playing in Apple Music and Spotify so the Music tab can show your current track.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Free · MIT licensed</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://notchpop.pages.dev/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>CfYNfRbvojf1x4iugpkQGkwNjJCbM5EqSFeIVgyAnu8=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>14400</integer>
 </dict>
 </plist>

@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var screenChangeCancellable: AnyCancellable?
     let viewModel = NotchViewModel()
+    let updater = UpdaterController()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide Dock icon — we want to live in the notch + menubar only.
@@ -21,6 +22,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installStatusItem()
         installNotchWindow()
         observeScreenChanges()
+
+        // Initialise Sparkle (lazy SPUStandardUpdaterController fires
+        // here; see UpdaterController). Then check whether we just got
+        // updated since last launch — if so, push a system notification.
+        _ = updater.controller
+        updater.notifyIfJustUpdated()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -38,6 +45,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
             .target = self
+        menu.addItem(.separator())
+        // Sparkle handles the entire update flow once the user clicks
+        // here: fetches appcast.xml, verifies the EdDSA signature on
+        // each entry, downloads the new DMG, prompts the user, swaps
+        // the .app bundle on relaunch.
+        let updateItem = menu.addItem(
+            withTitle: "Check for Updates…",
+            action: #selector(UpdaterController.checkForUpdates(_:)),
+            keyEquivalent: "u")
+        updateItem.target = updater
         menu.addItem(.separator())
         menu.addItem(withTitle: "Clear file shelf",
                      action: #selector(clearShelf), keyEquivalent: "")

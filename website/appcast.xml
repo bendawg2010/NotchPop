@@ -1,0 +1,46 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     version="2.0">
+  <channel>
+    <title>NotchPop</title>
+    <link>https://notchpop.pages.dev/appcast.xml</link>
+    <description>Updates for NotchPop — your MacBook notch, but useful.</description>
+    <language>en</language>
+
+    <!--
+      Each <item> is a release. Sparkle picks the highest sparkle:version
+      that's compatible with the user's macOS, and verifies the EdDSA
+      sparkle:edSignature against the public key embedded in the app's
+      Info.plist (SUPublicEDKey). If our website is compromised, an
+      attacker still can't push a malicious update without the private
+      key (which lives in this Mac's Keychain).
+
+      Don't edit by hand — `./scripts/release.sh <version>` prepends a
+      fresh entry with the correct signature + size + timestamp.
+    -->
+
+    <item>
+      <title>v1.5.1</title>
+      <pubDate>Fri, 08 May 2026 00:57:00 +0000</pubDate>
+      <sparkle:version>1.5.1</sparkle:version>
+      <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.1 — Auto-update + bug fixes</h2>
+        <ul>
+          <li>🚀 <strong>Auto-update via Sparkle</strong> — NotchPop checks for updates every 4 hours, signs them with EdDSA, and posts a system notification when an update is found / installed.</li>
+          <li>🎵 <strong>Music probe fix</strong> — added <code>NSAppleEventsUsageDescription</code> so macOS Sequoia stops silently blocking AppleScript reads of Music/Spotify track info. Plus a 5-second re-probe covers songs that started after launch.</li>
+          <li>📋 <strong>Clipboard widget</strong> · 🖥 <strong>System Stats widget</strong> · proper app icon · all carryover from v1.5.0.</li>
+        </ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.1/NotchPop.dmg"
+        sparkle:version="1.5.1"
+        sparkle:shortVersionString="1.5.1"
+        length="1774907"
+        type="application/octet-stream"
+        sparkle:edSignature="SAzILoJoo4ijOAH3rYPdgOQN2k5+uKGolUwHAb8QTiBmT0jk/OuQuousPdew9a39AU3Fmc2xW45/mA70fzKxAw==" />
+    </item>
+  </channel>
+</rss>

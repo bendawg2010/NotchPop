@@ -17,6 +17,16 @@ settings:
     OTHER_CODE_SIGN_FLAGS: "--timestamp=none"
     GENERATE_INFOPLIST_FILE: NO
 
+# Sparkle handles auto-updates. The framework gets pulled in via SPM
+# (Swift Package Manager) — Xcode embeds it in NotchPop.app/Contents/
+# Frameworks/. Each release the build script signs the new DMG with
+# our private EdDSA key (in Keychain) and adds an entry to the
+# appcast.xml that Sparkle polls every few hours.
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.1"
+
 targets:
   NotchPop:
     type: application
@@ -24,6 +34,9 @@ targets:
     sources:
       - path: App
       - path: App/Assets.xcassets
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     info:
       path: App/Info.plist
       properties:
@@ -33,6 +46,24 @@ targets:
         LSUIElement: true
         NSPrincipalClass: NSApplication
         NSHumanReadableCopyright: "Free · MIT licensed"
+        # Without this, macOS Sequoia silently blocks our AppleScript
+        # reads of Apple Music / Spotify state (the playpause commands
+        # work because they trigger a one-time permission prompt; reads
+        # die quietly). The text here shows in the consent dialog.
+        NSAppleEventsUsageDescription: "NotchPop reads what's playing in Apple Music and Spotify so the Music tab can show your current track."
+        # ---- Sparkle auto-update keys ----
+        # Public key from the matching private key in Keychain. Sparkle
+        # rejects any appcast entry whose ed25519 signature doesn't
+        # verify against this — so even if our website is compromised,
+        # an attacker can't push a malicious update.
+        SUPublicEDKey: "CfYNfRbvojf1x4iugpkQGkwNjJCbM5EqSFeIVgyAnu8="
+        # Where Sparkle polls for new versions. The script that
+        # publishes a release also re-deploys this file.
+        SUFeedURL: "https://notchpop.pages.dev/appcast.xml"
+        # Check every 4 hours by default (the user can change in Settings).
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 14400
+        SUAutomaticallyUpdate: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.benburnette.NotchPop
