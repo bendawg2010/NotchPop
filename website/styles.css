@@ -248,8 +248,28 @@ main { position: relative; z-index: 1; }
   gap: 8px;
 }
 .notch.is-open .notch-expanded { opacity: 1; transform: scale(1); }
+.ne-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .ne-tabs {
   display: flex; gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.ne-battery {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.78);
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 .ne-tab {
   font-size: 10px; font-weight: 700;

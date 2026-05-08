@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#000000" />
 
   <title>NotchPop — Your MacBook notch, but useful.</title>
-  <meta name="description" content="Free, open-source macOS app that turns the notch into a hover-to-expand file shelf, now-playing widget, and charging peek. Drag files in, drag them out anywhere." />
+  <meta name="description" content="Free, open-source macOS app that turns the notch into a hover-to-expand workspace. Six widgets — Shelf, Music, Pomodoro, Timers, World Clock, Notes — that mix and match. Blends invisibly with your hardware notch." />
 
   <meta property="og:title" content="NotchPop — Your MacBook notch, but useful." />
-  <meta property="og:description" content="Free macOS app. The notch becomes a file shelf + now-playing + charging peek. Hover to expand." />
+  <meta property="og:description" content="Free macOS app. Six widgets in your notch — Shelf, Music, Pomodoro, Timers, World Clock, Notes. Hover to expand. Blends with your hardware notch." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://notchpop.pages.dev/" />
 
@@ -32,12 +32,12 @@
   <main>
     <section class="hero">
       <h1>Your MacBook notch,<br/><span class="grad">but useful.</span></h1>
-      <p class="lead">Hover the notch — it pops open. Drop a file in, it sits there. Drag it out anywhere. Music. Pomodoro. Quick notes. Plug in, it cheers. Free. Open source. <strong>Blends invisibly with your hardware notch when collapsed.</strong></p>
+      <p class="lead">Hover the notch — it pops open. Drop a file in, drag it out anywhere. Music. Pomodoro. Timers. World clock. Quick notes. Six widgets you mix and match. Free. Open source. <strong>Blends invisibly with your hardware notch when collapsed.</strong></p>
       <div class="ctas">
         <a class="btn primary" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download for macOS</a>
         <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
       </div>
-      <div class="release-meta">macOS 14+ · Apple Silicon &amp; Intel · ~911 KB · Free · MIT</div>
+      <div class="release-meta">v1.4 · macOS 14+ · Apple Silicon &amp; Intel · ~1 MB DMG · Free · MIT</div>
       <div class="gatekeeper-note" role="note">
         <span class="gatekeeper-note-icon" aria-hidden="true">ⓘ</span>
         <div>
@@ -54,15 +54,15 @@
         <div class="notch" id="notchHero">
           <div class="notch-pill"></div>
           <div class="notch-expanded">
-            <div class="ne-tabs">
-              <span class="ne-tab is-on">📥 Shelf</span>
-              <span class="ne-tab">🎵 Music</span>
-              <span class="ne-tab">🍅 Pomodoro</span>
-              <span class="ne-tab">🕐 Stopwatch</span>
-              <span class="ne-tab">⏱ Timer</span>
-              <span class="ne-tab">🌍 Clock</span>
-              <span class="ne-tab">📝 Notes</span>
-              <span class="ne-tab">🔋 Battery</span>
+            <div class="ne-topbar">
+              <div class="ne-tabs">
+                <span class="ne-tab is-on">📥 Shelf</span>
+                <span class="ne-tab">🎵 Music</span>
+                <span class="ne-tab">🍅 Pomodoro</span>
+                <span class="ne-tab">🕐 Timers</span>
+                <span class="ne-tab">📝 Notes</span>
+              </div>
+              <span class="ne-battery" aria-label="82% battery">🔋 82%</span>
             </div>
             <div class="ne-shelf">
               <div class="ne-thumb"><span>📄</span><em>essay.pdf</em></div>
@@ -78,48 +78,52 @@
 
     <section class="features">
       <div class="feature">
-        <h3>📥 File shelf</h3>
-        <p>Drop any file onto the notch — it sits there. Drag it out into Finder, email, Slack, anywhere. No copies, no syncing, no upload.</p>
+        <h3>📥 Drag-to-open Shelf</h3>
+        <p>Start dragging a file from Finder — the notch <strong>auto-opens</strong> so you can drop it in. Drag it back out to Finder, email, Slack, anywhere. No copies, no upload.</p>
       </div>
       <div class="feature">
-        <h3>🎵 Music controls</h3>
-        <p>Play / pause / skip directly from the notch. Album art + track info from <strong>Apple Music, Spotify, YouTube, podcasts</strong> — anything with media keys.</p>
+        <h3>🎵 Music</h3>
+        <p>Album art, track info, and <strong>full transport controls</strong> — play, pause, skip — for Apple Music and Spotify. Animated progress bar, smooth scrubbing.</p>
       </div>
       <div class="feature">
-        <h3>🍅 Pomodoro timer</h3>
-        <p>Built-in 25/5 focus timer with a glowing progress ring. Customize durations, count daily sessions, get a notification when each phase ends.</p>
+        <h3>🍅 Pomodoro</h3>
+        <p>Focus timer with phase picker (Focus / Short / Long), daily goal, inline duration editing, and <strong>strict mode</strong> to lock yourself in. Auto-start the next phase if you want.</p>
       </div>
       <div class="feature">
-        <h3>⚡ Charging peek</h3>
-        <p>Plug in your MacBook — the notch briefly expands with a battery cheer. Auto-collapses after 4 seconds. Like AirPods, but for power.</p>
-      </div>
-      <div class="feature">
-        <h3>📝 Quick Notes</h3>
-        <p>Auto-saving scratchpad inside the notch. Type, switch tabs, close the notch — your text is still there next time. Debounced so it never thrashes the disk.</p>
-      </div>
-      <div class="feature">
-        <h3>🕐 Stopwatch &amp; Timer</h3>
-        <p>Count-up stopwatch with lap support, plus a countdown timer with ±30s nudges. Set a 7-min timer for the oven without leaving your desk.</p>
+        <h3>🕐 Timers</h3>
+        <p>Stopwatch and countdown <strong>combined into one tab</strong> with a mode picker. Lap support on the stopwatch, ±30s nudges on the countdown.</p>
       </div>
       <div class="feature">
         <h3>🌍 World Clock</h3>
-        <p>Up to 4 cities at a glance with live time + offset readout. Configure any of macOS's 600+ timezones. Default: Home / NYC / London / Tokyo.</p>
+        <p>Up to 4 cities with custom labels and any of macOS's 600+ timezones. Live offsets at a glance. Configure from Settings → World Clock.</p>
       </div>
       <div class="feature">
-        <h3>⚙️ Highly customizable</h3>
-        <p>8 widgets to mix and match. Show / hide / reorder. Tweak hover &amp; collapse delay. Auto-hide in fullscreen. Launch at login. Strict-mode Pomodoro. <strong>20+ knobs.</strong></p>
+        <h3>📝 Notes</h3>
+        <p>Auto-saving scratchpad inside the notch. Type, switch tabs, close — your text is still there. Debounced writes so it never thrashes the disk.</p>
       </div>
       <div class="feature">
-        <h3>🫥 Blends with the notch</h3>
-        <p>The collapsed shape is the same width and corner radius as your hardware notch. Continuous (squircle) corners, pure black, no border. Invisible until you hover.</p>
+        <h3>🔋 Inline battery</h3>
+        <p>Always visible in the top-right of the expanded notch. Plug in — a charging cheer briefly expands the notch, then it tucks itself away. Like AirPods, for power.</p>
+      </div>
+      <div class="feature">
+        <h3>🫥 Hardware-blending notch</h3>
+        <p>Collapsed shape matches your physical notch <strong>exactly</strong> — same width, same continuous (squircle) corners. Notch fit sliders in Settings if you want to fine-tune.</p>
+      </div>
+      <div class="feature">
+        <h3>🎬 3-scene welcome</h3>
+        <p>First launch plays a hue-shifting gradient with three scenes — <em>Your workflow, faster.</em> → <em>Drop files in.</em> → <em>Tabs are yours.</em> Replayable from Settings → About.</p>
+      </div>
+      <div class="feature">
+        <h3>⚙️ Six widgets, your way</h3>
+        <p>Mix and match in Settings → Tabs. Reorder. Show / hide. <strong>Pick your default starting tab</strong> (now configurable, defaults to Music). 20+ behavior knobs.</p>
       </div>
       <div class="feature">
         <h3>🚀 Native &amp; tiny</h3>
-        <p>SwiftUI + AppKit. ~1MB binary, ~410KB zipped. No Electron, no JavaScript. Boots before your menu bar finishes painting.</p>
+        <p>SwiftUI + AppKit. <strong>~1 MB DMG</strong>, signed-style installer with drag-to-Applications. No Electron, no JavaScript. Boots before your menu bar finishes painting.</p>
       </div>
       <div class="feature">
         <h3>🔓 Free forever</h3>
-        <p>MIT licensed. No subscription. No login. NotchNook charges $25 — this does the same things and costs nothing.</p>
+        <p>MIT licensed. No subscription. No login. NotchNook charges $25 — this does the same things, plus six widgets they don't have, and costs nothing.</p>
       </div>
     </section>
 
@@ -151,13 +155,19 @@
           <div class="cmp-meh">Limited</div>
         </div>
         <div class="cmp-row">
-          <div>Music controls (play/skip)</div>
+          <div>Drag-to-open Shelf</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-meh">Partial</div>
+          <div class="cmp-bad">No</div>
+        </div>
+        <div class="cmp-row">
+          <div>Music transport (play/skip)</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-meh">Read-only</div>
         </div>
         <div class="cmp-row">
-          <div>Pomodoro timer</div>
+          <div>Pomodoro (with strict mode)</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-bad">No</div>
           <div class="cmp-bad">No</div>
@@ -169,7 +179,7 @@
           <div class="cmp-bad">No</div>
         </div>
         <div class="cmp-row">
-          <div>World Clock</div>
+          <div>World Clock (4 cities)</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-bad">No</div>
           <div class="cmp-bad">No</div>
@@ -181,13 +191,25 @@
           <div class="cmp-bad">No</div>
         </div>
         <div class="cmp-row">
-          <div>Charging peek</div>
+          <div>Inline battery + charging peek</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
         </div>
         <div class="cmp-row">
           <div>Customizable tabs</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-meh">Partial</div>
+          <div class="cmp-meh">Partial</div>
+        </div>
+        <div class="cmp-row">
+          <div>Configurable default tab</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-bad">No</div>
+          <div class="cmp-meh">Partial</div>
+        </div>
+        <div class="cmp-row">
+          <div>Hardware-matched notch shape</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-meh">Partial</div>
           <div class="cmp-meh">Partial</div>
@@ -213,7 +235,7 @@
           <p>
             Tap the button below. Your browser saves <code>NotchPop.dmg</code>. Double-click it — Finder opens a window with <strong>NotchPop</strong> on the left and <strong>Applications</strong> on the right.
           </p>
-          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download NotchPop.dmg · 911 KB</a>
+          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download NotchPop.dmg · ~1 MB</a>
         </div>
 
         <div class="install-card">
@@ -238,7 +260,7 @@
       </div>
 
       <div class="install-after">
-        Once it's open, the notch <strong>auto-expands for 5 seconds with a welcome card</strong> so you can see what it does. Hover the notch any time to use it. Look for the rectangle icon in your menu bar (top-right) for Settings, Pomodoro reset, and Quit.
+        Once it's open, the notch <strong>plays a 3-scene welcome animation</strong> with a hue-shifting gradient so you can see what it does. Hover the notch any time to use it. Look for the rectangle icon in your menu bar (top-right) for Settings, Pomodoro reset, and Quit. Replay the welcome any time from <strong>Settings → About</strong>.
       </div>
 
       <div class="install-troubleshoot" role="note">

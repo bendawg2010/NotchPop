@@ -213,6 +213,10 @@ struct NotchView: View {
             WorldClockView(service: viewModel.worldClock)
         case .notes:
             NotesView(service: viewModel.notes)
+        case .clipboard:
+            ClipboardView(service: viewModel.clipboard)
+        case .systemStats:
+            SystemStatsView(service: viewModel.systemStats)
         }
     }
 }
