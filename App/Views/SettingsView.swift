@@ -257,6 +257,13 @@ struct SettingsView: View {
             }
             caption("Number of recent copies to remember. Older entries get evicted when the count exceeds this.")
 
+            LabeledContent {
+                Toggle("", isOn: $viewModel.clipboardAutoPaste).labelsHidden()
+            } label: {
+                Text("Auto-paste on click")
+            }
+            caption("On = clicking a chip copies the text AND simulates ⌘V into the previously-frontmost app, so you go from notch to pasted in one click. Off = chip click just copies (you press ⌘V manually).")
+
             footerCredit
         }
     }
@@ -276,21 +283,20 @@ struct SettingsView: View {
             }
             Spacer()
             if visible {
-                if !isFirst {
-                    Button {
-                        moveTab(tab, by: -1)
-                    } label: { Image(systemName: "arrow.up") }
-                        .buttonStyle(.borderless)
-                } else {
-                    Image(systemName: "arrow.up").opacity(0).accessibilityHidden(true)
+                // Up/down arrows now use .plain with an explicit
+                // contentShape(Rectangle) so the entire 28x28 area is
+                // clickable, not just the 11pt SF Symbol glyph
+                // (which the user reported as 'doesnt work' — too
+                // small to hit reliably).
+                arrowButton(symbol: "arrow.up",
+                            disabled: isFirst,
+                            help: "Move up") {
+                    moveTab(tab, by: -1)
                 }
-                if !isLast {
-                    Button {
-                        moveTab(tab, by: 1)
-                    } label: { Image(systemName: "arrow.down") }
-                        .buttonStyle(.borderless)
-                } else {
-                    Image(systemName: "arrow.down").opacity(0).accessibilityHidden(true)
+                arrowButton(symbol: "arrow.down",
+                            disabled: isLast,
+                            help: "Move down") {
+                    moveTab(tab, by: 1)
                 }
             }
             Toggle("", isOn: Binding(
@@ -311,6 +317,30 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
+    }
+
+    /// Tab-row arrow with a generous click target. The previous version
+    /// used `.buttonStyle(.borderless)` with no explicit frame, so the
+    /// hit area was just the SF Symbol glyph (~11×11pt) — easy to miss.
+    /// This wraps in a 28×28 rounded-rect, fades visibility on
+    /// disabled state instead of hiding entirely so the row layout
+    /// stays consistent.
+    private func arrowButton(symbol: String, disabled: Bool, help: String,
+                             action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .semibold))
+                .frame(width: 28, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.gray.opacity(disabled ? 0 : 0.10))
+                )
+                .contentShape(Rectangle())
+                .opacity(disabled ? 0.25 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .help(help)
     }
 
     private func moveTab(_ tab: NotchTab, by delta: Int) {

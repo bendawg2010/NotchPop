@@ -214,11 +214,68 @@ struct PomodoroView: View {
                         in: 1...90)
             }
 
-            Text("All four durations + the long-break cycle live in Settings → Pomodoro.")
+            // Per user feedback: "no customizablity for some of the
+            // units such as like the pombodoros you cant edit the
+            // options" — surface the flow + cycle-length + daily-goal
+            // controls directly in the popover so users don't have to
+            // dig through Settings → Pomodoro.
+            Divider()
+            Text("Flow & goal").font(.caption.weight(.heavy))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .tracking(1.0)
+            Toggle("Auto-start the next phase", isOn: Binding(
+                get: { service.autoStartNextPhase },
+                set: { service.autoStartNextPhase = $0 }))
+            Toggle("Strict mode (can't pause focus)", isOn: Binding(
+                get: { service.strictMode },
+                set: { service.strictMode = $0 }))
+            Stepper("Long break every \(service.sessionsBeforeLongBreak) sessions",
+                    value: Binding(
+                        get: { service.sessionsBeforeLongBreak },
+                        set: { service.sessionsBeforeLongBreak = $0 }),
+                    in: 2...10)
+            Stepper("Daily goal: \(service.dailyGoal) sessions",
+                    value: Binding(
+                        get: { service.dailyGoal },
+                        set: { service.dailyGoal = $0 }),
+                    in: 1...20)
+
+            Divider()
+            Text("Sound").font(.caption.weight(.heavy))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .tracking(1.0)
+            HStack {
+                Picker("End-of-phase sound",
+                       selection: Binding(
+                            get: {
+                                UserDefaults.standard.string(forKey: "np.timerSoundName")
+                                ?? TimerSound.defaultChoice
+                            },
+                            set: { newName in
+                                UserDefaults.standard.set(newName, forKey: "np.timerSoundName")
+                            })) {
+                    ForEach(TimerSound.choices, id: \.self) { Text($0).tag($0) }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                Button {
+                    let name = UserDefaults.standard.string(forKey: "np.timerSoundName")
+                        ?? TimerSound.defaultChoice
+                    TimerSound.playRaw(name: name)
+                } label: {
+                    Label("Preview", systemImage: "speaker.wave.2.fill")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+
+            Text("All four durations also live in Settings → Pomodoro.")
                 .font(.caption2).foregroundColor(.secondary)
         }
         .padding(16)
-        .frame(width: 280)
+        .frame(width: 320)
     }
 
     private var ringView: some View {

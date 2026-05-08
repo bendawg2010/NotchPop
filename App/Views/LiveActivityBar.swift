@@ -59,28 +59,55 @@ struct LiveActivityBar: View {
     /// pill. Music shows track-elapsed; timers show phase-progress.
     /// We match the colors used by the right-side signal (audio bars
     /// or timer text) so the readout stays visually coherent.
+    ///
+    /// User feedback: "the progress bar on the timer gets covered by
+    /// the notch." The pill spans the FULL window width including the
+    /// hardware notch cutout in the middle (~178pt of physical hole).
+    /// A single full-width progress capsule looks broken because the
+    /// middle 60% is invisible behind the cutout — fill rolls along
+    /// the left, vanishes for ages, then peeks out on the right.
+    /// Fix: split into TWO segments, one on the visible LEFT black
+    /// area, one on the visible RIGHT, each showing the same overall
+    /// progress mapped to its own width. The middle (cutout) stays
+    /// completely empty.
     @ViewBuilder
     private var activityProgressLine: some View {
         if let pct = activityProgress {
             GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.white.opacity(0.06))
-                        .frame(height: 1.5)
-                    Capsule()
-                        .fill(LinearGradient(
-                            colors: progressColors,
-                            startPoint: .leading, endPoint: .trailing))
-                        .frame(width: geo.size.width * CGFloat(pct), height: 1.5)
-                        .animation(.linear(duration: 0.5), value: pct)
+                let totalW = geo.size.width
+                let cutoutW = viewModel.compactSize.width
+                let sideW = max(0, (totalW - cutoutW) / 2)
+                HStack(spacing: 0) {
+                    progressCapsule(width: sideW, progress: pct)
+                    Color.clear.frame(width: cutoutW)
+                    progressCapsule(width: sideW, progress: pct)
                 }
                 .frame(height: 1.5)
             }
             .frame(height: 1.5)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 6)
             .padding(.bottom, 3)
             .allowsHitTesting(false)
         }
+    }
+
+    /// One side of the progress line — fills its own `width` based on
+    /// the same 0..1 progress fraction. We render TWO of these
+    /// (mirrored around the hardware notch cutout) so the user sees
+    /// continuous progress on both visible black areas of the pill.
+    private func progressCapsule(width: CGFloat, progress: Double) -> some View {
+        ZStack(alignment: .leading) {
+            Capsule()
+                .fill(Color.white.opacity(0.07))
+                .frame(width: width, height: 1.5)
+            Capsule()
+                .fill(LinearGradient(
+                    colors: progressColors,
+                    startPoint: .leading, endPoint: .trailing))
+                .frame(width: width * CGFloat(progress), height: 1.5)
+                .animation(.linear(duration: 0.5), value: progress)
+        }
+        .frame(width: width, height: 1.5)
     }
 
     /// 0..1 fraction to fill the activity progress line. Returns nil

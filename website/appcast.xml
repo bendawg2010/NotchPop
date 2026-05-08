@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.21</title>
+      <pubDate>Fri, 08 May 2026 17:55:59 +0000</pubDate>
+      <sparkle:version>1.5.21</sparkle:version>
+      <sparkle:shortVersionString>1.5.21</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Settings button in the notch now actually works.</strong> It WAS opening the Settings panel, but the panel was being raised to .floating (level 3) while the notch sits at .statusBar+1 (level 26) — settings was rendered BEHIND the notch the moment the level dropped to .normal. Fixed by pinning the panel above the notch (.statusBar+2) and never lowering it.</li><li><strong>Up/down arrows in Settings → Tabs are now reliable.</strong> Hit area was just the 11pt SF Symbol glyph — easy to miss. Now wrapped in 28×28 rounded-rect buttons with explicit contentShape, fade-on-disable instead of hide so the row layout stays consistent.</li><li><strong>Clipboard click pastes for real.</strong> Default behavior is now: click a chip → copy to pasteboard AND synthesize ⌘V into the previously-frontmost app. Toggle in Settings → Tabs → Clipboard tab.</li><li><strong>Timer progress bar no longer covered by the notch.</strong> The full-width progress capsule was hidden in the middle by the hardware notch cutout. Now split into LEFT and RIGHT segments mirroring the same progress fraction, with the cutout area left empty.</li><li><strong>Pomodoro options inline.</strong> Click the duration chip in the Pomodoro tab — the popover now includes auto-start toggle, strict mode, long-break cycle stepper, daily goal stepper, and the sound picker with Preview. No more digging through Settings → Pomodoro for these.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.21/NotchPop.dmg"
+        sparkle:version="1.5.21"
+        sparkle:shortVersionString="1.5.21"
+        length="2169019"
+        type="application/octet-stream"
+        sparkle:edSignature="snHsIvGccAVNTndwoFOytJQ9XzioiFEK28+gPGJmWBomdZu8AvhLEqAu65cGVFTYHuJH57P3RL3r0IotopYaDw==" />
+    </item>
+    <item>
       <title>v1.5.20</title>
       <pubDate>Fri, 08 May 2026 17:49:07 +0000</pubDate>
       <sparkle:version>1.5.20</sparkle:version>

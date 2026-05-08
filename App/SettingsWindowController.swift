@@ -71,17 +71,25 @@ final class SettingsWindowController: NSWindowController {
         if !window.isVisible {
             window.center()
         }
-        // Boost level briefly so the panel comes ABOVE the notch panel
-        // (which is at .statusBar+1). Dropping back to .normal after a
-        // beat means the settings window doesn't permanently float
-        // above other apps.
-        window.level = .floating
+        // Pin the settings panel ABOVE the notch panel.
+        //
+        // Bug we just fixed: the panel was being raised to .floating
+        // (level value 3), but the notch panel sits at .statusBar+1
+        // (level value 26). Result — settings was ALWAYS rendered
+        // BEHIND the notch the moment the level dropped. From the
+        // gear-icon path, this manifested as 'the settings button in
+        // the notch doesn't work' because the user expected to see
+        // the panel and instead nothing visible appeared (the
+        // settings window WAS opened, just hidden behind the notch
+        // pill in the corner of the screen, easy to miss).
+        //
+        // Fix: boost to .statusBar + 2 so it's strictly above the
+        // notch, and KEEP it there. Setting it back to .normal after
+        // 0.4s was actively bad — the moment the timer fired, the
+        // settings window dropped below the notch again.
+        window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.statusWindow)) + 2)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            window.level = .normal
-        }
-        NSLog("NotchPop: Settings panel ordered front, isVisible=\(window.isVisible), frame=\(window.frame)")
+        NSLog("NotchPop: Settings panel ordered front, level=\(window.level.rawValue), isVisible=\(window.isVisible), frame=\(window.frame)")
     }
 }

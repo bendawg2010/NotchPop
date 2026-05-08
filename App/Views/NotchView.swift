@@ -522,7 +522,8 @@ struct NotchView: View {
                       fontSize: CGFloat(viewModel.notesFontSize),
                       monospaced: viewModel.notesMonospaced)
         case .clipboard:
-            ClipboardView(service: viewModel.clipboard)
+            ClipboardView(service: viewModel.clipboard,
+                          autoPaste: viewModel.clipboardAutoPaste)
         case .systemStats:
             SystemStatsView(service: viewModel.systemStats)
         case .calendar:

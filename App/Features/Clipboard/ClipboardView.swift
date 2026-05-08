@@ -10,6 +10,12 @@ import SwiftUI
 
 struct ClipboardView: View {
     @ObservedObject var service: ClipboardService
+    /// When true, clicking a chip simulates Cmd+V into the previously-
+    /// frontmost app right after the copy. The notch's
+    /// .nonactivatingPanel style means we never stole focus, so the
+    /// app the user came from is still active and ready to receive
+    /// the paste. Setting lives on NotchViewModel.clipboardAutoPaste.
+    var autoPaste: Bool = true
     @State private var pulse: Bool = false
     @State private var copiedID: UUID?
 
@@ -92,6 +98,15 @@ struct ClipboardView: View {
         withAnimation(.easeOut(duration: 0.15)) {
             copiedID = entry.id
         }
+        // Auto-paste: synthesize Cmd+V into the foreground app (the
+        // app the user was on BEFORE expanding the notch — our panel
+        // never stole focus). Tiny delay so the pasteboard write
+        // settles before the keystroke arrives.
+        if autoPaste {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                synthesizePaste()
+            }
+        }
         // Reset the badge after a short beat so future clicks show
         // the flash again.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -101,6 +116,21 @@ struct ClipboardView: View {
                 }
             }
         }
+    }
+
+    /// Post Cmd+V via CGEvent so the foreground app pastes the new
+    /// pasteboard contents. We use .combinedSessionState so the
+    /// keystroke goes wherever the system would route a real
+    /// keyboard event right now.
+    private func synthesizePaste() {
+        let src = CGEventSource(stateID: .combinedSessionState)
+        let cmdV: CGKeyCode = 9 // V
+        let down = CGEvent(keyboardEventSource: src, virtualKey: cmdV, keyDown: true)
+        down?.flags = .maskCommand
+        down?.post(tap: .cghidEventTap)
+        let up = CGEvent(keyboardEventSource: src, virtualKey: cmdV, keyDown: false)
+        up?.flags = .maskCommand
+        up?.post(tap: .cghidEventTap)
     }
 }
 

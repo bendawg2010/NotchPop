@@ -402,6 +402,16 @@ final class NotchViewModel: ObservableObject {
     @Published var clipboardMax: Int = 12 {
         didSet { UserDefaults.standard.set(clipboardMax, forKey: "np.clipMax") }
     }
+    /// When true, clicking a clipboard chip not only copies the text
+    /// to the system pasteboard but ALSO synthesizes a Cmd+V into
+    /// whatever app was in the foreground BEFORE the user opened the
+    /// notch (the notch's .nonactivatingPanel style means it doesn't
+    /// steal focus, so the previously-frontmost app is still active).
+    /// User feedback: "the coping from the clip board unit doesnt
+    /// work" — they expected a click to paste, not just to copy.
+    @Published var clipboardAutoPaste: Bool = true {
+        didSet { UserDefaults.standard.set(clipboardAutoPaste, forKey: "np.clipAutoPaste") }
+    }
 
     // MARK: - Animation speed
 
@@ -615,6 +625,9 @@ final class NotchViewModel: ObservableObject {
         // Clipboard
         if d.object(forKey: "np.clipMax") != nil {
             self.clipboardMax = max(5, min(50, d.integer(forKey: "np.clipMax")))
+        }
+        if d.object(forKey: "np.clipAutoPaste") != nil {
+            self.clipboardAutoPaste = d.bool(forKey: "np.clipAutoPaste")
         }
         // Animation speed
         if d.object(forKey: "np.animSpeed") != nil {
