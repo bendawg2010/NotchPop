@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>NotchPop reads what's playing in Apple Music and Spotify so the Music tab can show your current track.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>NotchPop shows your next few calendar events in the Calendar tab inside the notch.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>NotchPop shows your next few calendar events in the Calendar tab inside the notch.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Free · MIT licensed</string>
 	<key>NSPrincipalClass</key>

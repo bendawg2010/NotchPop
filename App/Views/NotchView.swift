@@ -345,6 +345,10 @@ struct NotchView: View {
             ClipboardView(service: viewModel.clipboard)
         case .systemStats:
             SystemStatsView(service: viewModel.systemStats)
+        case .calendar:
+            CalendarView(service: viewModel.calendar)
+        case .airpods:
+            AirPodsView(service: viewModel.airpods)
         }
     }
 }

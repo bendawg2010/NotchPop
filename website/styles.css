@@ -168,6 +168,18 @@ main { position: relative; z-index: 1; }
   color: var(--text-muted);
   letter-spacing: 0.4px;
 }
+.version-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--grad);
+  color: white;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-size: 11px;
+  vertical-align: 1px;
+  box-shadow: 0 4px 14px rgba(255, 60, 172, 0.35);
+}
 
 /* ---------- Hero notch demo ---------- */
 .notch-demo {
@@ -258,6 +270,24 @@ main { position: relative; z-index: 1; }
   display: flex; gap: 6px;
   flex-wrap: nowrap;
   min-width: 0;
+  overflow: hidden;
+}
+.ne-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.ne-version {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: white;
+  background: var(--grad);
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(255, 60, 172, 0.25), 0 4px 12px rgba(255, 60, 172, 0.18);
 }
 .ne-battery {
   flex-shrink: 0;
@@ -270,6 +300,23 @@ main { position: relative; z-index: 1; }
   border: 1px solid rgba(255, 255, 255, 0.10);
   letter-spacing: 0.2px;
   white-space: nowrap;
+}
+.ne-gear {
+  display: inline-grid;
+  place-items: center;
+  width: 22px; height: 22px;
+  font-size: 12px;
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  cursor: default;
+  transition: transform 0.4s ease, color 0.2s, background 0.2s;
+}
+.notch.is-open .ne-gear { animation: gearSpin 8s linear infinite; }
+@keyframes gearSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 .ne-tab {
   font-size: 10px; font-weight: 700;
@@ -319,6 +366,93 @@ main { position: relative; z-index: 1; }
   font-size: 13px;
   color: var(--text-muted);
   font-weight: 500;
+}
+
+/* ---------- Live activity flanking pill ----------
+   Single integrated wide black shape that sits behind the
+   collapsed notch. The notch (240px) covers the middle, so
+   the album-art icon peeks out on the left and the audio
+   bars / countdown peeks out on the right. The whole thing
+   reads as one continuous pill — that's the design. */
+.notch-activity {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;            /* sits behind the notch (z=2) */
+  width: 360px;
+  height: 38px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.32s ease, transform 0.32s ease, width 0.32s ease;
+}
+.notch-activity.is-on {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.na-pill {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  border-radius: 0 0 19px 19px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+.na-art {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #1a1a1f;
+  position: relative;
+}
+.na-art-grad {
+  position: absolute;
+  inset: 0;
+  background: var(--grad);
+  animation: pillHue 14s linear infinite;
+}
+.na-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.na-bars span {
+  width: 3px;
+  background: white;
+  border-radius: 2px;
+  opacity: 0.92;
+}
+/* Music: bouncing audio bars. */
+.notch-activity.is-music .na-bars span {
+  animation: barPulse 0.9s ease-in-out infinite;
+}
+.notch-activity.is-music .na-bars span:nth-child(1) { animation-delay: 0s;    height: 60%; }
+.notch-activity.is-music .na-bars span:nth-child(2) { animation-delay: 0.18s; height: 100%; }
+.notch-activity.is-music .na-bars span:nth-child(3) { animation-delay: 0.36s; height: 75%; }
+.notch-activity.is-music .na-bars span:nth-child(4) { animation-delay: 0.55s; height: 90%; }
+@keyframes barPulse {
+  0%, 100% { transform: scaleY(0.45); }
+  50%      { transform: scaleY(1); }
+}
+/* Pomodoro: replace the bars with countdown text + tomato emoji.
+   We hide the bar spans and inject the text via ::after. */
+.notch-activity.is-pomodoro .na-bars span { display: none; }
+.notch-activity.is-pomodoro .na-bars {
+  height: auto;
+}
+.notch-activity.is-pomodoro .na-bars::after {
+  content: "🍅 19:42";
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 /* ---------- Features ---------- */

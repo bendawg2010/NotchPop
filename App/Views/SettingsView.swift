@@ -12,6 +12,11 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var viewModel: NotchViewModel
     @State private var draggingTab: NotchTab?
+    @State private var showResetConfirm = false
+
+    private var appVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
+    }
 
     var body: some View {
         TabView {
@@ -26,8 +31,42 @@ struct SettingsView: View {
             aboutSection
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 500, height: 540)
+        .frame(width: 540, height: 600)
         .padding(20)
+    }
+
+    // MARK: - Reusable section header
+    @ViewBuilder
+    private func sectionHeader(_ title: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 12, weight: .heavy))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .tracking(1.2)
+            Divider()
+        }
+        .padding(.top, 4)
+    }
+
+    // MARK: - Footer credit
+    @ViewBuilder
+    private var footerCredit: some View {
+        HStack {
+            Spacer()
+            Text("v\(appVersion) · MIT licensed · Sparkle 2.x")
+                .font(.caption2)
+                .foregroundColor(Color.secondary.opacity(0.6))
+        }
+        .padding(.top, 6)
+    }
+
+    // MARK: - Caption helper
+    @ViewBuilder
+    private func caption(_ text: String) -> some View {
+        Text(text)
+            .font(.caption2)
+            .foregroundColor(.secondary)
     }
 
     // MARK: - Tabs section
@@ -38,6 +77,8 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
+            sectionHeader("Visible tabs")
+
             VStack(spacing: 0) {
                 ForEach(NotchTab.allCases) { tab in
                     tabRow(tab)
@@ -47,6 +88,8 @@ struct SettingsView: View {
             .background(Color(.windowBackgroundColor).opacity(0.5))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray.opacity(0.3)))
+
+            caption("Reorder with the up/down arrows. The topmost visible tab is the default fallback if your selected default is hidden.")
 
             Spacer()
 
@@ -60,11 +103,15 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+
+            footerCredit
         }
     }
 
     private func tabRow(_ tab: NotchTab) -> some View {
         let visible = viewModel.visibleTabs.contains(tab)
+        let isFirst = viewModel.visibleTabs.first == tab
+        let isLast = viewModel.visibleTabs.last == tab
         return HStack(spacing: 12) {
             Image(systemName: tab.icon)
                 .font(.system(size: 14, weight: .semibold))
@@ -76,16 +123,24 @@ struct SettingsView: View {
             }
             Spacer()
             if visible {
-                Button {
-                    moveTab(tab, by: -1)
-                } label: { Image(systemName: "arrow.up") }
-                    .buttonStyle(.borderless)
-                    .disabled(viewModel.visibleTabs.first == tab)
-                Button {
-                    moveTab(tab, by: 1)
-                } label: { Image(systemName: "arrow.down") }
-                    .buttonStyle(.borderless)
-                    .disabled(viewModel.visibleTabs.last == tab)
+                // Hide arrows entirely at the boundaries instead of showing them disabled.
+                if !isFirst {
+                    Button {
+                        moveTab(tab, by: -1)
+                    } label: { Image(systemName: "arrow.up") }
+                        .buttonStyle(.borderless)
+                } else {
+                    // Reserve the same width so the toggle column doesn't jump.
+                    Image(systemName: "arrow.up").opacity(0).accessibilityHidden(true)
+                }
+                if !isLast {
+                    Button {
+                        moveTab(tab, by: 1)
+                    } label: { Image(systemName: "arrow.down") }
+                        .buttonStyle(.borderless)
+                } else {
+                    Image(systemName: "arrow.down").opacity(0).accessibilityHidden(true)
+                }
             }
             Toggle("", isOn: Binding(
                 get: { visible },
@@ -123,10 +178,27 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("How NotchPop behaves").font(.headline)
 
-                // Default tab — which pane the notch shows when expanded
-                HStack {
-                    Text("Default tab on expand")
-                    Spacer()
+                // ── Startup ──────────────────────────────────────────
+                sectionHeader("Startup")
+
+                LabeledContent {
+                    Toggle("", isOn: $viewModel.launchAtLogin).labelsHidden()
+                } label: {
+                    Text("Launch NotchPop at login")
+                }
+                caption("Adds NotchPop to System Settings → Login Items so it starts when you log in.")
+
+                LabeledContent {
+                    Toggle("", isOn: $viewModel.persistShelfBetweenLaunches).labelsHidden()
+                } label: {
+                    Text("Remember file shelf between launches")
+                }
+                caption("On = the dropped files in your shelf survive a relaunch. Off = shelf empties on quit.")
+
+                // ── Default tab ──────────────────────────────────────
+                sectionHeader("Default tab")
+
+                LabeledContent {
                     Picker("", selection: $viewModel.defaultTab) {
                         ForEach(viewModel.visibleTabs) { tab in
                             Label(tab.rawValue, systemImage: tab.icon).tag(tab)
@@ -134,25 +206,37 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .frame(maxWidth: 180)
+                } label: {
+                    Text("Default tab on expand")
                 }
-                Text("When you hover the notch, this tab shows first. Dragging a file in still auto-switches to Shelf.")
-                    .font(.caption2).foregroundColor(.secondary)
+                caption("When you hover the notch, this tab shows first. Dragging a file in still auto-switches to Shelf.")
 
-                Divider().padding(.vertical, 2)
+                // ── Display ──────────────────────────────────────────
+                sectionHeader("Display")
 
-                Toggle("Launch NotchPop at login", isOn: $viewModel.launchAtLogin)
-                Toggle("Hide notch in fullscreen apps", isOn: $viewModel.hideInFullscreen)
-                Toggle("Live activities flanking the notch (music + timer)",
-                       isOn: $viewModel.liveActivitiesEnabled)
-                Text("When music is playing or a timer is running, slim pills appear on either side of the collapsed notch — track info on the right, countdown on the left. Tap either to open it.")
-                    .font(.caption2).foregroundColor(.secondary)
-                Toggle("Auto-switch to Pomodoro tab when timer starts", isOn: $viewModel.pomodoroFollowsActive)
-                Toggle("Remember file shelf between launches", isOn: $viewModel.persistShelfBetweenLaunches)
-                Text("Timer-end sound options are in Settings → Pomodoro.")
-                    .font(.caption2).foregroundColor(.secondary)
+                LabeledContent {
+                    Toggle("", isOn: $viewModel.hideInFullscreen).labelsHidden()
+                } label: {
+                    Text("Hide notch in fullscreen apps")
+                }
+                caption("Keeps NotchPop out of the way when you're using a fullscreen video, presentation, or game.")
 
-                Divider().padding(.vertical, 4)
-                Text("Hover timing").font(.system(size: 13, weight: .semibold))
+                LabeledContent {
+                    Toggle("", isOn: $viewModel.liveActivitiesEnabled).labelsHidden()
+                } label: {
+                    Text("Live activities flanking the notch (music + timer)")
+                }
+                caption("When music is playing or a timer is running, slim pills appear on either side of the collapsed notch — track info on the right, countdown on the left. Tap either to open it.")
+
+                LabeledContent {
+                    Toggle("", isOn: $viewModel.pomodoroFollowsActive).labelsHidden()
+                } label: {
+                    Text("Auto-switch to Pomodoro tab when timer starts")
+                }
+                caption("On = expanding the notch during a focus session lands on Pomodoro instead of your default tab.")
+
+                // ── Hover timing ─────────────────────────────────────
+                sectionHeader("Hover timing")
 
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -163,8 +247,7 @@ struct SettingsView: View {
                             .monospacedDigit()
                     }
                     Slider(value: $viewModel.hoverDelay, in: 0...0.5, step: 0.05)
-                    Text("Higher = brushing the notch on the way past won't trigger it.")
-                        .font(.caption2).foregroundColor(.secondary)
+                    caption("Higher = brushing the notch on the way past won't trigger it.")
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -176,19 +259,16 @@ struct SettingsView: View {
                             .monospacedDigit()
                     }
                     Slider(value: $viewModel.collapseDelay, in: 0.05...1.0, step: 0.05)
-                    Text("Higher = more forgiving if you dart your mouse out for a moment.")
-                        .font(.caption2).foregroundColor(.secondary)
+                    caption("Higher = more forgiving if you dart your mouse out for a moment.")
                 }
 
-                Divider().padding(.vertical, 4)
-
+                // ── Notch fit ────────────────────────────────────────
                 // Notch-fit overrides — for users whose collapsed notch
                 // doesn't quite blend with their hardware. Auto-detection
                 // is right for most M-series MBPs but a few have slightly
                 // different bezel radii / cutout widths.
-                Text("Notch fit").font(.system(size: 13, weight: .semibold))
-                Text("If the collapsed notch doesn't blend perfectly with your hardware, nudge these. The drawn shape is always pure black.")
-                    .font(.caption2).foregroundColor(.secondary)
+                sectionHeader("Notch fit")
+                caption("If the collapsed notch doesn't blend perfectly with your hardware, nudge these. The drawn shape is always pure black.")
 
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -198,6 +278,7 @@ struct SettingsView: View {
                             .foregroundColor(.secondary).monospacedDigit()
                     }
                     Slider(value: $viewModel.notchWidthOffset, in: -10...10, step: 0.5)
+                    caption("Negative shrinks the drawn notch; positive widens it. Use if the edges of your hardware cutout peek through.")
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -208,8 +289,7 @@ struct SettingsView: View {
                             .foregroundColor(.secondary).monospacedDigit()
                     }
                     Slider(value: $viewModel.notchHeightExtension, in: 0...10, step: 0.5)
-                    Text("Extends the notch a few pixels below the hardware cutout. Useful if you want the bottom corners to be visible vs. perfectly hidden.")
-                        .font(.caption2).foregroundColor(.secondary)
+                    caption("Extends the notch a few pixels below the hardware cutout. Useful if you want the bottom corners to be visible vs. perfectly hidden.")
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -222,8 +302,7 @@ struct SettingsView: View {
                             .foregroundColor(.secondary).monospacedDigit()
                     }
                     Slider(value: $viewModel.notchCornerRadiusOverride, in: 0...14, step: 0.5)
-                    Text("0 = auto-detect from your screen. Higher = rounder bottom corners.")
-                        .font(.caption2).foregroundColor(.secondary)
+                    caption("0 = auto-detect from your screen. Higher = rounder bottom corners.")
                 }
 
                 Button("Reset notch fit to auto") {
@@ -234,6 +313,7 @@ struct SettingsView: View {
                 .buttonStyle(.bordered)
 
                 Spacer(minLength: 8)
+                footerCredit
             }
             .padding(.bottom, 10)
         }
@@ -247,70 +327,101 @@ struct SettingsView: View {
 
     // MARK: - Pomodoro section
     private var pomodoroSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Pomodoro durations").font(.headline)
-            durationStepper("Focus", value: Binding(
-                get: { viewModel.pomodoro.focusMinutes },
-                set: { viewModel.pomodoro.focusMinutes = $0 }), range: 5...120, suffix: "min")
-            durationStepper("Short break", value: Binding(
-                get: { viewModel.pomodoro.shortBreakMinutes },
-                set: { viewModel.pomodoro.shortBreakMinutes = $0 }), range: 1...30, suffix: "min")
-            durationStepper("Long break", value: Binding(
-                get: { viewModel.pomodoro.longBreakMinutes },
-                set: { viewModel.pomodoro.longBreakMinutes = $0 }), range: 5...60, suffix: "min")
-            durationStepper("Long break every", value: Binding(
-                get: { viewModel.pomodoro.sessionsBeforeLongBreak },
-                set: { viewModel.pomodoro.sessionsBeforeLongBreak = $0 }), range: 2...10, suffix: "sessions")
-            durationStepper("Daily goal", value: Binding(
-                get: { viewModel.pomodoro.dailyGoal },
-                set: { viewModel.pomodoro.dailyGoal = $0 }), range: 1...20, suffix: "sessions")
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Pomodoro durations").font(.headline)
 
-            Divider().padding(.vertical, 4)
+                // ── Durations ────────────────────────────────────────
+                sectionHeader("Durations")
 
-            Toggle("Auto-start the next phase",
-                   isOn: Binding(get: { viewModel.pomodoro.autoStartNextPhase },
-                                 set: { viewModel.pomodoro.autoStartNextPhase = $0 }))
-            Text("On = goes straight from focus → break → focus without clicking.")
-                .font(.caption2).foregroundColor(.secondary)
+                durationStepper("Focus", value: Binding(
+                    get: { viewModel.pomodoro.focusMinutes },
+                    set: { viewModel.pomodoro.focusMinutes = $0 }), range: 5...120, suffix: "min")
+                caption("Length of one focus block. Classic Pomodoro is 25 minutes.")
 
-            Toggle("Strict mode (can't pause focus)",
-                   isOn: Binding(get: { viewModel.pomodoro.strictMode },
-                                 set: { viewModel.pomodoro.strictMode = $0 }))
-            Text("Pause is disabled mid-focus. Skip and Reset still work.")
-                .font(.caption2).foregroundColor(.secondary)
+                durationStepper("Short break", value: Binding(
+                    get: { viewModel.pomodoro.shortBreakMinutes },
+                    set: { viewModel.pomodoro.shortBreakMinutes = $0 }), range: 1...30, suffix: "min")
+                caption("Quick rest between focus blocks.")
 
-            Divider().padding(.vertical, 4)
+                durationStepper("Long break", value: Binding(
+                    get: { viewModel.pomodoro.longBreakMinutes },
+                    set: { viewModel.pomodoro.longBreakMinutes = $0 }), range: 5...60, suffix: "min")
+                caption("Bigger break taken every few cycles.")
 
-            // Sound options — apply to BOTH Pomodoro and the Countdown
-            // timer (the standalone "set 7 minutes for the oven" one).
-            Toggle("Play sound when a timer ends",
-                   isOn: $viewModel.soundEffectsEnabled)
-            HStack {
-                Text("Sound").frame(width: 100, alignment: .leading)
-                Picker("", selection: $viewModel.timerSoundName) {
-                    ForEach(TimerSound.choices, id: \.self) { name in
-                        Text(name).tag(name)
-                    }
-                }
-                .labelsHidden()
-                .frame(maxWidth: 180)
-                Button {
-                    // Preview ALWAYS plays, regardless of master toggle —
-                    // the user is actively asking to hear it.
-                    TimerSound.playRaw(name: viewModel.timerSoundName)
+                durationStepper("Long break every", value: Binding(
+                    get: { viewModel.pomodoro.sessionsBeforeLongBreak },
+                    set: { viewModel.pomodoro.sessionsBeforeLongBreak = $0 }), range: 2...10, suffix: "sessions")
+                caption("How many focus blocks happen before a long break kicks in.")
+
+                durationStepper("Daily goal", value: Binding(
+                    get: { viewModel.pomodoro.dailyGoal },
+                    set: { viewModel.pomodoro.dailyGoal = $0 }), range: 1...20, suffix: "sessions")
+                caption("Target number of completed focus sessions per day. Drives the ring fill in the Pomodoro tab.")
+
+                // ── Flow ─────────────────────────────────────────────
+                sectionHeader("Flow")
+
+                LabeledContent {
+                    Toggle("", isOn: Binding(
+                        get: { viewModel.pomodoro.autoStartNextPhase },
+                        set: { viewModel.pomodoro.autoStartNextPhase = $0 })).labelsHidden()
                 } label: {
-                    Label("Preview", systemImage: "speaker.wave.2.fill")
+                    Text("Auto-start the next phase")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            .opacity(viewModel.soundEffectsEnabled ? 1 : 0.55)
-            Text("Used by both Pomodoro phase ends and the Countdown timer.")
-                .font(.caption2).foregroundColor(.secondary)
+                caption("On = goes straight from focus → break → focus without clicking.")
 
-            Spacer()
-            Button("Reset Pomodoro session") { viewModel.pomodoro.reset() }
-                .buttonStyle(.bordered)
+                LabeledContent {
+                    Toggle("", isOn: Binding(
+                        get: { viewModel.pomodoro.strictMode },
+                        set: { viewModel.pomodoro.strictMode = $0 })).labelsHidden()
+                } label: {
+                    Text("Strict mode (can't pause focus)")
+                }
+                caption("Pause is disabled mid-focus. Skip and Reset still work.")
+
+                // ── Sound ────────────────────────────────────────────
+                // Sound options — apply to BOTH Pomodoro and the Countdown
+                // timer (the standalone "set 7 minutes for the oven" one).
+                sectionHeader("Sound")
+
+                LabeledContent {
+                    Toggle("", isOn: $viewModel.soundEffectsEnabled).labelsHidden()
+                } label: {
+                    Text("Play sound when a timer ends")
+                }
+                caption("Master toggle for end-of-phase chimes. Used by both Pomodoro and the Countdown timer.")
+
+                HStack {
+                    Text("Sound").frame(width: 100, alignment: .leading)
+                    Picker("", selection: $viewModel.timerSoundName) {
+                        ForEach(TimerSound.choices, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: 180)
+                    Spacer()
+                    Button {
+                        // Preview ALWAYS plays, regardless of master toggle —
+                        // the user is actively asking to hear it.
+                        TimerSound.playRaw(name: viewModel.timerSoundName)
+                    } label: {
+                        Label("Preview", systemImage: "speaker.wave.2.fill")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .opacity(viewModel.soundEffectsEnabled ? 1 : 0.55)
+                caption("Preview always plays, even when the master toggle is off.")
+
+                Spacer(minLength: 8)
+                Button("Reset Pomodoro session") { viewModel.pomodoro.reset() }
+                    .buttonStyle(.bordered)
+
+                footerCredit
+            }
+            .padding(.bottom, 10)
         }
     }
 
@@ -323,6 +434,7 @@ struct SettingsView: View {
                     .font(.system(.body, design: .rounded))
                     .frame(minWidth: 100, alignment: .leading)
             }
+            Spacer()
         }
     }
 
@@ -336,6 +448,8 @@ struct SettingsView: View {
             Text("Up to 4 cities show in the World Clock tab.")
                 .font(.caption).foregroundColor(.secondary)
 
+            sectionHeader("Your cities")
+
             // Existing cities — list with delete/move buttons
             VStack(spacing: 0) {
                 ForEach(Array(viewModel.worldClock.clocks.enumerated()), id: \.element.id) { idx, entry in
@@ -348,12 +462,19 @@ struct SettingsView: View {
                             Text(entry.timezoneIdentifier).font(.caption2).foregroundColor(.secondary)
                         }
                         Spacer()
-                        Button { moveClock(idx, by: -1) } label: { Image(systemName: "arrow.up") }
-                            .buttonStyle(.borderless)
-                            .disabled(idx == 0)
-                        Button { moveClock(idx, by: 1) } label: { Image(systemName: "arrow.down") }
-                            .buttonStyle(.borderless)
-                            .disabled(idx == viewModel.worldClock.clocks.count - 1)
+                        // Boundary-aware arrows: hide instead of disabling.
+                        if idx > 0 {
+                            Button { moveClock(idx, by: -1) } label: { Image(systemName: "arrow.up") }
+                                .buttonStyle(.borderless)
+                        } else {
+                            Image(systemName: "arrow.up").opacity(0).accessibilityHidden(true)
+                        }
+                        if idx < viewModel.worldClock.clocks.count - 1 {
+                            Button { moveClock(idx, by: 1) } label: { Image(systemName: "arrow.down") }
+                                .buttonStyle(.borderless)
+                        } else {
+                            Image(systemName: "arrow.down").opacity(0).accessibilityHidden(true)
+                        }
                         Button { viewModel.worldClock.remove(entry) } label: {
                             Image(systemName: "minus.circle.fill")
                         }
@@ -374,10 +495,11 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
 
+            caption("Reorder with the up/down arrows. Tap the red minus to remove a city.")
+
             // Add-new row
             if viewModel.worldClock.clocks.count < 6 {
-                Divider().padding(.vertical, 4)
-                Text("Add a city").font(.system(size: 12, weight: .semibold))
+                sectionHeader("Add a city")
                 HStack(spacing: 8) {
                     Picker("", selection: $newClockTimezoneIndex) {
                         ForEach(Array(WorldClockService.availableTimezones.enumerated()),
@@ -393,12 +515,14 @@ struct SettingsView: View {
                         .keyboardShortcut(.defaultAction)
                         .buttonStyle(.borderedProminent)
                 }
+                caption("Pick an IANA timezone, optionally rename it, then click Add.")
             } else {
                 Text("Maximum 6 cities. Remove one before adding.")
                     .font(.caption).foregroundColor(.secondary)
                     .padding(.top, 4)
             }
             Spacer()
+            footerCredit
         }
     }
 
@@ -428,12 +552,13 @@ struct SettingsView: View {
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NotchPop").font(.title2.bold())
-            Text("v1.4 · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
-            Divider()
+            Text("v\(appVersion) · Free · MIT licensed").font(.subheadline).foregroundColor(.secondary)
+
+            sectionHeader("About")
             Text("Hover the notch to expand. Drop files in. Drag them back out anywhere. Music works with Apple Music + Spotify (transport controls included).")
                 .font(.callout)
 
-            Divider()
+            sectionHeader("Tour")
             HStack(spacing: 12) {
                 Button {
                     viewModel.runWelcomePeek()
@@ -443,14 +568,53 @@ struct SettingsView: View {
                 .buttonStyle(.bordered)
                 Spacer()
             }
+            caption("Plays the first-launch peek so you can revisit the intro.")
 
-            Spacer()
+            sectionHeader("Links")
             HStack(spacing: 14) {
                 Link("GitHub", destination: URL(string: "https://github.com/bendawg2010/NotchPop")!)
                 Link("Releases", destination: URL(string: "https://github.com/bendawg2010/NotchPop/releases")!)
                 Link("Sponsor", destination: URL(string: "https://github.com/sponsors/bendawg2010")!)
             }
             .font(.callout)
+
+            Spacer()
+
+            sectionHeader("Danger zone")
+            HStack {
+                Button(role: .destructive) {
+                    showResetConfirm = true
+                } label: {
+                    Label("Reset all settings", systemImage: "arrow.counterclockwise")
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+            caption("Wipes all NotchPop preferences (np.* keys). Your file shelf and notes are untouched.")
+
+            footerCredit
         }
+        .alert("Reset all NotchPop settings?", isPresented: $showResetConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                resetAllSettings()
+            }
+        } message: {
+            Text("Reset all NotchPop settings? This won't delete your file shelf or notes — just preferences.")
+        }
+    }
+
+    /// Wipe every `np.*` key from UserDefaults and post a relaunch request.
+    private func resetAllSettings() {
+        let defaults = UserDefaults.standard
+        let dict = defaults.dictionaryRepresentation()
+        for key in dict.keys where key.hasPrefix("np.") {
+            defaults.removeObject(forKey: key)
+        }
+        defaults.synchronize()
+        // Notify the rest of the app that a relaunch is desired. The app
+        // delegate (or anyone listening) can respond — fall back is just
+        // to leave the user with a fresh defaults state on next launch.
+        NotificationCenter.default.post(name: Notification.Name("np.requestRelaunch"), object: nil)
     }
 }

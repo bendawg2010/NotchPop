@@ -23,8 +23,8 @@ settings:
     # those mutations on the next regen — so every shipped DMG had
     # CFBundleShortVersionString=1.0 internally, breaking Sparkle's
     # version comparison and creating an endless 'update available' loop.
-    MARKETING_VERSION: "1.5.7"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "1.5.8"
+    CURRENT_PROJECT_VERSION: "3"
 
 # Sparkle handles auto-updates. The framework gets pulled in via SPM
 # (Swift Package Manager) — Xcode embeds it in NotchPop.app/Contents/
@@ -66,6 +66,9 @@ targets:
         # work because they trigger a one-time permission prompt; reads
         # die quietly). The text here shows in the consent dialog.
         NSAppleEventsUsageDescription: "NotchPop reads what's playing in Apple Music and Spotify so the Music tab can show your current track."
+        # EventKit access — needed by the Calendar peek widget
+        NSCalendarsUsageDescription: "NotchPop shows your next few calendar events in the Calendar tab inside the notch."
+        NSCalendarsFullAccessUsageDescription: "NotchPop shows your next few calendar events in the Calendar tab inside the notch."
         # ---- Sparkle auto-update keys ----
         # Public key from the matching private key in Keychain. Sparkle
         # rejects any appcast entry whose ed25519 signature doesn't

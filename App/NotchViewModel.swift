@@ -25,6 +25,8 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case notes = "Notes"
     case clipboard = "Clipboard"
     case systemStats = "System"
+    case calendar = "Calendar"
+    case airpods = "AirPods"
 
     var id: String { rawValue }
     var icon: String {
@@ -37,6 +39,8 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .notes:       return "note.text"
         case .clipboard:   return "doc.on.clipboard.fill"
         case .systemStats: return "cpu"
+        case .calendar:    return "calendar"
+        case .airpods:     return "airpods.gen2"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -50,6 +54,8 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .notes:       return "Quick scratchpad. Auto-saves as you type."
         case .clipboard:   return "Last 12 things you copied — click any to paste it back."
         case .systemStats: return "Live CPU + RAM gauges so you can spot a runaway process."
+        case .calendar:    return "Today's next events, pulled from macOS Calendar via EventKit."
+        case .airpods:     return "Battery levels for connected AirPods — left, right, and case."
         }
     }
 }
@@ -152,6 +158,8 @@ final class NotchViewModel: ObservableObject {
     let notes = NotesService()
     let clipboard = ClipboardService()
     let systemStats = SystemStatsService()
+    let calendar = CalendarService()
+    let airpods = AirPodsService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
@@ -254,6 +262,8 @@ final class NotchViewModel: ObservableObject {
         fullscreen.start()
         clipboard.start()
         systemStats.start()
+        calendar.start()
+        airpods.start()
 
         // Auto-switch to Pomodoro tab whenever the timer starts running
         // (only if pomodoroFollowsActive is on AND the tab is visible).

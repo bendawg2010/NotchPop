@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#000000" />
 
   <title>NotchPop — Your MacBook notch, but useful.</title>
-  <meta name="description" content="Free, open-source macOS app that turns the notch into a hover-to-expand workspace. Six widgets — Shelf, Music, Pomodoro, Timers, World Clock, Notes — that mix and match. Blends invisibly with your hardware notch." />
+  <meta name="description" content="Free, open-source macOS app that turns the notch into a hover-to-expand workspace. Eight swappable widgets — Shelf, Music, Pomodoro, Timers, World Clock, Notes, Clipboard, System. Live activity flanking pills. Auto-updating. Blends invisibly with your hardware notch." />
 
   <meta property="og:title" content="NotchPop — Your MacBook notch, but useful." />
-  <meta property="og:description" content="Free macOS app. Six widgets in your notch — Shelf, Music, Pomodoro, Timers, World Clock, Notes. Hover to expand. Blends with your hardware notch." />
+  <meta property="og:description" content="Free macOS app. Eight swappable widgets in your notch. Live activity pills flank it when music or a Pomodoro is running. Auto-updates. Hover to expand. Blends with your hardware notch." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://notchpop.pages.dev/" />
 
@@ -32,12 +32,12 @@
   <main>
     <section class="hero">
       <h1>Your MacBook notch,<br/><span class="grad">but useful.</span></h1>
-      <p class="lead">Hover the notch — it pops open. Drop a file in, drag it out anywhere. Music. Pomodoro. Timers. World clock. Quick notes. Six widgets you mix and match. Free. Open source. <strong>Blends invisibly with your hardware notch when collapsed.</strong></p>
+      <p class="lead">Hover the notch — it pops open. Drag a file toward it, the Shelf opens to catch it. Music, Pomodoro, Timers, World Clock, Notes, Clipboard, System — <strong>eight swappable widgets</strong> with a live activity pill that flanks the notch when something's running. Free. Open source. Auto-updating. <strong>Blends invisibly with your hardware notch when collapsed.</strong></p>
       <div class="ctas">
         <a class="btn primary" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download for macOS</a>
         <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
       </div>
-      <div class="release-meta">v1.4 · macOS 14+ · Apple Silicon &amp; Intel · ~1 MB DMG · Free · MIT</div>
+      <div class="release-meta"><span class="version-pill">v1.5.7</span> · macOS 14+ · Apple Silicon &amp; Intel · ~1.7 MB DMG · Free · MIT</div>
       <div class="gatekeeper-note" role="note">
         <span class="gatekeeper-note-icon" aria-hidden="true">ⓘ</span>
         <div>
@@ -51,6 +51,17 @@
     <section class="notch-demo" aria-label="Animated notch demo">
       <div class="screen">
         <div class="screen-bezel"></div>
+        <!-- Live activity wide-pill: integrated single black shape with art on left, audio bars on right -->
+        <div class="notch-activity" id="notchActivity" aria-hidden="true">
+          <div class="na-pill">
+            <div class="na-art">
+              <div class="na-art-grad"></div>
+            </div>
+            <div class="na-bars" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
         <div class="notch" id="notchHero">
           <div class="notch-pill"></div>
           <div class="notch-expanded">
@@ -60,9 +71,13 @@
                 <span class="ne-tab">🎵 Music</span>
                 <span class="ne-tab">🍅 Pomodoro</span>
                 <span class="ne-tab">🕐 Timers</span>
-                <span class="ne-tab">📝 Notes</span>
+                <span class="ne-tab">📋 Clipboard</span>
               </div>
-              <span class="ne-battery" aria-label="82% battery">🔋 82%</span>
+              <div class="ne-meta">
+                <span class="ne-version" aria-label="version 1.5.7">v1.5.7</span>
+                <span class="ne-battery" aria-label="82% battery">🔋 82%</span>
+                <span class="ne-gear" aria-label="Settings">⚙</span>
+              </div>
             </div>
             <div class="ne-shelf">
               <div class="ne-thumb"><span>📄</span><em>essay.pdf</em></div>
@@ -73,21 +88,21 @@
           </div>
         </div>
       </div>
-      <div class="demo-cap">Hover above. The notch expands into a real, drag-droppable shelf.</div>
+      <div class="demo-cap">Hover above — the notch expands. When music or a Pomodoro is running, a wide pill flanks the notch with album art on the left and audio bars on the right.</div>
     </section>
 
     <section class="features">
       <div class="feature">
         <h3>📥 Drag-to-open Shelf</h3>
-        <p>Start dragging a file from Finder — the notch <strong>auto-opens</strong> so you can drop it in. Drag it back out to Finder, email, Slack, anywhere. No copies, no upload.</p>
+        <p>Start dragging a file <strong>anywhere near the top of the screen</strong> — the notch auto-expands and the Shelf tab activates so you can drop it in. Drag it back out to Finder, email, Slack, anywhere. No copies, no upload.</p>
       </div>
       <div class="feature">
         <h3>🎵 Music</h3>
-        <p>Album art, track info, and <strong>full transport controls</strong> — play, pause, skip — for Apple Music and Spotify. Animated progress bar, smooth scrubbing.</p>
+        <p>Album art, track info, and <strong>full transport controls</strong> — play, pause, skip — for <strong>Apple Music and Spotify</strong>. Scrubbing progress bar that you can drag.</p>
       </div>
       <div class="feature">
         <h3>🍅 Pomodoro</h3>
-        <p>Focus timer with phase picker (Focus / Short / Long), daily goal, inline duration editing, and <strong>strict mode</strong> to lock yourself in. Auto-start the next phase if you want.</p>
+        <p>Focus timer with <strong>phase picker pills</strong> (Focus / Short / Long), inline duration popover, daily goal, and strict mode to lock yourself in. <strong>12 end-of-timer sounds</strong> with a Preview button in Settings.</p>
       </div>
       <div class="feature">
         <h3>🕐 Timers</h3>
@@ -102,28 +117,44 @@
         <p>Auto-saving scratchpad inside the notch. Type, switch tabs, close — your text is still there. Debounced writes so it never thrashes the disk.</p>
       </div>
       <div class="feature">
+        <h3>📋 Clipboard &amp; 💻 System</h3>
+        <p>Two new tabs in v1.5.7. <strong>Clipboard</strong> keeps a recent history you can re-copy with one click. <strong>System</strong> surfaces CPU, memory, and disk at a glance — right inside the notch.</p>
+      </div>
+      <div class="feature">
+        <h3>🎚 Live activity pills</h3>
+        <p>When music's playing or a Pomodoro is running, a single integrated <strong>wide black pill flanks the notch</strong> — album art on the left, animated audio bars or countdown text on the right. Pomodoro takes priority over music. Toggleable.</p>
+      </div>
+      <div class="feature">
         <h3>🔋 Inline battery</h3>
         <p>Always visible in the top-right of the expanded notch. Plug in — a charging cheer briefly expands the notch, then it tucks itself away. Like AirPods, for power.</p>
       </div>
       <div class="feature">
+        <h3>⌨ Settings gear in the notch</h3>
+        <p>A gear icon sits in the top-right of the expanded notch (next to battery and the version stamp). One click and Settings opens — no need to fish around the menu bar.</p>
+      </div>
+      <div class="feature">
+        <h3>🚀 Auto-update</h3>
+        <p>Powered by <strong>Sparkle with EdDSA-signed appcasts</strong>. Checks every 4 hours, asks before installing, and posts system notifications throughout. Set it and forget it.</p>
+      </div>
+      <div class="feature">
         <h3>🫥 Hardware-blending notch</h3>
-        <p>Collapsed shape matches your physical notch <strong>exactly</strong> — same width, same continuous (squircle) corners. Notch fit sliders in Settings if you want to fine-tune.</p>
+        <p>Collapsed shape matches your physical notch <strong>exactly</strong> — same width, same continuous (squircle) corners. Nudge width, height extension, and corner radius from <strong>Settings → Behavior → Notch fit</strong>.</p>
       </div>
       <div class="feature">
         <h3>🎬 3-scene welcome</h3>
         <p>First launch plays a hue-shifting gradient with three scenes — <em>Your workflow, faster.</em> → <em>Drop files in.</em> → <em>Tabs are yours.</em> Replayable from Settings → About.</p>
       </div>
       <div class="feature">
-        <h3>⚙️ Six widgets, your way</h3>
-        <p>Mix and match in Settings → Tabs. Reorder. Show / hide. <strong>Pick your default starting tab</strong> (now configurable, defaults to Music). 20+ behavior knobs.</p>
+        <h3>⚙️ Eight widgets, your way</h3>
+        <p>Mix and match in Settings → Tabs. Reorder. Show / hide. <strong>Pick your default starting tab.</strong> <strong>20+ knobs</strong> across Tabs, Behavior, Pomodoro, World Clock, and About.</p>
       </div>
       <div class="feature">
-        <h3>🚀 Native &amp; tiny</h3>
-        <p>SwiftUI + AppKit. <strong>~1 MB DMG</strong>, signed-style installer with drag-to-Applications. No Electron, no JavaScript. Boots before your menu bar finishes painting.</p>
+        <h3>🪶 Native &amp; tiny</h3>
+        <p>SwiftUI + AppKit. <strong>~1.7 MB DMG</strong>, drag-to-Applications installer. No Electron, no JavaScript. Boots before your menu bar finishes painting.</p>
       </div>
       <div class="feature">
         <h3>🔓 Free forever</h3>
-        <p>MIT licensed. No subscription. No login. NotchNook charges $25 — this does the same things, plus six widgets they don't have, and costs nothing.</p>
+        <p>MIT licensed. No subscription. No login. NotchNook charges $25 — this does the same things, plus widgets they don't have (Pomodoro, Timers, World Clock, Notes, Clipboard, System), and costs nothing.</p>
       </div>
     </section>
 
@@ -161,13 +192,13 @@
           <div class="cmp-bad">No</div>
         </div>
         <div class="cmp-row">
-          <div>Music transport (play/skip)</div>
+          <div>Music transport (Apple Music + Spotify)</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-meh">Read-only</div>
         </div>
         <div class="cmp-row">
-          <div>Pomodoro (with strict mode)</div>
+          <div>Pomodoro (phase picker + strict mode)</div>
           <div class="cmp-good">✓</div>
           <div class="cmp-bad">No</div>
           <div class="cmp-bad">No</div>
@@ -189,6 +220,24 @@
           <div class="cmp-good">✓</div>
           <div class="cmp-bad">No</div>
           <div class="cmp-bad">No</div>
+        </div>
+        <div class="cmp-row">
+          <div>Clipboard history</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-bad">No</div>
+          <div class="cmp-bad">No</div>
+        </div>
+        <div class="cmp-row">
+          <div>System monitor (CPU / RAM / disk)</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-bad">No</div>
+          <div class="cmp-bad">No</div>
+        </div>
+        <div class="cmp-row">
+          <div>Live activity flanking pill</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-meh">Partial</div>
+          <div class="cmp-good">✓</div>
         </div>
         <div class="cmp-row">
           <div>Inline battery + charging peek</div>
@@ -215,6 +264,18 @@
           <div class="cmp-meh">Partial</div>
         </div>
         <div class="cmp-row">
+          <div>Auto-update (signed appcast)</div>
+          <div class="cmp-good">Sparkle / EdDSA</div>
+          <div class="cmp-good">Sparkle</div>
+          <div class="cmp-meh">Manual</div>
+        </div>
+        <div class="cmp-row">
+          <div>Settings gear in notch</div>
+          <div class="cmp-good">✓</div>
+          <div class="cmp-bad">No</div>
+          <div class="cmp-bad">No</div>
+        </div>
+        <div class="cmp-row">
           <div>Login required</div>
           <div class="cmp-good">No</div>
           <div class="cmp-bad">Yes</div>
@@ -235,7 +296,7 @@
           <p>
             Tap the button below. Your browser saves <code>NotchPop.dmg</code>. Double-click it — Finder opens a window with <strong>NotchPop</strong> on the left and <strong>Applications</strong> on the right.
           </p>
-          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download NotchPop.dmg · ~1 MB</a>
+          <a class="btn primary install-card-btn" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg">↓ Download NotchPop.dmg · ~1.7 MB</a>
         </div>
 
         <div class="install-card">
@@ -260,7 +321,7 @@
       </div>
 
       <div class="install-after">
-        Once it's open, the notch <strong>plays a 3-scene welcome animation</strong> with a hue-shifting gradient so you can see what it does. Hover the notch any time to use it. Look for the rectangle icon in your menu bar (top-right) for Settings, Pomodoro reset, and Quit. Replay the welcome any time from <strong>Settings → About</strong>.
+        Once it's open, the notch <strong>plays a 3-scene welcome animation</strong> with a hue-shifting gradient so you can see what it does. Hover the notch any time to use it — there's also a <strong>gear icon in the top-right of the expanded notch</strong> that opens Settings directly. From v1.5.7 onward NotchPop <strong>auto-updates via Sparkle</strong> (EdDSA-signed), so you'll never have to come back here for a new build. Replay the welcome any time from <strong>Settings → About</strong>.
       </div>
 
       <div class="install-troubleshoot" role="note">
@@ -321,13 +382,28 @@ cd NotchPop
       });
     });
 
-    // Auto-loop the hero notch demo (collapsed → expanded → collapsed)
+    // Auto-loop the hero notch demo. We cycle through:
+    //   0  collapsed pill (idle)
+    //   1  collapsed + live-activity flanking pill (music — animated audio bars)
+    //   2  collapsed + live-activity flanking pill (pomodoro — countdown + emoji)
+    //   3  expanded (Shelf with file thumbs)
+    // Only inline JS, no external deps, CSP-friendly.
     const notchHero = document.getElementById('notchHero');
-    if (notchHero) {
-      let on = false;
+    const notchActivity = document.getElementById('notchActivity');
+    if (notchHero && notchActivity) {
+      const states = ['idle', 'music', 'pomodoro', 'expanded'];
+      let i = 0;
+      const apply = function () {
+        const s = states[i];
+        notchHero.classList.toggle('is-open', s === 'expanded');
+        notchActivity.classList.toggle('is-on', s === 'music' || s === 'pomodoro');
+        notchActivity.classList.toggle('is-music', s === 'music');
+        notchActivity.classList.toggle('is-pomodoro', s === 'pomodoro');
+      };
+      apply();
       setInterval(function () {
-        on = !on;
-        notchHero.classList.toggle('is-open', on);
+        i = (i + 1) % states.length;
+        apply();
       }, 2400);
     }
   </script>

@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.8</title>
+      <pubDate>Fri, 08 May 2026 01:50:29 +0000</pubDate>
+      <sparkle:version>1.5.8</sparkle:version>
+      <sparkle:shortVersionString>1.5.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>v1.5.8 — Big polish drop (6 parallel agents)</h2><h3>Two new widgets</h3><ul><li><strong>📅 Calendar peek</strong> — today's next ~5 events from macOS Calendar via EventKit. Color stripes from each event's calendar. Permission-state-aware UI (Click-to-enable / Denied-with-instructions / Granted). Auto-refreshes when calendar data changes.</li><li><strong>🎧 AirPods battery</strong> — when AirPods are connected, shows L / R / Case battery in mini pills. Color-coded (green ≥50%, amber 20-49%, red &lt;20%). Polls system_profiler every 60s. Handles AirPods Max single-side and pods-in-case nil cases.</li></ul><h3>Polish across the board</h3><ul><li><strong>🎵 Music</strong> — draggable scrubber knob, marquee-scrolling track title for long names, subtle 1.5s pulse on artwork while playing, monospaced timestamp (1:42 / 3:28), cleaner empty state.</li><li><strong>⚡ Charging peek</strong> — flowing electric-current animation along the battery fill, spark particles burst when % ticks up, splashier 28pt percentage with gradient fill. Inline indicator tightened to a clean 50pt pill, checkmark instead of bolt at 100%.</li><li><strong>⚙️ Settings</strong> — section headers (Startup / Default tab / Display / Hover timing / Notch fit / Durations / Flow / Sound / etc.), captions under every toggle, flush-right toggle alignment via LabeledContent, cleaner reorder arrows (hidden at boundaries), <strong>Reset all settings</strong> with confirmation in About → Danger zone, footer credit on every tab.</li><li><strong>🌐 Website</strong> — refreshed hero, demo, features grid, comparison table for v1.5.x reality. Version pill in release-meta line.</li></ul><h3>Tab pool now 10 widgets</h3><p>Shelf · Music · Pomodoro · Timers · World Clock · Notes · Clipboard · System · <strong>Calendar</strong> · <strong>AirPods</strong>. New ones default to OFF — toggle on in Settings → Tabs.</p>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.8/NotchPop.dmg"
+        sparkle:version="1.5.8"
+        sparkle:shortVersionString="1.5.8"
+        length="1924385"
+        type="application/octet-stream"
+        sparkle:edSignature="THktfYi/kuq3wIWxfNkFA6OXj36FHVhrbgK0qt1xS1h32IxuzXGubnzyPx3YMzoWSrvHp+qovpLNvG5rDFw/Dw==" />
+    </item>
+    <item>
       <title>v1.5.7</title>
       <pubDate>Fri, 08 May 2026 01:42:22 +0000</pubDate>
       <sparkle:version>1.5.7</sparkle:version>
