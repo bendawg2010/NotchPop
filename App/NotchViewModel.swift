@@ -87,39 +87,42 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case airpods = "AirPods"
     case quickActions = "Quick Actions"
     case weather = "Weather"
+    case appShortcuts = "App Shortcuts"
 
     var id: String { rawValue }
     var icon: String {
         switch self {
-        case .shelf:        return "tray.full.fill"
-        case .nowPlaying:   return "music.note"
-        case .pomodoro:     return "timer"
-        case .timers:       return "stopwatch.fill"
-        case .worldClock:   return "globe"
-        case .notes:        return "note.text"
-        case .clipboard:    return "doc.on.clipboard.fill"
-        case .systemStats:  return "cpu"
-        case .calendar:     return "calendar"
-        case .airpods:      return "airpods.gen2"
-        case .quickActions: return "bolt.fill"
-        case .weather:      return "cloud.sun.fill"
+        case .shelf:         return "tray.full.fill"
+        case .nowPlaying:    return "music.note"
+        case .pomodoro:      return "timer"
+        case .timers:        return "stopwatch.fill"
+        case .worldClock:    return "globe"
+        case .notes:         return "note.text"
+        case .clipboard:     return "doc.on.clipboard.fill"
+        case .systemStats:   return "cpu"
+        case .calendar:      return "calendar"
+        case .airpods:       return "airpods.gen2"
+        case .quickActions:  return "bolt.fill"
+        case .weather:       return "cloud.sun.fill"
+        case .appShortcuts:  return "square.grid.3x3.fill"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
     var blurb: String {
         switch self {
-        case .shelf:        return "Drag any file onto the notch — drag it back out anywhere."
-        case .nowPlaying:   return "Apple Music / Spotify track info + transport controls."
-        case .pomodoro:     return "Phased focus timer with strict mode + daily goal."
-        case .timers:       return "Stopwatch and quick countdown timer in one tab."
-        case .worldClock:   return "Up to 4 cities at a glance. Configurable in Settings."
-        case .notes:        return "Quick scratchpad. Auto-saves as you type."
-        case .clipboard:    return "Last 12 things you copied — click any to paste it back."
-        case .systemStats:  return "Live CPU + RAM gauges so you can spot a runaway process."
-        case .calendar:     return "Today's next events, pulled from macOS Calendar via EventKit."
-        case .airpods:      return "Battery levels for connected AirPods — left, right, and case."
-        case .quickActions: return "Lock screen, sleep displays, screenshot, Mission Control — fast."
-        case .weather:      return "Live conditions from Open-Meteo. Free, no API key. °F / °C."
+        case .shelf:         return "Drag any file onto the notch — drag it back out anywhere."
+        case .nowPlaying:    return "Apple Music / Spotify track info + transport controls."
+        case .pomodoro:      return "Phased focus timer with strict mode + daily goal."
+        case .timers:        return "Stopwatch and quick countdown timer in one tab."
+        case .worldClock:    return "Up to 4 cities at a glance. Configurable in Settings."
+        case .notes:         return "Quick scratchpad. Auto-saves as you type."
+        case .clipboard:     return "Last 12 things you copied — click any to paste it back."
+        case .systemStats:   return "Live CPU + RAM gauges so you can spot a runaway process."
+        case .calendar:      return "Today's next events, pulled from macOS Calendar via EventKit."
+        case .airpods:       return "Battery levels for connected AirPods — left, right, and case."
+        case .quickActions:  return "Lock screen, sleep displays, screenshot, Mission Control — fast."
+        case .weather:       return "Live conditions from Open-Meteo. Free, no API key. °F / °C."
+        case .appShortcuts:  return "Pin macOS apps and URLs — click to launch from inside the notch."
         }
     }
 }
@@ -466,6 +469,8 @@ final class NotchViewModel: ObservableObject {
     let calendar = CalendarService()
     let airpods = AirPodsService()
     let weather = WeatherService()
+    let appShortcuts = AppShortcutsService()
+    let connections = ConnectionsService()
     let fullscreen = FullscreenWatcher()
 
     /// User-configurable order + visibility of tabs. Persisted via
@@ -738,11 +743,22 @@ final class NotchViewModel: ObservableObject {
             .store(in: &bag)
 
         // Music pill specifically reacts to isPlaying flips — force
-        // a window resize so the pill grows/shrinks the notch.
+        // a window resize so the pill grows/shrinks the notch. ALSO
+        // fire user-configurable Connections triggers on the same
+        // edges so users can wire e.g. "open lyrics window when
+        // music starts" / "send Slack DND status when music plays."
         nowPlaying.$track
             .map { $0.isPlaying && !$0.title.isEmpty }
             .removeDuplicates()
-            .sink { [weak self] _ in self?.onSizeChange?() }
+            .sink { [weak self] playing in
+                self?.onSizeChange?()
+                let nc = NotificationCenter.default
+                if playing {
+                    nc.post(name: ConnectionTrigger.musicStart.notificationName, object: nil)
+                } else {
+                    nc.post(name: ConnectionTrigger.musicEnd.notificationName, object: nil)
+                }
+            }
             .store(in: &bag)
 
         // Pomodoro phase / remaining time updates so the live activity

@@ -49,6 +49,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
             self?.updater.runIndependentVersionCheck()
         }
+        // User-configurable Connections trigger — fires once per
+        // launch. The user can hook this to "open my IDE on launch"
+        // or "play a chime when NotchPop starts."
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            NotificationCenter.default.post(
+                name: ConnectionTrigger.appLaunched.notificationName, object: nil)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

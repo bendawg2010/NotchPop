@@ -110,6 +110,18 @@ final class PomodoroService: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
+        // Connections trigger — fires user-defined automations like
+        // "open Things 3 when focus starts" or "play a sound when
+        // break starts."
+        let nc = NotificationCenter.default
+        switch phase {
+        case .focus:
+            nc.post(name: ConnectionTrigger.pomodoroFocusStart.notificationName, object: nil)
+        case .shortBreak, .longBreak:
+            nc.post(name: ConnectionTrigger.pomodoroBreakStart.notificationName, object: nil)
+        case .idle:
+            break
+        }
     }
 
     /// Manually pick which phase the user wants to start in (instead
@@ -212,6 +224,18 @@ final class PomodoroService: ObservableObject {
         // Respects the user's "Sound on timer end" toggle + sound choice
         // in Settings → Pomodoro. No-op if they've muted notifications.
         TimerSound.play()
+        // Connections trigger for the phase-end side. Lets the user
+        // wire up "open Twitter when break starts" / "open IDE when
+        // focus ends" / etc.
+        let nc = NotificationCenter.default
+        switch completed {
+        case .focus:
+            nc.post(name: ConnectionTrigger.pomodoroFocusEnd.notificationName, object: nil)
+        case .shortBreak, .longBreak:
+            nc.post(name: ConnectionTrigger.pomodoroBreakEnd.notificationName, object: nil)
+        case .idle:
+            break
+        }
         let content = UNMutableNotificationContent()
         switch completed {
         case .focus:

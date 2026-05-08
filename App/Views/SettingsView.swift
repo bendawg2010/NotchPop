@@ -38,6 +38,10 @@ struct SettingsView: View {
                 .tabItem { Label("Appearance", systemImage: "paintpalette") }
             pomodoroSection
                 .tabItem { Label("Pomodoro", systemImage: "timer") }
+            shortcutsSection
+                .tabItem { Label("Shortcuts", systemImage: "square.grid.3x3.fill") }
+            connectionsSection
+                .tabItem { Label("Connections", systemImage: "bolt.horizontal.fill") }
             worldClockSection
                 .tabItem { Label("World Clock", systemImage: "globe") }
             updatesSection
@@ -842,6 +846,275 @@ struct SettingsView: View {
     // MARK: - World Clock section
     @State private var newClockTimezoneIndex: Int = 0
     @State private var newClockLabel: String = ""
+
+    // MARK: - App Shortcuts section
+    @State private var newURLString = ""
+    @State private var newURLTitle = ""
+
+    private var shortcutsSection: some View {
+        scrollable {
+            Text("App & URL Shortcuts").font(.headline)
+            Text("Pin macOS apps and URLs — click to launch from inside the notch's App Shortcuts tab.")
+                .font(.caption).foregroundColor(.secondary)
+
+            sectionHeader("Pinned shortcuts")
+
+            VStack(spacing: 0) {
+                ForEach(viewModel.appShortcuts.items) { item in
+                    shortcutRow(item)
+                    if item.id != viewModel.appShortcuts.items.last?.id { Divider() }
+                }
+                if viewModel.appShortcuts.items.isEmpty {
+                    Text("No shortcuts yet — add one below")
+                        .font(.caption).foregroundColor(.secondary)
+                        .padding(.vertical, 14)
+                }
+            }
+            .background(Color(.windowBackgroundColor).opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+
+            sectionHeader("Add an app")
+            HStack {
+                Button {
+                    pickAppFromOpenPanel()
+                } label: {
+                    Label("Choose app from /Applications…", systemImage: "plus.app.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                Spacer()
+            }
+            caption("An NSOpenPanel opens — pick any .app and it'll appear in the row above.")
+
+            sectionHeader("Add a URL")
+            HStack(spacing: 8) {
+                TextField("https://github.com or github.com", text: $newURLString)
+                    .textFieldStyle(.roundedBorder)
+                TextField("Optional label", text: $newURLTitle)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 140)
+                Button("Add") {
+                    let title = newURLTitle.trimmingCharacters(in: .whitespaces)
+                    viewModel.appShortcuts.addURL(
+                        newURLString,
+                        title: title.isEmpty ? nil : title)
+                    newURLString = ""
+                    newURLTitle = ""
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+                .disabled(newURLString.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            caption("Schema-less URLs default to https://. Click the resulting tile to open in your default browser.")
+
+            footerCredit
+        }
+    }
+
+    private func shortcutRow(_ item: ShortcutItem) -> some View {
+        HStack(spacing: 8) {
+            // Tiny icon preview using the same NSWorkspace lookup as
+            // the in-notch tile.
+            Group {
+                if let img = viewModel.appShortcuts.icon(for: item) {
+                    Image(nsImage: img).resizable().scaledToFit()
+                } else if let symbol = item.iconSymbol {
+                    Image(systemName: symbol)
+                } else {
+                    Image(systemName: "questionmark.app.fill")
+                }
+            }
+            .frame(width: 22, height: 22)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item.title).font(.system(size: 13, weight: .semibold))
+                Text(item.kind == .app ? "App" : item.payload)
+                    .font(.caption2).foregroundColor(.secondary)
+                    .lineLimit(1).truncationMode(.middle)
+            }
+            Spacer()
+            arrowButton(symbol: "arrow.up",
+                        disabled: viewModel.appShortcuts.items.first?.id == item.id,
+                        help: "Move up") { viewModel.appShortcuts.move(item, by: -1) }
+            arrowButton(symbol: "arrow.down",
+                        disabled: viewModel.appShortcuts.items.last?.id == item.id,
+                        help: "Move down") { viewModel.appShortcuts.move(item, by: 1) }
+            Button {
+                viewModel.appShortcuts.remove(item)
+            } label: {
+                Image(systemName: "minus.circle.fill")
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.red)
+            .help("Remove")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+    }
+
+    private func pickAppFromOpenPanel() {
+        let panel = NSOpenPanel()
+        panel.title = "Pick an app to pin"
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url {
+            viewModel.appShortcuts.addApp(at: url)
+        }
+    }
+
+    // MARK: - Connections section
+    @State private var newConnectionTrigger: ConnectionTrigger = .pomodoroFocusStart
+    @State private var newConnectionAction: ConnectionAction = .launchApp
+    @State private var newConnectionArg: String = ""
+
+    private var connectionsSection: some View {
+        scrollable {
+            Text("Connections — when X happens, do Y").font(.headline)
+            Text("Tiny automation engine. Pomodoro phase changes, charging, music, app launch — each can fire an action.")
+                .font(.caption).foregroundColor(.secondary)
+
+            sectionHeader("Your connections")
+
+            VStack(spacing: 0) {
+                ForEach(viewModel.connections.connections) { c in
+                    connectionRow(c)
+                    if c.id != viewModel.connections.connections.last?.id { Divider() }
+                }
+                if viewModel.connections.connections.isEmpty {
+                    Text("No connections yet — add one below")
+                        .font(.caption).foregroundColor(.secondary)
+                        .padding(.vertical, 14)
+                }
+            }
+            .background(Color(.windowBackgroundColor).opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3)))
+
+            sectionHeader("Add a connection")
+
+            HStack(spacing: 8) {
+                Text("When").frame(width: 50, alignment: .leading)
+                Picker("", selection: $newConnectionTrigger) {
+                    ForEach(ConnectionTrigger.allCases) { t in
+                        Text(t.label).tag(t)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 220)
+                Spacer()
+            }
+            HStack(spacing: 8) {
+                Text("Then").frame(width: 50, alignment: .leading)
+                Picker("", selection: $newConnectionAction) {
+                    ForEach(ConnectionAction.allCases) { a in
+                        Text(a.label).tag(a)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 220)
+                Spacer()
+            }
+            HStack(spacing: 8) {
+                Text("Arg").frame(width: 50, alignment: .leading)
+                TextField(newConnectionAction.argLabel, text: $newConnectionArg)
+                    .textFieldStyle(.roundedBorder)
+                if newConnectionAction == .launchApp {
+                    Button("Pick…") {
+                        let panel = NSOpenPanel()
+                        panel.allowedContentTypes = [.application]
+                        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+                        panel.canChooseFiles = true
+                        panel.canChooseDirectories = false
+                        if panel.runModal() == .OK, let url = panel.url {
+                            newConnectionArg = url.path
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            caption(connectionArgHint(for: newConnectionAction))
+
+            HStack {
+                Button("Add connection") {
+                    let conn = Connection(trigger: newConnectionTrigger,
+                                          action: newConnectionAction,
+                                          arg: newConnectionArg)
+                    viewModel.connections.add(conn)
+                    newConnectionArg = ""
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(newConnectionArg.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                Button("Test fire trigger") {
+                    viewModel.connections.testFire(newConnectionTrigger)
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+            caption("'Test fire trigger' simulates the event so you can verify your connection runs without waiting for a real Pomodoro / charge / etc.")
+
+            footerCredit
+        }
+    }
+
+    private func connectionRow(_ c: Connection) -> some View {
+        HStack(spacing: 8) {
+            Toggle("", isOn: Binding(
+                get: { c.enabled },
+                set: { _ in viewModel.connections.toggle(c) }
+            ))
+            .labelsHidden()
+
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text("When").font(.caption2).foregroundColor(.secondary)
+                    Text(c.trigger.label)
+                        .font(.system(size: 12, weight: .heavy))
+                }
+                HStack(spacing: 4) {
+                    Text("then").font(.caption2).foregroundColor(.secondary)
+                    Text(c.action.label)
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("→")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(c.arg)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1).truncationMode(.middle)
+                }
+            }
+            Spacer()
+            Button {
+                viewModel.connections.remove(c)
+            } label: {
+                Image(systemName: "minus.circle.fill")
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.red)
+            .help("Remove")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .opacity(c.enabled ? 1 : 0.55)
+    }
+
+    private func connectionArgHint(for action: ConnectionAction) -> String {
+        switch action {
+        case .launchApp:   return "Full path like /Applications/Things3.app — or click 'Pick…'."
+        case .openURL:     return "Anything macOS can open. https:// added if missing."
+        case .runShortcut: return "The exact name of a shortcut from the Shortcuts app."
+        case .playSound:   return "Glass · Submarine · Bell · Hero · Funk · Frog · Pop · Sosumi · Tink · Ping · Purr · Beep"
+        case .copyText:    return "Whatever you want. Useful for paste-this-snippet workflows."
+        }
+    }
 
     private var worldClockSection: some View {
         scrollable {

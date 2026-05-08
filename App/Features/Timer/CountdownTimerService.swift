@@ -90,6 +90,9 @@ final class CountdownTimerService: ObservableObject {
         // Same sound system as Pomodoro — see TimerSound.swift. Honors
         // np.sound toggle + np.timerSoundName preference.
         TimerSound.play()
+        // Fire the user-configurable Connections trigger.
+        NotificationCenter.default.post(
+            name: ConnectionTrigger.countdownEnd.notificationName, object: nil)
         let c = UNMutableNotificationContent()
         c.title = "Timer done"
         c.body = "Your \(formatDuration(setDuration)) timer just finished."

@@ -39,6 +39,10 @@ final class ChargingMonitor: ObservableObject {
             peekTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false) { [weak self] _ in
                 self?.peeking = false
             }
+            // User-configurable Connections trigger — drives "open
+            // Battery prefs when I plug in" / "play a chime" / etc.
+            NotificationCenter.default.post(
+                name: ConnectionTrigger.chargingStart.notificationName, object: nil)
         }
     }
 

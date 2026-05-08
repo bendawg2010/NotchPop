@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.22</title>
+      <pubDate>Fri, 08 May 2026 18:05:07 +0000</pubDate>
+      <sparkle:version>1.5.22</sparkle:version>
+      <sparkle:shortVersionString>1.5.22</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>App Shortcuts (new tab — 13th widget).</strong> Pin any macOS app or URL — click a tile, app opens. Manage in Settings → Shortcuts (NSOpenPanel for apps, type a URL for web links). Per user feedback: 'make it so you can connect it and make it open certain apps stuff like that.'</li><li><strong>Connections — when X happens, do Y.</strong> Tiny automation engine. 9 triggers (Pomodoro focus start/end, break start/end, countdown end, charging start, music start/end, app launch); 5 actions (launch app, open URL, run macOS Shortcut, play sound, copy text). Wire 'when Pomodoro focus starts, launch Things 3' / 'when charging starts, play Sosumi' / 'when music ends, copy back-to-work message'. Test each trigger from Settings without waiting for a real event.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.22/NotchPop.dmg"
+        sparkle:version="1.5.22"
+        sparkle:shortVersionString="1.5.22"
+        length="2277414"
+        type="application/octet-stream"
+        sparkle:edSignature="s4Z5vfYtv3OcECD3ndGdr476mVgZyfvClS+SeX6B2MvZzPMhyqCtUR4C4RB8JWceWzN9B9qR/51UDfv+VzynDQ==" />
+    </item>
+    <item>
       <title>v1.5.21</title>
       <pubDate>Fri, 08 May 2026 17:55:59 +0000</pubDate>
       <sparkle:version>1.5.21</sparkle:version>

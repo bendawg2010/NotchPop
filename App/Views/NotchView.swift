@@ -535,6 +535,8 @@ struct NotchView: View {
         case .weather:
             WeatherView(service: viewModel.weather,
                         showsWind: viewModel.weatherShowsWind)
+        case .appShortcuts:
+            AppShortcutsView(service: viewModel.appShortcuts)
         }
     }
 }
