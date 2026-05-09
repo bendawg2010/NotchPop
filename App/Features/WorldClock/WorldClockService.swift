@@ -29,14 +29,28 @@ final class WorldClockService: ObservableObject {
            !restored.isEmpty {
             self.clocks = restored
         } else {
-            // Sensible defaults: local + 3 popular timezones
-            self.clocks = [
-                ClockEntry(timezoneIdentifier: TimeZone.current.identifier,
-                           label: "Home"),
-                ClockEntry(timezoneIdentifier: "America/New_York", label: "New York"),
-                ClockEntry(timezoneIdentifier: "Europe/London",     label: "London"),
-                ClockEntry(timezoneIdentifier: "Asia/Tokyo",        label: "Tokyo"),
+            // Sensible defaults: local + 3 popular timezones, with
+            // a dedupe pass so users in Eastern Time don't see two
+            // "America/New_York" cards (Home + New York both showing
+            // the same clock face). User report: "the time is really
+            // messed up its not right." Root cause was exactly this —
+            // identical timezones rendered as separate cards.
+            let home = TimeZone.current.identifier
+            let homeFriendly = TimeZone.current.identifier
+                .split(separator: "/").last
+                .map { String($0).replacingOccurrences(of: "_", with: " ") }
+                ?? "Home"
+            let defaults: [(String, String)] = [
+                (home,                  "Home (\(homeFriendly))"),
+                ("America/New_York",    "New York"),
+                ("Europe/London",       "London"),
+                ("Asia/Tokyo",          "Tokyo"),
             ]
+            var seen = Set<String>()
+            self.clocks = defaults.compactMap { (id, label) in
+                guard seen.insert(id).inserted else { return nil }
+                return ClockEntry(timezoneIdentifier: id, label: label)
+            }
         }
     }
 

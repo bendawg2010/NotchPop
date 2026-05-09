@@ -725,7 +725,8 @@ struct NotchView: View {
         case .audioControls:
             AudioControlsView(service: viewModel.audioControls)
         case .notchPet:
-            NotchPetView(service: viewModel.pet)
+            NotchPetView(service: viewModel.pet,
+                         bounceIntensity: viewModel.petBounceIntensity)
         }
     }
 }

@@ -744,8 +744,108 @@ struct SettingsView: View {
                 caption("0.5× = snappier (animations finish in half the time). 2.0× = slow-mo demo. Default 1.0× matches the original timing.")
             }
 
+            // ── Per-surface animation tuning ─────────────────────
+            sectionHeader("Per-surface tuning")
+            caption("Fine-grained sliders for each animated surface. Reset each one back to default by double-clicking the slider.")
+
+            animationSlider(
+                label: "Pomodoro ring spin",
+                value: $viewModel.pomodoroRingRotationSpeed,
+                range: 0...20,
+                format: "%.1f s",
+                hint: "How long one full gradient orbit takes around the ring. 0 = no rotation.")
+
+            animationSlider(
+                label: "Welcome hue cycle",
+                value: $viewModel.welcomeHueCyclePeriod,
+                range: 1...20,
+                format: "%.1f s",
+                hint: "How long the welcome glow takes to cycle the full pink → purple → blue → mint rainbow.")
+
+            animationSlider(
+                label: "Welcome bloom depth",
+                value: $viewModel.welcomeBloomDepth,
+                range: 0...2,
+                format: "%.2f×",
+                hint: "How much the welcome glow scales up as it ramps in. 0 = no scale, 1.0 = default 0.85 → 1.0, 2.0 = exaggerated.")
+
+            animationSlider(
+                label: "Live-activity audio bars",
+                value: $viewModel.audioBarsIntensity,
+                range: 0...2,
+                format: "%.2f×",
+                hint: "How aggressive the dancing bars are when music is playing. 1.0 = base, 0.3 = chill, 1.7 = bouncy.")
+
+            animationSlider(
+                label: "Album-art breathing",
+                value: $viewModel.artworkPulseDepth,
+                range: 0...0.10,
+                format: "%.0f%% scale",
+                multiplier: 100,
+                hint: "How much the now-playing artwork scales up and down each beat. 4% default; 0% off; 10% noticeable.")
+
+            animationSlider(
+                label: "Notch Pet bounce",
+                value: $viewModel.petBounceIntensity,
+                range: 0...3,
+                format: "%.2f×",
+                hint: "Excited-state bounce amplitude on the Notch Pet sprite. 1.0 = default 6pt jump, 0.5 = chill, 2.5 = wild.")
+
+            animationSlider(
+                label: "Background animation speed",
+                value: $viewModel.backgroundAnimSpeed,
+                range: 0...3,
+                format: "%.2f×",
+                hint: "Galaxy stars / Aurora drift / etc. 1.0 = default, 0.3 = barely moves, 2.5 = chaotic.")
+
+            animationSlider(
+                label: "Progress line thickness",
+                value: $viewModel.progressLineThickness,
+                range: 1...4,
+                format: "%.1f pt",
+                hint: "How thick the bottom progress line on the live-activity pill is. 1.5pt default, 4pt = thick.")
+
+            HStack {
+                Button("Reset all animation sliders") {
+                    viewModel.pomodoroRingRotationSpeed = 8.0
+                    viewModel.welcomeHueCyclePeriod = 5.0
+                    viewModel.welcomeBloomDepth = 1.0
+                    viewModel.audioBarsIntensity = 1.0
+                    viewModel.artworkPulseDepth = 0.04
+                    viewModel.petBounceIntensity = 1.0
+                    viewModel.backgroundAnimSpeed = 1.0
+                    viewModel.progressLineThickness = 1.5
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+
             footerCredit
         }
+    }
+
+    /// Re-usable labeled slider for animation tuning. Multiplier
+    /// scales the displayed value (used for the artwork pulse where
+    /// 0.04 should display as "4%" not "0.04").
+    private func animationSlider(
+        label: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        format: String,
+        multiplier: Double = 1,
+        hint: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(label)
+                Spacer()
+                Text(String(format: format, value.wrappedValue * multiplier))
+                    .foregroundColor(.secondary).monospacedDigit()
+            }
+            Slider(value: value, in: range)
+            caption(hint)
+        }
+        .padding(.vertical, 2)
     }
 
     private func backgroundSwatch(_ choice: NotchBackground) -> some View {
@@ -931,6 +1031,7 @@ struct SettingsView: View {
     // MARK: - World Clock section
     @State private var newClockTimezoneIndex: Int = 0
     @State private var newClockLabel: String = ""
+    @State private var clockSearchText: String = ""
 
     // MARK: - App Shortcuts section
     @State private var newURLString = ""
@@ -1255,30 +1356,189 @@ struct SettingsView: View {
             caption("Reorder with the up/down arrows. Tap the red minus to remove a city.")
 
             if viewModel.worldClock.clocks.count < 6 {
-                sectionHeader("Add a city")
-                HStack(spacing: 8) {
-                    Picker("", selection: $newClockTimezoneIndex) {
-                        ForEach(Array(WorldClockService.availableTimezones.enumerated()),
-                                id: \.offset) { i, tz in
-                            Text(tz).tag(i)
-                        }
-                    }
-                    .labelsHidden()
-                    .frame(maxWidth: 220)
-                    TextField("Label (optional)", text: $newClockLabel)
-                        .textFieldStyle(.roundedBorder)
-                    Button("Add") { addNewClock() }
-                        .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
-                }
-                caption("Pick an IANA timezone, optionally rename it, then click Add.")
+                addCityBlock
             } else {
                 Text("Maximum 6 cities. Remove one before adding.")
                     .font(.caption).foregroundColor(.secondary)
                     .padding(.top, 4)
             }
+            resetWorldClockBlock
             footerCredit
         }
+    }
+
+    /// Extracted as a property so the parent ViewBuilder doesn't
+    /// blow up Swift's type-checker. Searchable timezone picker
+    /// (was an unsorted scroll of 400+ IANA identifiers — user
+    /// report: "you cant use the bar to change where you are").
+    @ViewBuilder
+    private var addCityBlock: some View {
+        sectionHeader("Add a city")
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField("Search timezones — try \"Tokyo\" or \"Pacific\"",
+                          text: $clockSearchText)
+                    .textFieldStyle(.plain)
+                    .padding(.vertical, 4)
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 28)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.gray.opacity(0.15))
+            )
+            timezonePickerScroll
+            HStack(spacing: 8) {
+                TextField("Label (optional, e.g. \"Mom\" or \"Tokyo office\")",
+                          text: $newClockLabel)
+                    .textFieldStyle(.roundedBorder)
+                Button("Add") { addNewClock() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        caption("Search above, click a row to select, optionally rename, then Add. Selected: \(currentSelectionLabel)")
+    }
+
+    @ViewBuilder
+    private var timezonePickerScroll: some View {
+        let filtered = filteredTimezones(query: clockSearchText)
+        let selectedTZ = currentSelectionLabel
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(filtered.enumerated()),
+                        id: \.element) { idx, tz in
+                    timezonePickerButton(tz: tz, selectedTZ: selectedTZ)
+                    if idx < filtered.count - 1 { Divider() }
+                }
+                if filtered.isEmpty {
+                    Text("No timezones match \"\(clockSearchText)\"")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(12)
+                }
+            }
+        }
+        .frame(maxHeight: 180)
+        .background(Color(.windowBackgroundColor).opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.gray.opacity(0.25))
+        )
+    }
+
+    private func timezonePickerButton(tz: String, selectedTZ: String) -> some View {
+        let isSelected = tz == selectedTZ
+        return Button {
+            if let realIdx = WorldClockService
+                .availableTimezones.firstIndex(of: tz) {
+                newClockTimezoneIndex = realIdx
+            }
+        } label: {
+            timezoneRow(tz: tz, isSelected: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var currentSelectionLabel: String {
+        WorldClockService.availableTimezones[safe: newClockTimezoneIndex] ?? "—"
+    }
+
+    @ViewBuilder
+    private var resetWorldClockBlock: some View {
+        sectionHeader("Reset")
+        HStack {
+            Button("Reset to defaults (Home + NY + London + Tokyo)") {
+                resetWorldClockToDefaults()
+            }
+            .buttonStyle(.bordered)
+            Spacer()
+        }
+        caption("If your World Clock has duplicate cities (Home + your local city showing the same time), tap this to rebuild from a clean default.")
+    }
+
+    private func resetWorldClockToDefaults() {
+        UserDefaults.standard.removeObject(forKey: "np.worldClock.clocks")
+        let home = TimeZone.current.identifier
+        let homeFriendly = TimeZone.current.identifier
+            .split(separator: "/").last
+            .map { String($0).replacingOccurrences(of: "_", with: " ") }
+            ?? "Home"
+        let defaults: [(String, String)] = [
+            (home,                  "Home (\(homeFriendly))"),
+            ("America/New_York",    "New York"),
+            ("Europe/London",       "London"),
+            ("Asia/Tokyo",          "Tokyo"),
+        ]
+        var seen = Set<String>()
+        viewModel.worldClock.clocks = defaults.compactMap { (id, label) in
+            guard seen.insert(id).inserted else { return nil }
+            return ClockEntry(timezoneIdentifier: id, label: label)
+        }
+    }
+
+    /// Filter the IANA timezone list by a free-text query. Match is
+    /// case-insensitive and substring-based on the identifier path
+    /// AND on the trailing city portion (so "tokyo" finds
+    /// "Asia/Tokyo" and "new york" finds "America/New_York" with
+    /// the underscore stripped).
+    private func filteredTimezones(query: String) -> [String] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let all = WorldClockService.availableTimezones
+        guard !q.isEmpty else { return all }
+        return all.filter { tz in
+            let lower = tz.lowercased()
+            if lower.contains(q) { return true }
+            // Match on the friendly city portion with underscores
+            // converted to spaces — "new york" should find
+            // "America/New_York".
+            let friendly = lower.replacingOccurrences(of: "_", with: " ")
+            return friendly.contains(q)
+        }
+    }
+
+    private func timezoneRow(tz: String, isSelected: Bool) -> some View {
+        let parts = tz.split(separator: "/")
+        let region = parts.first.map(String.init) ?? ""
+        let city = parts.last.map { String($0).replacingOccurrences(of: "_", with: " ") } ?? tz
+        let now = Date()
+        let f = DateFormatter()
+        f.timeZone = TimeZone(identifier: tz)
+        f.dateFormat = "HH:mm"
+        let nowStr = f.string(from: now)
+
+        return HStack(spacing: 8) {
+            Image(systemName: "globe")
+                .frame(width: 18)
+                .foregroundColor(isSelected ? .accentColor : .secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(city)
+                    .font(.system(size: 12, weight: .semibold))
+                if region != city {
+                    Text(region)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            Spacer()
+            Text(nowStr)
+                .font(.system(size: 12, weight: .heavy, design: .monospaced))
+                .foregroundColor(.secondary)
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.accentColor)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            isSelected ? Color.accentColor.opacity(0.10) : Color.clear
+        )
+        .contentShape(Rectangle())
     }
 
     private func moveClock(_ from: Int, by delta: Int) {

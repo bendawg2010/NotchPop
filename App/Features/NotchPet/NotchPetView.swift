@@ -15,13 +15,17 @@ import SwiftUI
 
 struct NotchPetView: View {
     @ObservedObject var service: NotchPetService
+    /// Forwarded from NotchViewModel.petBounceIntensity at the call
+    /// site so users can tune the excited-state amplitude.
+    var bounceIntensity: Double = 1.0
 
     var body: some View {
         HStack(spacing: 12) {
-            // LEFT — sprite
+            // LEFT — sprite (bounceIntensity wired below from NotchView)
             NotchPetSprite(
                 stage: service.state.stage,
-                mood: service.state.mood
+                mood: service.state.mood,
+                bounceIntensity: bounceIntensity
             )
             .frame(width: 70, height: 70)
 
@@ -166,6 +170,10 @@ struct NotchPetView: View {
 struct NotchPetSprite: View {
     let stage: PetStage
     let mood: PetMood
+    /// Multiplier on the bounce/jump amplitude. Honors
+    /// NotchViewModel.petBounceIntensity so users can dial the
+    /// excited-state animation up or down to taste.
+    var bounceIntensity: Double = 1.0
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30)) { ctx in
@@ -192,11 +200,15 @@ struct NotchPetSprite: View {
 
     /// Idle bob offset — pulled out of the @ViewBuilder body so the
     /// switch statement doesn't trip up SwiftUI's view-result chain.
+    /// Excited-state amplitude is multiplied by bounceIntensity from
+    /// NotchViewModel.petBounceIntensity (0 = no bounce, 1 = default,
+    /// 2.5 = wild).
     private func bobOffset(time t: TimeInterval) -> CGFloat {
+        let mult = CGFloat(bounceIntensity)
         switch mood {
         case .asleep:   return 0.0
-        case .excited:  return 6 * sin(t * 8)
-        case .happy:    return 3 * sin(t * 4)
+        case .excited:  return 6 * mult * sin(t * 8)
+        case .happy:    return 3 * mult * sin(t * 4)
         default:        return 1.5 * sin(t * 1.5)
         }
     }

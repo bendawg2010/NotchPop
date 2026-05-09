@@ -317,6 +317,48 @@ final class NotchViewModel: ObservableObject {
     @Published var expandedBackground: NotchBackground = .classicBlack {
         didSet { UserDefaults.standard.set(expandedBackground.rawValue, forKey: "np.bg") }
     }
+
+    // MARK: - Animation customization (deeper)
+
+    /// Pomodoro ring's gradient orbit speed in seconds-per-rotation.
+    /// 8s default. Lower = faster spin. 0 = no rotation.
+    @Published var pomodoroRingRotationSpeed: Double = 8.0 {
+        didSet { UserDefaults.standard.set(pomodoroRingRotationSpeed, forKey: "np.pomRingSpeed") }
+    }
+    /// Welcome glow hue cycle period in seconds. 5s default = full
+    /// pink → purple → blue → mint rainbow during one welcome.
+    @Published var welcomeHueCyclePeriod: Double = 5.0 {
+        didSet { UserDefaults.standard.set(welcomeHueCyclePeriod, forKey: "np.welcomeHue") }
+    }
+    /// How aggressive the live-activity audio bars dance. 1.0 = base,
+    /// 1.5 = bouncier, 0.5 = chill. Multiplies the wave amplitude.
+    @Published var audioBarsIntensity: Double = 1.0 {
+        didSet { UserDefaults.standard.set(audioBarsIntensity, forKey: "np.audioBars") }
+    }
+    /// Album-art breathing pulse amplitude (0.0–0.10). Default 0.04.
+    @Published var artworkPulseDepth: Double = 0.04 {
+        didSet { UserDefaults.standard.set(artworkPulseDepth, forKey: "np.artPulse") }
+    }
+    /// Pet sprite bounce amplitude when excited. 1.0 = default 6pt,
+    /// 2.0 = double-bounce, 0.5 = subtle.
+    @Published var petBounceIntensity: Double = 1.0 {
+        didSet { UserDefaults.standard.set(petBounceIntensity, forKey: "np.petBounce") }
+    }
+    /// Notch background animation speed multiplier (Galaxy stars,
+    /// Aurora hue cycle, etc.). 1.0 = default, 0.5 = chill,
+    /// 2.0 = chaotic.
+    @Published var backgroundAnimSpeed: Double = 1.0 {
+        didSet { UserDefaults.standard.set(backgroundAnimSpeed, forKey: "np.bgAnimSpeed") }
+    }
+    /// Welcome glow scale-in / scale-out amplitude. 0.0 = no scale
+    /// transition, 1.0 = default 0.85 → 1.0 bloom.
+    @Published var welcomeBloomDepth: Double = 1.0 {
+        didSet { UserDefaults.standard.set(welcomeBloomDepth, forKey: "np.welcomeBloom") }
+    }
+    /// Live activity progress line thickness (1–4pt). Default 1.5.
+    @Published var progressLineThickness: Double = 1.5 {
+        didSet { UserDefaults.standard.set(progressLineThickness, forKey: "np.progLine") }
+    }
     /// Reduce motion: kills welcome animation, gradient ring rotation,
     /// and any other purely-decorative animation. Useful for users with
     /// vestibular sensitivity or a low-power Mac.
@@ -640,6 +682,39 @@ final class NotchViewModel: ObservableObject {
         if let raw = d.string(forKey: "np.bg"),
            let parsed = NotchBackground(rawValue: raw) {
             self.expandedBackground = parsed
+        }
+        // Animation customization
+        if d.object(forKey: "np.pomRingSpeed") != nil {
+            let v = d.double(forKey: "np.pomRingSpeed")
+            self.pomodoroRingRotationSpeed = v >= 0 && v <= 30 ? v : 8.0
+        }
+        if d.object(forKey: "np.welcomeHue") != nil {
+            let v = d.double(forKey: "np.welcomeHue")
+            self.welcomeHueCyclePeriod = v >= 1 && v <= 30 ? v : 5.0
+        }
+        if d.object(forKey: "np.audioBars") != nil {
+            let v = d.double(forKey: "np.audioBars")
+            self.audioBarsIntensity = v >= 0 && v <= 2 ? v : 1.0
+        }
+        if d.object(forKey: "np.artPulse") != nil {
+            let v = d.double(forKey: "np.artPulse")
+            self.artworkPulseDepth = v >= 0 && v <= 0.10 ? v : 0.04
+        }
+        if d.object(forKey: "np.petBounce") != nil {
+            let v = d.double(forKey: "np.petBounce")
+            self.petBounceIntensity = v >= 0 && v <= 3 ? v : 1.0
+        }
+        if d.object(forKey: "np.bgAnimSpeed") != nil {
+            let v = d.double(forKey: "np.bgAnimSpeed")
+            self.backgroundAnimSpeed = v >= 0 && v <= 3 ? v : 1.0
+        }
+        if d.object(forKey: "np.welcomeBloom") != nil {
+            let v = d.double(forKey: "np.welcomeBloom")
+            self.welcomeBloomDepth = v >= 0 && v <= 2 ? v : 1.0
+        }
+        if d.object(forKey: "np.progLine") != nil {
+            let v = d.double(forKey: "np.progLine")
+            self.progressLineThickness = v >= 1 && v <= 4 ? v : 1.5
         }
         if d.object(forKey: "np.dragExpand") != nil {
             self.expandOnDragHover = d.bool(forKey: "np.dragExpand")

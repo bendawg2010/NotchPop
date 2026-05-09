@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.30</title>
+      <pubDate>Sat, 09 May 2026 00:15:48 +0000</pubDate>
+      <sparkle:version>1.5.30</sparkle:version>
+      <sparkle:shortVersionString>1.5.30</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>World Clock duplicate-time bug fixed.</strong> Default cities had Home (current TZ) + New York + London + Tokyo — if you live in Eastern Time, Home and New York were the same timezone showing identical times. User report: 'the time is really messed up its not right.' Init now de-dupes; existing users can hit Settings → World Clock → Reset to defaults to clear the dup.</li><li><strong>Searchable timezone picker.</strong> User report: 'you cant use the bar to change where you are or anything.' Was an unsorted Picker scroll of 400+ IANA identifiers. Now: a search field that filters by city or region, scroll list with current local time per row, click to select. Type 'tokyo' or 'pacific' or 'kolkata' and you get instant results.</li><li><strong>8 new animation tuning sliders</strong> in Settings → Appearance: Pomodoro ring spin (0–20s), Welcome hue cycle (1–20s), Welcome bloom depth (0–2×), Audio bars intensity (0–2×), Album-art breathing (0–10%), Notch Pet bounce (0–3×), Background animation speed (0–3×), Progress line thickness (1–4pt). Plus a 'Reset all animation sliders' button.</li><li><strong>GravyWorkflow skill</strong> — install at ~/.claude/skills/gravy-workflow/ — codifies the full idea-to-shipping pipeline so you say 'use gravy workflow' and the whole template kicks in (project scaffold, download gate with 3s hold + open-source + Cash App, Cloudflare Pages deploy, Sparkle release, commit). And 8 ready-to-paste Claude design prompts at /Users/benburnette/Downloads/NotchPop/docs/animation-design-prompts.md for new presets / pet stages / welcome scenes / etc.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.30/NotchPop.dmg"
+        sparkle:version="1.5.30"
+        sparkle:shortVersionString="1.5.30"
+        length="2697760"
+        type="application/octet-stream"
+        sparkle:edSignature="PuHVCrwMuCw3dfu065nHL1vYpVvWpUZRyvaPubCNOIFEHS9JbL7Fg/pkJetJUkdPhppXZFFTDZWWXjqyOxvsAA==" />
+    </item>
+    <item>
       <title>v1.5.29</title>
       <pubDate>Fri, 08 May 2026 23:42:10 +0000</pubDate>
       <sparkle:version>1.5.29</sparkle:version>
