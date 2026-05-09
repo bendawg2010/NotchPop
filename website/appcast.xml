@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.31</title>
+      <pubDate>Sat, 09 May 2026 00:24:37 +0000</pubDate>
+      <sparkle:version>1.5.31</sparkle:version>
+      <sparkle:shortVersionString>1.5.31</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <ul><li><strong>Notchy is the official mascot.</strong> The blob sprite is gone — replaced by the design Ben handed me from claude.ai/design: a horizontal pill body (the notch shape itself) with stubby arms+legs, face inside the capsule, and a soft radial halo behind that color-shifts per state. 12 mood states (idle / alert / focused / celebrate / sleep / love / thinking / listening / charging / dnd / sad / wink). The pet's body fill darkens through 5 stages of evolution (notch black → magenta → purple → blue → teal). Halo color matches the design's GLOW palette per state.</li></ul>
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.31/NotchPop.dmg"
+        sparkle:version="1.5.31"
+        sparkle:shortVersionString="1.5.31"
+        length="2685850"
+        type="application/octet-stream"
+        sparkle:edSignature="7WOoQLieCrjquLujYENXdtGsqQ2x0MUz1FInPLQuvoVEnriLewEYr+Vw/Aqi+h0czWm4BIi1fPlUVzmb8zSPBw==" />
+    </item>
+    <item>
       <title>v1.5.30</title>
       <pubDate>Sat, 09 May 2026 00:15:48 +0000</pubDate>
       <sparkle:version>1.5.30</sparkle:version>

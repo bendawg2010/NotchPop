@@ -18,16 +18,64 @@ struct NotchPetView: View {
     /// Forwarded from NotchViewModel.petBounceIntensity at the call
     /// site so users can tune the excited-state amplitude.
     var bounceIntensity: Double = 1.0
+    /// Toggles between the original blob sprite and the new Notchy
+    /// mascot. Always true now — kept as a flag in case we want to
+    /// resurrect the blob as a "classic" skin later.
+    private let useNotchy = true
+
+    /// Body fill color tied to the pet's evolution stage so older
+    /// pets visibly shift palette. Pulls from PetStage.bodyColors[0]
+    /// so the existing stage progression still influences the look.
+    private var notchyBodyFill: Color {
+        switch service.state.stage {
+        case .egg, .hatchling:
+            return Color(red: 0.04, green: 0.03, blue: 0.05)  // notch black
+        case .kid:
+            return Color(red: 0.12, green: 0.04, blue: 0.18)  // deep magenta
+        case .teen:
+            return Color(red: 0.18, green: 0.06, blue: 0.30)  // royal purple
+        case .adult:
+            return Color(red: 0.10, green: 0.18, blue: 0.36)  // midnight blue
+        case .sage:
+            return Color(red: 0.04, green: 0.16, blue: 0.20)  // deep teal
+        }
+    }
+
+    /// Subtle bounce on mood change to visualize state transitions.
+    @State private var bouncePhase: CGFloat = 1.0
+    private var bounceScale: CGFloat {
+        // Excited / happy moods pulse slightly bigger; sleep / sad
+        // shrink a hair. Multiplied by the user's bounceIntensity
+        // setting so 0× kills it, 2× exaggerates.
+        let base: CGFloat
+        switch service.state.mood {
+        case .excited: base = 1.05
+        case .happy:   base = 1.02
+        case .asleep:  base = 0.97
+        case .sad:     base = 0.97
+        default:       base = 1.0
+        }
+        let delta = (base - 1.0) * CGFloat(bounceIntensity)
+        return 1.0 + delta
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            // LEFT — sprite (bounceIntensity wired below from NotchView)
-            NotchPetSprite(
-                stage: service.state.stage,
-                mood: service.state.mood,
-                bounceIntensity: bounceIntensity
+            // LEFT — Notchy mascot. Replaces the earlier blob sprite
+            // with the official Claude-Design "Notchy" — a notch-pill
+            // body with stubby arms+legs, face inside the capsule,
+            // and a state-tinted radial halo behind. 12 mood states
+            // map from the existing PetMood enum.
+            NotchyMascot(
+                state: NotchyState.from(petMood: service.state.mood),
+                bodyFill: notchyBodyFill,
+                detail: .white,
+                showHalo: true
             )
-            .frame(width: 70, height: 70)
+            .frame(width: 100, height: 65)
+            .scaleEffect(bounceScale)
+            .animation(.spring(response: 0.35, dampingFraction: 0.65),
+                       value: service.state.mood)
 
             // MIDDLE — info + stats
             VStack(alignment: .leading, spacing: 3) {
