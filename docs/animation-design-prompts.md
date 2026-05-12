@@ -1,11 +1,12 @@
 # Claude Animation Design Prompts
 
-Paste these into Claude (or any image / motion-design AI) when you
-want concept art / storyboards / SVG sprites for new NotchPop +
-WallPop animations. Each is self-contained — drop the whole block
-in, get back something usable.
+Paste any of these into Claude (or any image / motion-design AI)
+when you want concept art, storyboards, or SVG sprites for a NEW
+ANIMATION inside NotchPop or WallPop. **All prompts are
+animation-focused** — no logo / static-asset prompts in this file.
+Each one is self-contained. Drop the whole block in.
 
-The brand palette to reference:
+The brand palette to reference in every prompt:
 
 | Color | Hex | Use |
 |---|---|---|
@@ -18,24 +19,25 @@ The brand palette to reference:
 
 ---
 
-## 1. New WallPop preset
+## 1. New WallPop preset (full-screen animated wallpaper)
 
 ```
 Design a new animated wallpaper preset for WallPop, a free macOS
-animated-wallpaper app. The preset will render in SwiftUI Canvas at
-~1440×900 (any display size — should scale).
+animated-wallpaper app. The preset will render in SwiftUI Canvas
+at full screen (~1440×900 — should scale to any display).
 
-CONSTRAINTS
+ANIMATION CONSTRAINTS
 - Pure CPU, no Metal shaders. Drawing primitives are: linear /
   radial / angular gradients, Path, Ellipse, Rectangle, Capsule,
   Canvas drawing API. Cap at ~120 sprites or you'll dropframes.
-- Animation runs forever — design the LOOP, not a one-shot intro.
-  Should look the same at t=2.5s as t=8.7s in motion character.
+- Animation runs FOREVER — design the LOOP, not a one-shot intro.
+  Should look the same in motion character at t=2.5s as t=8.7s.
 - Brand palette (use 1-3 of these): hot pink #FF6B6B, magenta
   #C147FF, blue #47A0FF, mint #2EE6A0, yellow #FFD960. Plus pure
   black #000 and a deep purple bg #06010f are fair game.
 - DO NOT design something realistic / photographic. Should look
-  like generative art or a NotchNook-aesthetic mood piece.
+  like generative art or a Notch / Dynamic Island aesthetic.
+- Frame rate: 30fps minimum, 60fps preferred. State the budget.
 
 STYLE BUCKET
 Pick one and stay in it:
@@ -49,251 +51,257 @@ THEME (your prompt-specific bit)
 upward in a column with caustic light shimmer"]
 
 DELIVERABLES
-1. A short description (≤3 sentences) of the visual.
-2. The animation loop — what changes over time, in plain English.
-3. A sketched SwiftUI view (Swift code or pseudocode is fine), one
-   function returning some View, ~30-60 lines.
-4. Notes on what dial users would want to control (speed, density,
-   intensity).
+1. A short description (≤3 sentences) of the visual + motion.
+2. Frame-by-frame animation breakdown — what changes over time.
+3. SwiftUI view source (or pseudo-Swift), one function returning
+   `some View`, ~30-60 lines.
+4. Notes on what dial users would want to control: speed, density,
+   intensity. Range each dial.
 ```
 
 ---
 
-## 2. New Notch Pet evolution stage
+## 2. New Notchy mascot pose / animation state
 
 ```
-Design a new evolution stage for the Notch Pet — the SwiftUI-shaped
-creature that lives in the NotchPop expanded notch. Existing stages
-(in order): Egg → Hatchling → Kid → Teen → Adult → Sage. Each gets
-a bigger body and a different gradient palette, and pet evolves at
-XP thresholds 0/5/50/200/600/1500.
+Notchy is the official NotchPop mascot — a horizontal pill body
+(the notch silhouette itself) with stubby arms and legs, a face
+inside the capsule, and a soft radial halo behind that color-
+shifts per state.
+
+EXISTING STATES (12 — already implemented)
+idle / alert / focused / celebrate / sleep / love / thinking /
+listening / charging / dnd / sad / wink
 
 YOU'RE DESIGNING
-Stage name: [e.g. "Mythic", "Astral", "Crowned", "Legend"]
-XP threshold: [≥1500, post-Sage]
+A 13th animation state for: [REPLACE — e.g. "doing a shrug",
+"playing music with headphones on", "stretching after a long
+focus session"]
 
-CONSTRAINTS
-- Pure SwiftUI shapes — no images, no SF Symbols (except small
-  accessories like a crown). Body is a gradient ellipse / blob;
-  face is two eyes + a mouth that morph with mood (asleep / hungry /
-  sad / neutral / happy / excited).
-- Body width 38-72pt — readable at small size, no fine detail.
-- Brand-palette gradient body. Sage already uses a 3-stop rainbow
-  (#FF8B3D → #C147FF → #2EE6A0). New stage should feel like a
-  step UP from there.
+ANIMATION CONSTRAINTS
+- Notchy lives in a 200×130 viewBox (matches the SVG handoff).
+- Body box is x 30..170, y 36..84 (width 140, height 48,
+  corner radius 24). Mostly stays put — pose is mostly arms/legs.
+- Limbs are 6pt strokeWidth lines + 6pt circles for hands/feet.
+- Face is two eyes + a mouth, both detail-color (white). Each
+  state has a unique face — change the eye shape / mouth curve.
+- Halo is a radial gradient that color-shifts per state. Pick
+  one halo color from the palette and explain why.
+- Animation runs in a 1-2 second loop. State which limbs / face
+  parts move and at what frequency.
 
 DELIVERABLES
-1. One paragraph describing the look + vibe.
-2. Body palette — 2 to 4 colors with hex.
-3. ANY accessories — a halo, wings, sparkles, particles. Keep
-   small enough to fit in a 70x70 sprite.
-4. A SwiftUI fragment for the body (10-30 lines) that I can drop
-   into the existing PetStage `bodyColors` + render path.
+1. Concept name + halo color + one-paragraph description
+2. Pose table entry (8 fields: bodyDx, bodyDy, armL, armR, legL,
+   legR, handL, handR, footL, footR — coordinates inside 200×130)
+3. Face SVG fragment (eyes + mouth, all in `detail` color)
+4. Animation loop description — what ticks each frame
+5. Trigger condition — what NotchPop event should put Notchy in
+   this state? (e.g. "battery <20%" / "user idle 1hr" / etc.)
 ```
 
 ---
 
-## 3. New welcome scene
+## 3. New welcome scene transition
 
 ```
-Design a 4th scene for the NotchPop welcome animation. Existing
-scenes (each 1.5s): Scene 1 ("Your workflow, faster"), Scene 2
-("Drop files in / drag them out"), Scene 3 ("Tabs are yours").
-Adding a 4th means the welcome takes ~6s instead of ~4.5s.
+Design the animation BETWEEN two welcome scenes in NotchPop's
+3-scene welcome sequence. Existing transitions = simple opacity
+crossfade (0.45s spring). I want something more interesting.
 
-CONSTRAINTS
-- Each scene = emoji + headline + bold accent line + one-line
-  caption. Total content lives in a 520x178pt panel inside the
-  expanded notch.
-- The welcome glow halo cycles a hue rainbow behind everything;
-  scene content is static after fade-in.
-- Headline ≤ 24 chars. Accent line ≤ 22 chars (renders at 30pt
-  black weight). Caption ≤ 70 chars.
-- Tone: friendly, slightly mischievous, indie. Not corporate.
+ANIMATION CONSTRAINTS
+- Plays inside the expanded notch (520×178pt panel)
+- Scene-out + scene-in happen in <1.0s total
+- The welcome glow halo behind the panel keeps cycling unaffected
+- Must work for any pair of scenes (don't hard-code emoji /
+  headline content)
 
-YOUR PROMPT
-What concept should this new scene introduce? E.g., "celebrate the
-Pomodoro feature" / "show off the App Shortcuts launcher" / "tease
-the secret konami-code Easter egg".
+YOU'RE DESIGNING
+A new transition style: [REPLACE — e.g. "vinyl-record spin",
+"page-turn", "elastic squish-and-stretch", "shutter close + open",
+"letters scatter and reform"]
 
 DELIVERABLES
-1. emoji
-2. headline (the regular-weight white line)
-3. accent (the BIG gradient-stroked line)
-4. caption (the small subdued explanation)
-5. brief reasoning on why this concept earns its 1.5s of welcome
-   real estate
+1. Storyboard: 4-6 frames at 100ms intervals describing what
+   the user sees during the transition
+2. SwiftUI animation source (~40 lines) — `withAnimation` calls,
+   AnyTransition, matchedGeometryEffect if needed
+3. Per-element timing — when does the headline move / fade,
+   when does the accent line, when do the dots reset, etc.
+4. Easing curve recommendation (.spring / .easeInOut / custom
+   timing function)
 ```
 
 ---
 
-## 4. New live-activity right-side signal
+## 4. New live-activity right-side animated signal
 
 ```
-Design a new "right side" signal for the NotchPop live-activity
-pill (the wide black pill that flanks the collapsed notch when
-something's happening on your Mac).
+Design a new animated signal for the right side of NotchPop's
+live-activity pill (the wide black notch shape that flanks the
+collapsed hardware notch when something's happening).
 
-EXISTING SIGNALS (the right-side area when activity is live)
-- Music playing → 4 vertical audio bars dancing at varied heights
-- Pomodoro / Countdown running → giant 13pt heavy rounded text
-  showing remaining time
+EXISTING SIGNALS
+- Music playing → 4 vertical audio bars, sin-driven heights
+- Pomodoro / Countdown running → countdown text in 13pt heavy
+  rounded mono, gradient-colored
 
-NEW SIGNAL FOR — [user-supplied event, e.g. "GitHub PR opened",
-"Slack message received", "Spotify track liked", "Battery hit 100%"]
+YOUR NEW SIGNAL FOR
+[REPLACE — e.g. "GitHub PR mention", "AirDrop incoming",
+"Spotify track liked", "Battery just hit 100%"]
 
-CONSTRAINTS
+ANIMATION CONSTRAINTS
 - 38pt wide × 22pt tall area to play with
-- Animated; loops forever while active
-- High contrast against pure black
-- Branded — uses the palette colors above (or a clear semantic
-  accent: green for success, yellow for warning, red for urgent)
+- Loops while active, fades on activity-end
+- High contrast against pure black notch background
+- Brand palette OR clear semantic color (green/yellow/red)
+- Frame budget: 30fps, lightweight, no per-pixel work
 
 DELIVERABLES
-1. Short description of the visual
-2. SwiftUI fragment (≤25 lines) producing a `View` for the signal
-3. The trigger condition (what event fires it) and how long it
-   stays visible
+1. Description of the visual + motion in plain English
+2. Animation timing — what moves on what frequency
+3. SwiftUI fragment (≤25 lines) producing a `View`
+4. Trigger event — when does this signal start, when does
+   it fade out
 ```
 
 ---
 
-## 5. New Pomodoro phase variant
+## 5. New Pomodoro ring animation variant
 
 ```
-Design a new visual phase for the Pomodoro tab beyond the existing
-Focus / Short Break / Long Break.
+The current Pomodoro ring shows a gradient stroke that orbits
+the perimeter, with the time-remaining in the center. I want a
+NEW visual variant the user can swap to.
 
-EXAMPLES
-- "Deep Work" mode (45-90 min focus block, no breaks)
-- "Sprint" mode (5 × 5-min mini-focus blocks back to back)
-- "Wind-down" mode (gradual end-of-day timer with shrinking
-  intensity)
+YOUR VARIANT
+[REPLACE — e.g. "particle-fill" (particles fill the ring as time
+elapses), "tide" (a wave sloshes around), "petals" (petals close
+inward as time runs out), "constellation" (stars connect with
+lines as you focus)]
 
-CONSTRAINTS
-- The Pomodoro tab has a 64x64pt ring with a gradient stroke that
-  slowly orbits when the timer is running, plus a center text with
-  remaining time, plus three transport buttons (start/pause, skip,
-  reset). Plus a phase picker with emoji + label pills.
-- Each phase has a tint color used in the ring stroke + the live
-  activity bar.
-
-YOUR PHASE
-[name + concept]
+ANIMATION CONSTRAINTS
+- Ring is 64×64pt
+- Three phases (Focus / Short Break / Long Break) each with a
+  tint color baked into the gradient — your variant has to
+  respect those tints
+- Reduce-motion friendly — must have a static fallback for
+  users with prefers-reduced-motion
+- Should communicate progress: a glance tells you "near start" /
+  "halfway" / "almost done"
 
 DELIVERABLES
-1. Phase name + emoji
-2. Tint color (hex)
-3. Default duration in minutes
-4. Quick-pick chip presets (4-8 minute values)
-5. Behavior — does it auto-start the next phase? Strict mode?
+1. Description of the visual + how it communicates progress
+2. SwiftUI source (~50 lines, TimelineView-driven)
+3. Reduce-motion fallback — the static version
+4. Color application — how the phase tint folds in
+5. State transitions — what happens when the timer is paused,
+   skipped, completed
 ```
 
 ---
 
-## 6. New "Connections" trigger event
+## 6. New WallPop hero canvas animation (for the website)
 
 ```
-Design a new trigger event for NotchPop's Connections automation
-engine. Existing triggers: pomodoroFocusStart/End,
-pomodoroBreakStart/End, countdownEnd, chargingStart, musicStart/End,
-appLaunched.
+The WallPop website's hero section has a fullscreen <canvas>
+behind the title text. Currently it renders the Galaxy preset.
+I want a NEW hero animation that's only used on the website
+(doesn't have to ship as an in-app preset).
 
-YOUR TRIGGER
-What system / app / state change should fire it?
-[e.g. "WiFi network changed", "AirPods connected", "Caffeine kicks
-in", "Stand-up reminder time"]
+ANIMATION CONSTRAINTS
+- HTML5 Canvas with vanilla JS, no WebGL / three.js / pixi
+- 60fps via requestAnimationFrame
+- Loops forever, looks identical at any timestamp
+- Sits BEHIND a translucent dark gradient fade (so don't make it
+  too bright — the title text needs to remain legible)
+- Brand palette (pink/magenta/blue/mint), dark background, no
+  realistic photography
+- Should make someone want to download the app
 
-CONSTRAINTS
-- Must be detectable from a SwiftUI macOS app without Accessibility
-  permission (we don't ask for it). Available paths: Distributed
-  Notifications, NotificationCenter, NSWorkspace observers,
-  CoreLocation (already permissioned), Calendar (EventKit),
-  Network reachability, IOPowerSources.
-- Should be a discrete EVENT not a continuous state — e.g.
-  "WiFi changed" (event) not "still on WiFi" (state).
-- Plays well with all existing actions: launch app, open URL, run
-  Shortcut, play sound, copy text.
+YOUR HERO CONCEPT
+[REPLACE — e.g. "infinite zoom into a fractal", "particles spell
+out a different word every loop", "depth field of pulsing rings"]
 
 DELIVERABLES
-1. Trigger name (camelCase enum case)
-2. Friendly label ("Wi-Fi network changes")
-3. The macOS API + observer pattern to detect it (one paragraph)
-4. SwiftUI / Combine code skeleton (~20 lines) for the observer
-5. Example automation — what would a user wire to it?
+1. One-paragraph description of the visual + motion character
+2. Implementable Canvas code (≤80 lines, single drawFrame
+   function: `drawFrame(ctx, width, height, time_seconds)`)
+3. Reduced-motion static fallback — what to render if the user
+   has prefers-reduced-motion enabled
+4. Optional: ideas for how the animation could subtly REACT to
+   user inputs (mouse position, scroll Y, etc.) without becoming
+   distracting
 ```
 
 ---
 
-## 7. Hero animation for a new project's website
+## 7. New ambient idle micro-animation for the notch
 
 ```
-Design the hero animation for a new free + open-source [macOS app /
-web tool / browser extension]. The project is named [NAME] and
-does [what]. Site uses the standard "Gravy" promo template:
-animated gradient title, drifting orb backgrounds, shimmer-sweep
-download button, dark `#06010f` bg.
+Design a tiny ambient animation that plays inside the COLLAPSED
+notch (the small black pill, 178×32pt) when nothing else is
+active. Today the collapsed notch is dead-static black.
 
-YOUR JOB
-Design what plays BEHIND the hero copy at full viewport size. Has
-to:
-- Render in HTML5 Canvas with vanilla JS (NO three.js / pixi /
-  webgl). 60fps via requestAnimationFrame.
-- Loop forever, look the same at any timestamp.
-- Sit BEHIND a translucent dark gradient fade so it never overpowers
-  the title text.
-- Fit the brand: pink/magenta/blue/mint palette.
-- Be DIFFERENT from existing project hero animations: NotchPop has
-  a black notch + welcome glow; WallPop has a galaxy preset; we
-  don't want a copy.
+ANIMATION CONSTRAINTS
+- 178pt wide × 32pt tall (the actual hardware notch dimensions)
+- Has to read as "alive" without being distracting — user should
+  notice it briefly, then forget about it
+- Period: 8-30 seconds. Long enough that it doesn't pull focus.
+- Pure black background (the notch must blend with the hardware
+  cutout when collapsed)
+- Brand-color accents only — pink/magenta/blue/mint
+- 30fps fine; doesn't need to be smooth
+
+YOUR CONCEPT
+[REPLACE — e.g. "tiny sparkle that drifts across once a minute",
+"breath-like opacity pulse on the bottom edge", "Notchy peeks out
+once every 2 minutes", "a subtle aurora shimmer on the inner
+top edge"]
 
 DELIVERABLES
-1. One-paragraph description of the hero visual + motion character
-2. Implementable Canvas code (≤80 lines, single drawFrame function
-   taking ctx, width, height, time-in-seconds).
-3. Optional: a tiny static fallback gradient if the user has
-   prefers-reduced-motion enabled
+1. Storyboard: 3-5 keyframes describing the motion
+2. SwiftUI source (~40 lines, TimelineView-driven)
+3. Trigger conditions — when DOES it play (always idle?
+   only when no live activity? only certain hours of the day?)
+4. User-toggleable? Yes/no + reasoning
 ```
 
 ---
 
-## 8. Logo concept for a new project
+## 8. New welcome glow halo variant
 
 ```
-Design a logo for [PROJECT NAME] — a free + open-source [tool / app
-/ game] that does [what]. Will be rendered at:
-- 16x16 favicon (data: SVG)
-- 64x64 in-app icon
-- 128x128 macOS app icon
-- 1024x1024 download artwork
+The welcome animation currently shows a multi-color radial halo
+behind the expanded notch that hue-cycles through pink/purple/
+blue/mint over ~5 seconds. I want a new HALO style the user can
+switch to in Settings.
 
-CONSTRAINTS
-- Brand palette: pink #FF6B6B, magenta #C147FF, blue #47A0FF, mint
-  #2EE6A0, yellow #FFD960. Pick 2-3, no more.
-- ALWAYS uses gradient (linear or angular). No flat colors.
-- Body shape sits in a rounded square with corner radius 14pt
-  (matches macOS app icon shape).
-- White / very-light glyph drawn ON TOP of the gradient.
-- No text — pure mark.
-- Should read at 16x16 — bold shapes, no fine detail, no thin
-  strokes (<2px equivalents).
+YOUR HALO VARIANT
+[REPLACE — e.g. "fireworks bursts", "expanding concentric rings",
+"sparkle rain falling outward from the notch", "lightning forks
+that strike outward then fade"]
 
-REFERENCE the existing family:
-- NotchPop = a curved notch shape / dynamic-island silhouette in
-  white over pink-purple-blue gradient
-- WallPop = a checkmark-shaped path in white over pink-purple-blue
-- DeckGrab = a card-stack with arrow + smaller card slot, white
-  over orange-pink-purple
-
-YOUR ASK
-Design a NEW mark for [PROJECT]. Suggest 3 directions in the same
-visual family.
+ANIMATION CONSTRAINTS
+- Renders in the welcome-only padding around the expanded notch
+  (110pt sides, 100pt bottom — ~280pt × 250pt available area)
+- Plays for the welcome duration (3-15s, configurable)
+- Has a ramp-IN (smoothstep first 1.6s) and ramp-OUT (last 1s)
+- Brand palette
+- Reduce-motion friendly
 
 DELIVERABLES
-1. Three concept names with one-line elevator pitch
-2. For your favorite: full SVG (paste-able) at 64x64 viewBox
-3. CSS-encoded data URL for use in `<link rel="icon">`
+1. Description of the visual
+2. Frame-by-frame animation breakdown for one full loop
+3. SwiftUI source (~60 lines, TimelineView-driven)
+4. Ramp-in / ramp-out behavior — does the variant adapt to
+   the envelope, or is it triggered as a one-shot?
+5. How does it interact with the user's chosen accent color?
 ```
 
-Use these by replacing the [BRACKETED] sections with whatever
-you're working on, then paste the whole block to Claude.
+---
+
+That's all 8 — each one tightly scoped to a specific animation
+surface in the NotchPop / WallPop family. Replace `[REPLACE]`
+sections with whatever you're working on, paste the whole block
+to Claude, and you'll get something usable back.

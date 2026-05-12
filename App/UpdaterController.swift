@@ -45,9 +45,15 @@ final class UpdaterController: NSObject {
             .requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
+    /// Latched briefly when the user clicked Check / Force Update so
+    /// the "no update found" delegate posts a confirmation notification
+    /// (vs the silent background 4h poll).
+    private var userInitiatedCheck: Bool = false
+
     /// Trigger a user-initiated check for updates. Sparkle pops a sheet
     /// regardless of result (so the user knows we actually checked).
     @objc func checkForUpdates(_ sender: Any?) {
+        userInitiatedCheck = true
         controller.checkForUpdates(sender)
     }
 
@@ -77,6 +83,7 @@ final class UpdaterController: NSObject {
     /// got and start a brand-new update cycle." Followed by a
     /// user-initiated checkForUpdates so the user sees the result.
     @objc func forceUpdateNow(_ sender: Any?) {
+        userInitiatedCheck = true
         NSLog("NotchPop: forceUpdateNow — nuking Sparkle + URL caches")
         let defaults = UserDefaults.standard
         for key in [
@@ -101,9 +108,19 @@ final class UpdaterController: NSObject {
         // appcast state, re-schedules the cycle from scratch.
         controller.updater.resetUpdateCycle()
 
-        // Then a user-visible check so the user gets a sheet either
-        // way (sees "you're up to date" with the LATEST version OR
-        // "v1.5.X is available, install now").
+        // Side-channel safety net (runs in parallel with Sparkle).
+        // Bypasses Sparkle entirely — fetches the appcast directly,
+        // and if there's a newer version, downloads the DMG to
+        // ~/Downloads and opens Finder. Belt + braces — covers the
+        // case where Sparkle's XPC service is wedged for ad-hoc
+        // builds. User sees SOMETHING happen either way.
+        runIndependentVersionCheck()
+
+        // Visible feedback right now so user knows the click registered.
+        // Then a user-visible Sparkle check so they see the sheet
+        // either way ("up to date" OR "vX.Y.Z available").
+        notify(title: "Checking for updates…",
+               body: "If a new NotchPop is out, we'll download it to ~/Downloads and open Finder. Otherwise Sparkle's sheet will show you're up to date.")
         controller.checkForUpdates(sender)
     }
 
@@ -312,6 +329,14 @@ extension UpdaterController: SPUUpdaterDelegate {
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
         NSLog("NotchPop Sparkle: no update available")
+        // Only confirm to the user if THEY clicked Check / Force —
+        // background 4h polls stay silent.
+        if userInitiatedCheck {
+            let v = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
+            notify(title: "NotchPop is up to date",
+                   body: "You're on v\(v) — the latest. Auto-update is working.")
+            userInitiatedCheck = false
+        }
     }
 
     func updater(_ updater: SPUUpdater,
@@ -328,6 +353,9 @@ extension UpdaterController: SPUUpdaterDelegate {
         if let error = error {
             NSLog("NotchPop Sparkle: cycle error \(error.localizedDescription)")
         }
+        // Reset the user-initiated latch on EVERY cycle end so a stale
+        // true-flag doesn't bleed into the next background poll.
+        userInitiatedCheck = false
     }
 
     // Notify-on-version-drift: cleanest way to surface "you were just

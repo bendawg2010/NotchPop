@@ -78,7 +78,17 @@ final class NotchWindowController: NSWindowController {
         super.init(window: window)
 
         let host = NSHostingView(rootView: NotchView(viewModel: viewModel))
-        host.translatesAutoresizingMaskIntoConstraints = false
+        // Pin host to all 4 window edges via autoresizing mask. With
+        // translatesAutoresizingMaskIntoConstraints=false (the old
+        // setting) AND no explicit constraints, the host's frame
+        // could end up at any size — SwiftUI layout was rendering at
+        // an arbitrary container size, causing the "off to the right"
+        // artifact during close (the SwiftUI shape's center wasn't
+        // actually the window's center). Switching to autoresize so
+        // the host always exactly fills the window contentLayoutRect
+        // → SwiftUI layout matches window center on every resize.
+        host.translatesAutoresizingMaskIntoConstraints = true
+        host.autoresizingMask = [.width, .height]
         window.contentView = host
 
         viewModel.onSizeChange = { [weak self] in
@@ -145,30 +155,57 @@ final class NotchWindowController: NSWindowController {
         }
     }
 
+    /// Re-apply check is suppressed until this Date passes — set when
+    /// we kick off an animated window resize so the next-runloop
+    /// re-apply doesn't race with the in-progress animation and
+    /// snap the window to a half-interpolated frame.
+    private var suppressReapplyUntil: Date?
+
     private func applyContentSize() {
         sizeApplyGeneration &+= 1
         let myGen = sizeApplyGeneration
-        applyFrame()
+
+        // Window SHRINKING → defer the resize ~0.4s so the SwiftUI
+        // spring in NotchView's hover handler can fully spring shut
+        // INSIDE the still-expanded window before we shrink the
+        // window itself. With the host now properly pinned to the
+        // window via autoresizing (see init), the SwiftUI shape
+        // stays centered during this deferred period — fixes both
+        // "no visible animation" (window was snapping shut, clipping
+        // the spring invisibly) AND "slid right then jumped back"
+        // (host wasn't filling the window, so the shape wasn't truly
+        // center-anchored).
+        // Window GROWING → apply immediately so the expanded shape
+        // has room to render at full size as soon as the spring
+        // starts running.
+        let newFrame = computeDesiredFrame()
+        let cur = window?.frame ?? .zero
+        let shrinking = newFrame.width < cur.width - 8 || newFrame.height < cur.height - 8
+        if shrinking {
+            suppressReapplyUntil = Date().addingTimeInterval(0.45)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.40) { [weak self] in
+                guard let self = self,
+                      self.sizeApplyGeneration == myGen else { return }
+                self.applyFrame()
+            }
+        } else {
+            applyFrame()
+        }
 
         // Force a second pass after the system finishes its async
         // window placement — sometimes macOS overrides the frame for
         // borderless panels with .canJoinAllSpaces collectionBehavior.
         // Critical: bail out if a NEWER applyContentSize has been
-        // called since (myGen != current) — otherwise we'd revert the
-        // window to OUR stale frame and undo the newer call's correct
-        // frame. That race was the root cause of "starts fine THEN
-        // jumps to the left" on display reconnect / live-activity
-        // toggle / welcome-glow padding kick-in.
+        // called since (myGen != current) — otherwise we'd revert
+        // the window to OUR stale frame.
+        // Also bail if we're inside an animated-shrink suppression
+        // window — the in-progress animation will land at the
+        // correct frame on its own.
         DispatchQueue.main.async { [weak self] in
             guard let self = self,
                   self.sizeApplyGeneration == myGen,
                   let window = self.window else { return }
-
-            // Also recompute the *current* desired frame (from the
-            // current viewModel + chosen screen) rather than reusing
-            // a captured value. If viewModel.targetSize changed in
-            // the same runloop, applyFrame() will land us on the
-            // newest desired frame instead of an older one.
+            if let until = self.suppressReapplyUntil, Date() < until { return }
             let want = self.computeDesiredFrame()
             let cur = window.frame
             if abs(cur.origin.x - want.origin.x) > 0.5

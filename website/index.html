@@ -13,14 +13,21 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://notchpop.pages.dev/" />
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FF3CAC'/%3E%3Cstop offset='.5' stop-color='%23784BA0'/%3E%3Cstop offset='1' stop-color='%232B86C5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='black'/%3E%3Cpath d='M16 14 H48 V22 Q48 30 40 30 H24 Q16 30 16 22 Z' fill='url(%23g)'/%3E%3C/svg%3E" />
+  <!-- Favicon: mini-Notchy (capsule body + dot eyes + smile) on a
+       gradient pink→purple→blue rounded square. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FF3CAC'/%3E%3Cstop offset='.5' stop-color='%23784BA0'/%3E%3Cstop offset='1' stop-color='%232B86C5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Crect x='12' y='22' width='40' height='20' rx='10' ry='10' fill='%23000'/%3E%3Ccircle cx='26' cy='32' r='2.4' fill='%23fff'/%3E%3Ccircle cx='38' cy='32' r='2.4' fill='%23fff'/%3E%3Cpath d='M 28 36 Q 32 39 36 36' stroke='%23fff' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
 
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="nav">
     <a class="logo" href="/">
-      <span class="logo-mark"></span>
+      <svg class="logo-notchy" viewBox="0 0 200 130" aria-hidden="true">
+        <rect x="30" y="36" width="140" height="48" rx="24" ry="24" fill="currentColor"/>
+        <circle cx="86"  cy="58" r="4" fill="#fff"/>
+        <circle cx="114" cy="58" r="4" fill="#fff"/>
+        <path d="M 92 68 Q 100 74 108 68" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      </svg>
       <span>NotchPop</span>
     </a>
     <nav>
@@ -31,13 +38,89 @@
 
   <main>
     <section class="hero">
+      <!-- Notchy is the brand face — anchors the intro before the headline. -->
+      <div class="hero-notchy">
+        <div class="notchy-stage">
+          <div class="notchy-halo" id="notchyHalo"></div>
+          <svg class="notchy-svg ny-state-idle" id="notchySvg" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <line class="ny-leg-l" x1="74"  y1="84" x2="74"  y2="108" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+            <line class="ny-leg-r" x1="126" y1="84" x2="126" y2="108" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="74"  cy="111" r="4.5" fill="#000"/>
+            <circle cx="126" cy="111" r="4.5" fill="#000"/>
+            <rect x="30" y="36" width="140" height="48" rx="24" ry="24" fill="#000"/>
+            <line class="ny-arm-l" x1="36"  y1="60" x2="14"  y2="76" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+            <line class="ny-arm-r" x1="164" y1="60" x2="186" y2="76" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+            <circle class="ny-hand-l" cx="14"  cy="76" r="4.5" fill="#000"/>
+            <circle class="ny-hand-r" cx="186" cy="76" r="4.5" fill="#000"/>
+            <g class="ny-face ny-face-idle">
+              <circle cx="86"  cy="58" r="3.5" fill="#fff"/><circle cx="114" cy="58" r="3.5" fill="#fff"/>
+              <path d="M 92 68 Q 100 74 108 68" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </g>
+            <g class="ny-face ny-face-alert">
+              <circle cx="86"  cy="56" r="4" fill="#fff"/><circle cx="114" cy="56" r="4" fill="#fff"/>
+              <circle cx="100" cy="70" r="2" fill="#fff"/>
+            </g>
+            <g class="ny-face ny-face-focused">
+              <line x1="80"  y1="54" x2="92"  y2="56" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="120" y1="54" x2="108" y2="56" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M 92 70 Q 100 67 108 70" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </g>
+            <g class="ny-face ny-face-celebrate">
+              <path d="M 82 58 Q 86 52 90 58" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <path d="M 110 58 Q 114 52 118 58" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <path d="M 90 66 Q 100 78 110 66" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+            </g>
+            <g class="ny-face ny-face-love">
+              <path d="M 82 56 q 0 -3 3 -3 q 3 0 3 3 q 0 -3 3 -3 q 3 0 3 3 q 0 4 -6 8 q -6 -4 -6 -8 z" fill="#FF6B6B"/>
+              <path d="M 108 56 q 0 -3 3 -3 q 3 0 3 3 q 0 -3 3 -3 q 3 0 3 3 q 0 4 -6 8 q -6 -4 -6 -8 z" fill="#FF6B6B"/>
+              <path d="M 92 70 Q 100 75 108 70" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </g>
+            <g class="ny-face ny-face-sleep">
+              <line x1="82" y1="58" x2="92" y2="58" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="108" y1="58" x2="118" y2="58" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <text x="124" y="48" fill="#fff" font-size="9" font-family="-apple-system,sans-serif" font-weight="700">z</text>
+              <text x="132" y="42" fill="#fff" font-size="11" font-family="-apple-system,sans-serif" font-weight="700">Z</text>
+            </g>
+            <g class="ny-face ny-face-thinking">
+              <circle cx="86"  cy="58" r="3.2" fill="#fff"/><circle cx="114" cy="58" r="3.2" fill="#fff"/>
+              <path d="M 90 70 Q 96 68 104 71" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </g>
+            <g class="ny-face ny-face-listening">
+              <circle cx="86"  cy="58" r="3.5" fill="#fff"/><circle cx="114" cy="58" r="3.5" fill="#fff"/>
+              <circle cx="100" cy="70" r="2.6" fill="none" stroke="#fff" stroke-width="2"/>
+            </g>
+            <g class="ny-face ny-face-charging">
+              <circle cx="86"  cy="58" r="3.2" fill="#fff"/><circle cx="114" cy="58" r="3.2" fill="#fff"/>
+              <path d="M 102 64 L 96 72 L 100 72 L 98 78 L 104 70 L 100 70 L 102 64 Z" fill="#FFD960"/>
+            </g>
+            <g class="ny-face ny-face-dnd">
+              <line x1="82"  y1="54" x2="90"  y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="90"  y1="54" x2="82"  y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="110" y1="54" x2="118" y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="118" y1="54" x2="110" y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="90"  y1="71" x2="110" y2="71" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+            </g>
+            <g class="ny-face ny-face-sad">
+              <circle cx="86"  cy="60" r="3.2" fill="#fff"/><circle cx="114" cy="60" r="3.2" fill="#fff"/>
+              <path d="M 90 73 Q 100 66 110 73" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </g>
+            <g class="ny-face ny-face-wink">
+              <line x1="82" y1="58" x2="92" y2="58" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="114" cy="58" r="3.5" fill="#fff"/>
+              <path d="M 92 68 Q 100 74 108 68" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <div class="notchy-label" id="notchyLabel">Hi, I'm Notchy.</div>
+      </div>
+
       <h1>Your MacBook notch,<br/><span class="grad">but useful.</span></h1>
       <p class="lead">Hover the notch — it pops open. Drag a file toward it, the Shelf opens to catch it. Music, Pomodoro, Quick Actions, Notes, Calculator, Reminders, Habits, Weather, Network, QR Code, Unit Converter, Random, Hash, Audio Controls, Countdown To, App Shortcuts, Timers, World Clock, Clipboard, System, Calendar, AirPods, Shelf — <strong>23 swappable widgets</strong> with a live activity pill that flanks the notch when something's running. Free. Open source. Auto-updating. <strong>Blends invisibly with your hardware notch when collapsed.</strong></p>
       <div class="ctas">
         <a class="btn primary" href="https://github.com/bendawg2010/NotchPop/releases/latest/download/NotchPop.dmg" data-download-trigger="hero">↓ Download for macOS</a>
         <a class="btn ghost" href="https://github.com/bendawg2010/NotchPop">View on GitHub</a>
       </div>
-      <div class="release-meta"><span class="version-pill">v1.5.31</span> · macOS 14+ · Apple Silicon &amp; Intel · ~1.9 MB DMG · Free · MIT</div>
+      <div class="release-meta"><span class="version-pill">v1.5.44</span> · macOS 14+ · Apple Silicon &amp; Intel · ~1.9 MB DMG · Free · MIT</div>
       <div class="gatekeeper-note" role="note">
         <span class="gatekeeper-note-icon" aria-hidden="true">ⓘ</span>
         <div>
@@ -46,6 +129,97 @@
         </div>
       </div>
     </section>
+
+    <!-- DEPRECATED stage (Notchy now lives in the hero). Hidden via CSS.
+         Keeping the markup commented-out for historical reference.
+    <section class="notchy-hello" aria-label="Notchy mascot">
+      <div class="notchy-stage">
+        <div class="notchy-halo"></div>
+        <svg class="notchy-svg" viewBox="0 0 200 130"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- legs (drawn first so body covers tops) -->
+          <line class="ny-leg ny-leg-l" x1="74"  y1="84"  x2="74"  y2="108" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+          <line class="ny-leg ny-leg-r" x1="126" y1="84"  x2="126" y2="108" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+          <circle class="ny-foot ny-foot-l" cx="74"  cy="111" r="4.5" fill="#000"/>
+          <circle class="ny-foot ny-foot-r" cx="126" cy="111" r="4.5" fill="#000"/>
+          <!-- body capsule -->
+          <rect class="ny-body" x="30" y="36" width="140" height="48"
+                rx="24" ry="24" fill="#000"/>
+          <!-- arms -->
+          <line class="ny-arm ny-arm-l" x1="36"  y1="60"  x2="14"  y2="76"  stroke="#000" stroke-width="6" stroke-linecap="round"/>
+          <line class="ny-arm ny-arm-r" x1="164" y1="60"  x2="186" y2="76"  stroke="#000" stroke-width="6" stroke-linecap="round"/>
+          <circle class="ny-hand ny-hand-l" cx="14"  cy="76" r="4.5" fill="#000"/>
+          <circle class="ny-hand ny-hand-r" cx="186" cy="76" r="4.5" fill="#000"/>
+          <!-- face groups, one per state — toggled via class on root svg -->
+          <g class="ny-face ny-face-idle">
+            <circle cx="86"  cy="58" r="3.5" fill="#fff"/>
+            <circle cx="114" cy="58" r="3.5" fill="#fff"/>
+            <path d="M 92 68 Q 100 74 108 68" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g class="ny-face ny-face-alert">
+            <circle cx="86"  cy="56" r="4" fill="#fff"/>
+            <circle cx="114" cy="56" r="4" fill="#fff"/>
+            <circle cx="100" cy="70" r="2" fill="#fff"/>
+          </g>
+          <g class="ny-face ny-face-focused">
+            <line x1="80"  y1="54" x2="92"  y2="56" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="120" y1="54" x2="108" y2="56" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 92 70 Q 100 67 108 70" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g class="ny-face ny-face-celebrate">
+            <path d="M 82 58 Q 86 52 90 58" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M 110 58 Q 114 52 118 58" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M 90 66 Q 100 78 110 66" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+          </g>
+          <g class="ny-face ny-face-love">
+            <path d="M 82 56 q 0 -3 3 -3 q 3 0 3 3 q 0 -3 3 -3 q 3 0 3 3 q 0 4 -6 8 q -6 -4 -6 -8 z" fill="#FF6B6B"/>
+            <path d="M 108 56 q 0 -3 3 -3 q 3 0 3 3 q 0 -3 3 -3 q 3 0 3 3 q 0 4 -6 8 q -6 -4 -6 -8 z" fill="#FF6B6B"/>
+            <path d="M 92 70 Q 100 75 108 70" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g class="ny-face ny-face-sleep">
+            <line x1="82" y1="58" x2="92" y2="58" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="108" y1="58" x2="118" y2="58" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="124" y="48" fill="#fff" font-size="9" font-family="-apple-system,sans-serif" font-weight="700">z</text>
+            <text x="132" y="42" fill="#fff" font-size="11" font-family="-apple-system,sans-serif" font-weight="700">Z</text>
+          </g>
+          <g class="ny-face ny-face-thinking">
+            <circle cx="86"  cy="58" r="3.2" fill="#fff"/>
+            <circle cx="114" cy="58" r="3.2" fill="#fff"/>
+            <path d="M 90 70 Q 96 68 104 71" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g class="ny-face ny-face-listening">
+            <circle cx="86"  cy="58" r="3.5" fill="#fff"/>
+            <circle cx="114" cy="58" r="3.5" fill="#fff"/>
+            <circle cx="100" cy="70" r="2.6" fill="none" stroke="#fff" stroke-width="2"/>
+          </g>
+          <g class="ny-face ny-face-charging">
+            <circle cx="86"  cy="58" r="3.2" fill="#fff"/>
+            <circle cx="114" cy="58" r="3.2" fill="#fff"/>
+            <path d="M 102 64 L 96 72 L 100 72 L 98 78 L 104 70 L 100 70 L 102 64 Z" fill="#FFD960"/>
+          </g>
+          <g class="ny-face ny-face-dnd">
+            <line x1="82"  y1="54" x2="90"  y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="90"  y1="54" x2="82"  y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="110" y1="54" x2="118" y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="118" y1="54" x2="110" y2="62" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="90"  y1="71" x2="110" y2="71" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          </g>
+          <g class="ny-face ny-face-sad">
+            <circle cx="86"  cy="60" r="3.2" fill="#fff"/>
+            <circle cx="114" cy="60" r="3.2" fill="#fff"/>
+            <path d="M 90 73 Q 100 66 110 73" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g class="ny-face ny-face-wink">
+            <line x1="82" y1="58" x2="92" y2="58" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="114" cy="58" r="3.5" fill="#fff"/>
+            <path d="M 92 68 Q 100 74 108 68" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </g>
+        </svg>
+        <div class="notchy-label" id="notchyLabel">Hi, I'm Notchy.</div>
+      </div>
+      <p class="notchy-blurb">The official NotchPop mascot.</p>
+    </section>
+    -->
 
     <!-- Live notch demo -->
     <section class="notch-demo" aria-label="Animated notch demo">
@@ -74,7 +248,7 @@
                 <span class="ne-tab">📋 Clipboard</span>
               </div>
               <div class="ne-meta">
-                <span class="ne-version" aria-label="version 1.5.12">v1.5.31</span>
+                <span class="ne-version" aria-label="version 1.5.12">v1.5.44</span>
                 <span class="ne-battery" aria-label="82% battery">🔋 82%</span>
                 <span class="ne-gear" aria-label="Settings">⚙</span>
               </div>
@@ -527,6 +701,41 @@ cd NotchPop
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && !gate.hasAttribute('hidden')) closeGate();
       });
+    })();
+
+    // Notchy mascot state cycler. 12 states, ~2.4s each. Toggles a
+    // class on the SVG to switch which pre-rendered face shows.
+    (function () {
+      const halo = document.getElementById('notchyHalo');
+      const svg = document.getElementById('notchySvg');
+      const label = document.getElementById('notchyLabel');
+      if (!halo || !svg || !label) return;
+      const states = [
+        { name: 'idle',      halo: '#C147FF', text: "Hi, I'm Notchy." },
+        { name: 'alert',     halo: '#FFD960', text: 'Heads up!' },
+        { name: 'focused',   halo: '#47A0FF', text: 'Focusing.' },
+        { name: 'celebrate', halo: '#2EE6A0', text: 'Yesss! 🎉' },
+        { name: 'love',      halo: '#FF6B6B', text: 'Aww 💖' },
+        { name: 'sleep',     halo: '#47A0FF', text: 'Zzz…' },
+        { name: 'thinking',  halo: '#C147FF', text: 'Hmm…' },
+        { name: 'listening', halo: '#2EE6A0', text: 'Listening…' },
+        { name: 'charging',  halo: '#FFD960', text: '⚡ Juicing up' },
+        { name: 'dnd',       halo: '#FF6B6B', text: 'Do not disturb' },
+        { name: 'sad',       halo: '#47A0FF', text: 'Aw…' },
+        { name: 'wink',      halo: '#C147FF', text: ';)' }
+      ];
+      let i = 0;
+      const apply = function () {
+        const s = states[i];
+        halo.style.background = 'radial-gradient(circle, ' + s.halo + '88 0%, ' + s.halo + '22 50%, transparent 75%)';
+        svg.setAttribute('class', 'notchy-svg ny-state-' + s.name + ' ny-bounce');
+        label.textContent = s.text;
+      };
+      apply();
+      setInterval(function () {
+        i = (i + 1) % states.length;
+        apply();
+      }, 2400);
     })();
 
     // Auto-loop the hero notch demo. We cycle through:

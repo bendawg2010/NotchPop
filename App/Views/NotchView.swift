@@ -223,6 +223,27 @@ struct NotchView: View {
                                        height: visibleShapeSize.height)
                                 .transition(.opacity)
                             }
+                            // Ambient idle shimmer — top-edge aurora
+                            // along the collapsed notch when nothing
+                            // else is happening. Reads as "alive" but
+                            // never pulls focus. Toggleable in
+                            // Settings → Behavior → Ambient shimmer.
+                            if !viewModel.expanded
+                                && !viewModel.hasAnyLiveActivity
+                                && viewModel.ambientShimmerEnabled {
+                                AmbientNotchShimmer(
+                                    height: 6,
+                                    reduceMotion: viewModel.reducedMotion
+                                )
+                                .clipShape(
+                                    NotchShape(bottomCornerRadius: bottomCornerRadius)
+                                )
+                                .frame(width: visibleShapeSize.width,
+                                       height: visibleShapeSize.height,
+                                       alignment: .top)
+                                .allowsHitTesting(false)
+                                .transition(.opacity)
+                            }
                         }
                     )
                     .opacity(shouldRender ? 1 : 0)
@@ -260,6 +281,11 @@ struct NotchView: View {
                     .padding(.bottom, 16)
                     .frame(width: viewModel.expandedSize.width,
                            height: viewModel.expandedSize.height)
+                    // Belt + braces — even with the inner ScrollView,
+                    // any leftover overflow gets visually clipped to
+                    // the notch silhouette so it can NEVER bleed onto
+                    // the desktop.
+                    .clipShape(NotchShape(bottomCornerRadius: bottomCornerRadius))
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 0.94, anchor: .top))
                                           .animation(.spring(response: 0.45, dampingFraction: 0.80).delay(0.05)),
@@ -494,9 +520,30 @@ struct NotchView: View {
             let delay = max(0.05, viewModel.collapseDelay)
             let work = DispatchWorkItem { [weak vm = viewModel] in
                 guard let vm = vm else { return }
+                // Big-notch mode pins the panel open. Skip the
+                // hover-out collapse entirely until user clicks ⛶
+                // again or hits Escape.
+                if vm.bigNotchMode { return }
                 if !vm.hovering {
-                    withAnimation(.spring(response: 0.42, dampingFraction: 0.85)) {
-                        vm.expanded = false
+                    // Closing animation. Previous spring (response
+                    // 0.42, damping 0.85) was so over-damped it
+                    // felt static — user feedback: "the open is
+                    // good but the closing doesnt have one."
+                    // Bouncy spring gives it a satisfying snap-shut
+                    // with a tiny overshoot so the notch feels like
+                    // a physical object settling back into place.
+                    if vm.reducedMotion {
+                        // Reduce-motion users get the old crisp settle.
+                        withAnimation(.spring(response: 0.30,
+                                                dampingFraction: 0.95)) {
+                            vm.expanded = false
+                        }
+                    } else {
+                        let mult = vm.animationSpeed > 0 ? vm.animationSpeed : 1.0
+                        withAnimation(.spring(response: 0.36 / mult,
+                                                dampingFraction: 0.68)) {
+                            vm.expanded = false
+                        }
                     }
                 }
             }
@@ -509,12 +556,24 @@ struct NotchView: View {
     private var expandedContent: some View {
         VStack(spacing: 8) {
             tabBar
-            paneFor(viewModel.activeTab)
-                .id(viewModel.activeTab) // force a transition between tabs
-                .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .move(edge: .trailing)),
-                    removal:   .opacity.combined(with: .move(edge: .leading))
-                ))
+            // Wrap the active pane in a ScrollView so tall content
+            // (TipCalc, SpeedTest, Stocks, Calculator with long
+            // history, etc.) scrolls WITHIN the notch panel instead
+            // of overflowing past the rounded bottom corners and
+            // making it look like NotchPop is "sinking" through the
+            // notch shape onto the desktop. User feedback: "MAJOR
+            // BUG you need to fix the thing where some of the
+            // modules make notch pop sink into the notch."
+            ScrollView(.vertical, showsIndicators: false) {
+                paneFor(viewModel.activeTab)
+                    .id(viewModel.activeTab)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .trailing)),
+                        removal:   .opacity.combined(with: .move(edge: .leading))
+                    ))
+                    .frame(maxWidth: .infinity, alignment: .top)
+            }
+            .scrollClipDisabled(false)
         }
         .animation(.spring(response: 0.32, dampingFraction: 0.85), value: viewModel.activeTab)
     }
@@ -727,6 +786,27 @@ struct NotchView: View {
         case .notchPet:
             NotchPetView(service: viewModel.pet,
                          bounceIntensity: viewModel.petBounceIntensity)
+        // ---- v1.5.34 expansion: 10 new modules ---------------------
+        case .caffeinate:    CaffeinateView()
+        case .tipCalc:       TipCalcView()
+        case .diceCoin:      DiceCoinView()
+        case .eyedropper:    EyedropperView()
+        case .lorem:         LoremIpsumView()
+        case .markdown:      MarkdownPreviewView()
+        case .jsonFormat:    JSONFormatView()
+        case .base64:        Base64ToolView()
+        case .speedTest:     SpeedTestView()
+        case .stocks:        StocksView()
+        case .urlCode:       URLCodeView()
+        case .jwtDecode:     JWTDecodeView()
+        case .timestamp:     TimestampConvView()
+        case .regexTest:     RegexTestView()
+        case .colorConv:     ColorConvView()
+        case .htmlEntity:    HTMLEntityView()
+        case .slugify:       SlugifyView()
+        case .diffCheck:     DiffCheckView()
+        case .claudePrompt:  ClaudePromptView(viewModel: viewModel,
+                                                svc: viewModel.claudePrompt)
         }
     }
 }

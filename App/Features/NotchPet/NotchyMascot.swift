@@ -21,13 +21,18 @@ import SwiftUI
 enum NotchyState: String, CaseIterable {
     case idle, alert, focused, celebrate, sleep
     case love, thinking, listening, charging, dnd, sad, wink
+    /// "Music + headphones" — vibing-with-music pose from the
+    /// Anthropic Design "8 Animations" handoff. Body bobs, headphones
+    /// drawn over the head, eyes are happy-closed arcs, music notes
+    /// drift up. Triggered when NowPlaying.isPlaying.
+    case music
 
     /// Per-state glow halo color (matches the design's GLOW table).
     var glowColor: Color {
         switch self {
         case .idle, .alert:    return Color(red: 0.47, green: 0.29, blue: 0.63) // PURPLE
         case .focused:         return Color(red: 0.17, green: 0.52, blue: 0.77) // BLUE
-        case .celebrate, .love, .wink:
+        case .celebrate, .love, .wink, .music:
                                return Color(red: 1.00, green: 0.24, blue: 0.67) // PINK
         case .sleep:           return Color(red: 0.23, green: 0.16, blue: 0.33) // dim indigo
         case .thinking:        return Color(red: 0.42, green: 0.56, blue: 0.83)
@@ -140,6 +145,14 @@ private struct Pose {
             legL: (78, 84, 72, 110), legR: (122, 84, 128, 110),
             handL: (14, 68), handR: (198, 26),
             footL: (72, 112), footR: (128, 112)),
+        // Music — both arms drumming-up the air. The body bob is
+        // applied as an extra time-driven offset in the renderer.
+        .music: Pose(
+            bodyDx: 0, bodyDy: 0,
+            armL: (30, 60, 20, 70), armR: (170, 60, 180, 70),
+            legL: (80, 84, 80, 100), legR: (120, 84, 120, 100),
+            handL: (20, 70), handR: (180, 70),
+            footL: (80, 100), footR: (120, 100)),
     ]
 }
 
@@ -397,6 +410,35 @@ struct NotchyMascot: View {
             // Slight smirk
             drawArc(context: context, fromX: 92, baseY: 68, toX: 108,
                     midY: 75, color: detail, w: 2.4)
+        case .music:
+            // Both eyes happy-closed (vibing). Concave-up arcs.
+            drawArc(context: context, fromX: lx - 5, baseY: cy + 1, toX: lx + 5,
+                    midY: cy - 4, color: detail, w: 2.6)
+            drawArc(context: context, fromX: rx - 5, baseY: cy + 1, toX: rx + 5,
+                    midY: cy - 4, color: detail, w: 2.6)
+            // Subtle smile
+            drawArc(context: context, fromX: 92, baseY: 70, toX: 108,
+                    midY: 76, color: detail, w: 2.4)
+            // Headphones — band over the top + ear-cups.
+            // The pink body covers most of the band; we draw ear-cups
+            // visibly above the body line.
+            var band = Path()
+            band.move(to: CGPoint(x: 50, y: 36))
+            band.addQuadCurve(to: CGPoint(x: 150, y: 36),
+                               control: CGPoint(x: 100, y: 10))
+            context.stroke(band, with: .color(detail),
+                           style: StrokeStyle(lineWidth: 4, lineCap: .round))
+            drawDot(context: context, x: 48, y: 42, radius: 8, color: Color(red: 1.00, green: 0.42, blue: 0.42))
+            drawDot(context: context, x: 152, y: 42, radius: 8, color: Color(red: 1.00, green: 0.42, blue: 0.42))
+            // Music notes drift up — driven by external time later, but
+            // simple static notes here look fine because the parent
+            // animation context handles the rebuild.
+            let pinkNote = Color(red: 0.76, green: 0.28, blue: 1.00)
+            let blueNote = Color(red: 0.28, green: 0.63, blue: 1.00)
+            context.draw(Text("♪").font(.system(size: 11, weight: .heavy)).foregroundColor(pinkNote),
+                         at: CGPoint(x: 40, y: 30))
+            context.draw(Text("♫").font(.system(size: 11, weight: .heavy)).foregroundColor(blueNote),
+                         at: CGPoint(x: 160, y: 36))
         }
     }
 

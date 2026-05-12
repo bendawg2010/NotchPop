@@ -136,6 +136,29 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case hash = "Hash"
     case audioControls = "Audio"
     case notchPet = "Notch Pet"
+    // ---- v1.5.34 expansion: 10 new modules -------------------------
+    case caffeinate    = "Caffeinate"
+    case tipCalc       = "Tip Calc"
+    case diceCoin      = "Dice & Coin"
+    case eyedropper    = "Eyedropper"
+    case lorem         = "Lorem Ipsum"
+    case markdown      = "Markdown"
+    case jsonFormat    = "JSON Format"
+    case base64        = "Base64"
+    case speedTest     = "Speed Test"
+    case stocks        = "Stocks"
+    // ---- v1.5.40 dev-tools expansion ----
+    case urlCode       = "URL Encode"
+    case jwtDecode     = "JWT Decode"
+    case timestamp     = "Timestamp"
+    case regexTest     = "Regex"
+    // ---- v1.5.41 more dev tools ----
+    case colorConv     = "Color"
+    case htmlEntity    = "HTML Entity"
+    case slugify       = "Slugify"
+    case diffCheck     = "Diff"
+    // ---- v1.5.42 — talk to Claude Code from the notch ----
+    case claudePrompt  = "Claude"
 
     var id: String { rawValue }
     var icon: String {
@@ -164,6 +187,25 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .hash:          return "number"
         case .audioControls: return "speaker.wave.2.fill"
         case .notchPet:      return "pawprint.fill"
+        case .caffeinate:    return "cup.and.saucer.fill"
+        case .tipCalc:       return "dollarsign.circle.fill"
+        case .diceCoin:      return "die.face.5.fill"
+        case .eyedropper:    return "eyedropper.halffull"
+        case .lorem:         return "text.alignleft"
+        case .markdown:      return "doc.richtext"
+        case .jsonFormat:    return "curlybraces"
+        case .base64:        return "lock.shield"
+        case .speedTest:     return "speedometer"
+        case .stocks:        return "chart.line.uptrend.xyaxis"
+        case .urlCode:       return "link"
+        case .jwtDecode:     return "key.fill"
+        case .timestamp:     return "clock.arrow.circlepath"
+        case .regexTest:     return "asterisk"
+        case .colorConv:     return "paintpalette.fill"
+        case .htmlEntity:    return "chevron.left.forwardslash.chevron.right"
+        case .slugify:       return "link.circle"
+        case .diffCheck:     return "doc.on.doc.fill"
+        case .claudePrompt:  return "sparkle"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -193,6 +235,25 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .hash:          return "MD5 / SHA-1 / SHA-256 / Base64 of any text. Click to copy."
         case .audioControls: return "System volume slider + brightness up/down + mute."
         case .notchPet:      return "A virtual pet that grows when you complete Pomodoros, gets fed by your habits, evolves at milestones."
+        case .caffeinate:    return "Keep your Mac awake — toggle the digital cup of coffee."
+        case .tipCalc:       return "Bill amount + tip % + split → per-person total."
+        case .diceCoin:      return "D6 / D20 dice rolls and coin flips with rolling history."
+        case .eyedropper:    return "Pick any pixel from the screen → hex copied. Recent picks saved."
+        case .lorem:         return "Generate placeholder text — Lorem, Hipster, Bacon, or SpaceX style."
+        case .markdown:      return "Paste markdown, see it rendered. Toggle edit/preview."
+        case .jsonFormat:    return "Pretty-print and validate JSON. Sorts keys, fixes spacing."
+        case .base64:        return "Encode or decode Base64. Side-by-side input/output panes."
+        case .speedTest:     return "Measure your internet download speed via Cloudflare."
+        case .stocks:        return "Live ticker quotes from Yahoo Finance — refreshes every 60s."
+        case .urlCode:       return "Percent-encode and decode URLs. Encode/decode toggle, side-by-side I/O."
+        case .jwtDecode:     return "Paste a JWT, see the header + payload decoded (no signature verify)."
+        case .timestamp:     return "Convert Unix epoch (s/ms) ↔ ISO 8601 ↔ local time. Type 'now' for current."
+        case .regexTest:     return "Live regex tester with capture-group highlighting + match count."
+        case .colorConv:     return "Convert between hex / rgb / hsl. Type any format, see the others + a swatch."
+        case .htmlEntity:    return "Encode or decode HTML entities. &amp;lt;p&amp;gt; ↔ <p>."
+        case .slugify:       return "Text → URL slug. Strips diacritics, replaces non-alphanumerics with your chosen separator."
+        case .diffCheck:     return "Line-by-line diff of two texts with LCS-based add/remove highlighting + summary count."
+        case .claudePrompt:  return "Prompt Claude Code straight from the notch — runs `claude -p` under the hood, streams the reply back. ⌘↩ to send. 'Open in Terminal' button pops you into a full interactive session with the same prompt."
         }
     }
 }
@@ -364,6 +425,13 @@ final class NotchViewModel: ObservableObject {
     /// vestibular sensitivity or a low-power Mac.
     @Published var reducedMotion: Bool = false {
         didSet { UserDefaults.standard.set(reducedMotion, forKey: "np.reduceMotion") }
+    }
+    /// Top-edge aurora shimmer on the collapsed notch when idle. From
+    /// the Anthropic Design "8 Animations" handoff (#7 Ambient idle).
+    /// On by default; user can disable in Settings → Behavior.
+    @Published var ambientShimmerEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(ambientShimmerEnabled,
+                                            forKey: "np.ambientShimmerEnabled") }
     }
     /// When dragging a file near the notch, auto-expand to the file
     /// shelf even before the user has actually hovered. ON by default
@@ -575,6 +643,11 @@ final class NotchViewModel: ObservableObject {
     }
 
     // MARK: - Children
+    // Claude prompt service owned by the viewModel so its state
+    // (draft, output, running, recent prompts) survives notch
+    // collapse — SwiftUI tears down view-owned @StateObjects when
+    // their host view leaves the hierarchy.
+    let claudePrompt = ClaudePromptService()
     let shelf = FileShelf()
     let nowPlaying = NowPlayingService()
     let charging = ChargingMonitor()
@@ -678,6 +751,8 @@ final class NotchViewModel: ObservableObject {
         }
         if d.object(forKey: "np.reduceMotion") != nil {
             self.reducedMotion = d.bool(forKey: "np.reduceMotion")
+            // Default ambient shimmer ON unless user has explicitly turned it off
+            self.ambientShimmerEnabled = d.object(forKey: "np.ambientShimmerEnabled") as? Bool ?? true
         }
         if let raw = d.string(forKey: "np.bg"),
            let parsed = NotchBackground(rawValue: raw) {
@@ -837,6 +912,17 @@ final class NotchViewModel: ObservableObject {
         }
 
         // Re-broadcast: any expanded toggle must notify the window
+        // so the NSWindow's frame matches the SwiftUI content size.
+        // The previous attempt at deferred-close (to fake a smooth
+        // shape spring) caused the notch to "animate off to the right
+        // then jump back to the middle" because the window was at
+        // expanded width while the SwiftUI shape shrank inside it,
+        // then snapped to compact-centered position 0.42s later.
+        // The visible shape stayed pinned to the wide window's
+        // center → looked like it slid sideways.
+        // Going back to synchronous resize. The close-anim quality
+        // is now driven entirely by the spring values in NotchView's
+        // onHoverChange — no window-vs-shape race.
         $expanded
             .removeDuplicates()
             .sink { [weak self] _ in self?.onSizeChange?() }
@@ -1104,7 +1190,31 @@ final class NotchViewModel: ObservableObject {
     /// Height covers: notch top inset (~32) + tabs (26) + spacing (8) +
     /// pane content (88) + bottom padding (16) = ~170pt with breathing.
     var expandedSize: CGSize {
-        CGSize(width: 520, height: 178)
+        if bigNotchMode {
+            // "Drag your terminal into the notch" — make the panel
+            // big enough to feel like a real workspace. Cap at the
+            // screen size minus a small margin so it doesn't run
+            // off-screen on smaller displays.
+            let screen = screenInfo.screenSize
+            return CGSize(width: min(1400, screen.width - 80),
+                          height: min(820, screen.height - 60))
+        }
+        return CGSize(width: 520, height: 178)
+    }
+
+    /// When true, the expanded notch grows to a giant workspace
+    /// (~1400×820). The Claude tab uses this to give itself room to
+    /// breathe — interactive shell + multi-paragraph replies.
+    /// User feedback: "make the notch SUPER big". Toggle from the
+    /// Claude tab's ⛶ button. Escape collapses it.
+    @Published var bigNotchMode: Bool = false {
+        didSet {
+            // Big mode implies expanded — without this the tab UI
+            // doesn't render (NotchView only renders expandedContent
+            // when expanded=true).
+            if bigNotchMode { expanded = true }
+            onSizeChange?()
+        }
     }
 
     /// Extra padding around the notch panel during the welcome peek
@@ -1127,7 +1237,13 @@ final class NotchViewModel: ObservableObject {
     /// peek, also reserves room for the gradient glow halo that
     /// bleeds OUTSIDE the notch shape on first launch / replay.
     var targetSize: CGSize {
-        let base = expanded ? expandedSize : compactSizeWithActivities
+        // Big-notch mode pins the panel at expanded size so it
+        // doesn't collapse the second the user moves the mouse off
+        // it. They wanted "the notch SUPER big" — that means
+        // sticky, not "big for half a second then gone."
+        let base = (expanded || bigNotchMode)
+                    ? expandedSize
+                    : compactSizeWithActivities
         let sidePad = welcomeGlowSidePadding
         let bottomPad = welcomeGlowBottomPadding
         return CGSize(

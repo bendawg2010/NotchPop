@@ -733,6 +733,13 @@ struct SettingsView: View {
             }
             caption("Skips spring animations on the welcome peek and stops the Pomodoro ring's gradient orbit. Useful for vestibular sensitivity or older Macs.")
 
+            LabeledContent {
+                Toggle("", isOn: $viewModel.ambientShimmerEnabled).labelsHidden()
+            } label: {
+                Text("Ambient shimmer when idle")
+            }
+            caption("Top-edge aurora shimmer on the collapsed notch — from the official 8-animations handoff. Reads as 'alive' without pulling focus.")
+
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("Animation speed")
@@ -957,6 +964,25 @@ struct SettingsView: View {
                 get: { viewModel.pomodoro.dailyGoal },
                 set: { viewModel.pomodoro.dailyGoal = $0 }), range: 1...20, suffix: "sessions")
             caption("Target number of completed focus sessions per day. Drives the ring fill in the Pomodoro tab.")
+
+            sectionHeader("Ring style")
+
+            // Toggle the Pomodoro ring between the default orbit
+            // gradient stroke and the new "tide" variant from the
+            // Anthropic Design 8 Animations handoff (water-rises-as-
+            // time-passes). Persisted under np.pomodoroRingStyle.
+            HStack {
+                Text("Ring style")
+                Spacer()
+                Picker("", selection: Binding<String>(
+                    get: { UserDefaults.standard.string(forKey: "np.pomodoroRingStyle") ?? "orbit" },
+                    set: { UserDefaults.standard.set($0, forKey: "np.pomodoroRingStyle") }
+                )) {
+                    Text("Orbit (default)").tag("orbit")
+                    Text("🌊 Tide").tag("tide")
+                }.labelsHidden().frame(width: 180)
+            }
+            caption("Tide fills the ring with sloshing water as time elapses — designed in the official 8-animations handoff.")
 
             sectionHeader("Flow")
 

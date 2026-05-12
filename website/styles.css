@@ -70,6 +70,11 @@ main { position: relative; z-index: 1; }
   background: var(--grad);
   box-shadow: 0 0 24px rgba(255, 60, 172, 0.45);
 }
+.logo-notchy {
+  width: 32px; height: 22px;
+  color: var(--text);
+  filter: drop-shadow(0 4px 12px rgba(255, 60, 172, 0.35));
+}
 .nav nav { display: flex; gap: 22px; }
 .nav nav a {
   font-size: 14px; font-weight: 700; opacity: 0.78;
@@ -783,3 +788,109 @@ footer {
 }
 footer a { color: var(--text-muted); }
 footer a:hover { color: var(--text); }
+
+/* ---------- Notchy mascot ---------- */
+.notchy-hello {
+  max-width: 720px;
+  margin: 40px auto 60px;
+  text-align: center;
+  padding: 0 24px;
+  position: relative; z-index: 5;
+}
+.notchy-stage {
+  position: relative;
+  width: 360px;
+  height: 240px;
+  margin: 0 auto 18px;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5;
+}
+.notchy-halo {
+  position: absolute;
+  inset: -10% -8% -20% -8%;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: 0.85;
+  background: radial-gradient(circle, #C147FF88 0%, #C147FF22 50%, transparent 75%);
+  transition: background 0.6s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.notchy-svg {
+  position: relative;
+  width: 320px; height: auto;
+  filter: drop-shadow(0 8px 28px rgba(0,0,0,0.55))
+          drop-shadow(0 0 24px rgba(255, 60, 172, 0.35));
+  z-index: 2;
+}
+/* Use visibility instead of display — SVG <g> behaves more reliably
+   with visibility, and visibility:hidden still respects layout but
+   keeps the rendering tree tidy. */
+.notchy-svg .ny-face { visibility: hidden; }
+.notchy-svg.ny-state-idle      .ny-face-idle,
+.notchy-svg.ny-state-alert     .ny-face-alert,
+.notchy-svg.ny-state-focused   .ny-face-focused,
+.notchy-svg.ny-state-celebrate .ny-face-celebrate,
+.notchy-svg.ny-state-love      .ny-face-love,
+.notchy-svg.ny-state-sleep     .ny-face-sleep,
+.notchy-svg.ny-state-thinking  .ny-face-thinking,
+.notchy-svg.ny-state-listening .ny-face-listening,
+.notchy-svg.ny-state-charging  .ny-face-charging,
+.notchy-svg.ny-state-dnd       .ny-face-dnd,
+.notchy-svg.ny-state-sad       .ny-face-sad,
+.notchy-svg.ny-state-wink      .ny-face-wink { visibility: visible; }
+
+@keyframes ny-bounce {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-6px) scale(1.02); }
+  70% { transform: translateY(2px) scale(0.99); }
+}
+.notchy-svg.ny-bounce {
+  animation: ny-bounce 0.9s cubic-bezier(0.18, 0.78, 0.36, 1);
+}
+
+.notchy-label {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.4px;
+  margin-top: 8px;
+  background: var(--grad);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.notchy-blurb {
+  color: var(--text-muted);
+  max-width: 540px; margin: 12px auto 0;
+  font-size: 14px; line-height: 1.55;
+}
+
+/* Subtle limb sway always-on */
+@keyframes ny-arm-sway-l {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-4deg); }
+}
+@keyframes ny-arm-sway-r {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(4deg); }
+}
+.notchy-svg .ny-arm-l, .notchy-svg .ny-hand-l {
+  transform-origin: 36px 60px;
+  animation: ny-arm-sway-l 3.2s ease-in-out infinite;
+}
+.notchy-svg .ny-arm-r, .notchy-svg .ny-hand-r {
+  transform-origin: 164px 60px;
+  animation: ny-arm-sway-r 3.2s ease-in-out infinite;
+}
+
+/* ---------- Hero Notchy (the brand face) ---------- */
+.hero-notchy {
+  display: flex; flex-direction: column; align-items: center;
+  margin: 0 auto 8px;
+}
+.hero-notchy .notchy-stage {
+  width: 360px; height: 240px;
+  margin: 0 auto;
+}
+.hero-notchy .notchy-svg { width: 320px; }
+.hero-notchy .notchy-label {
+  font-size: 18px;
+  margin-top: 0px;
+}

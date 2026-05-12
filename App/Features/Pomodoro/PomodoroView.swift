@@ -278,7 +278,36 @@ struct PomodoroView: View {
         .frame(width: 320)
     }
 
+    /// User-toggleable ring style. The original orbit-stroke ring is
+    /// the default; "tide" is a port from the Anthropic Design "8
+    /// Animations" handoff — a sloshing water level rising as time
+    /// elapses. Toggle in Settings → Pomodoro → "Tide ring style".
+    @AppStorage("np.pomodoroRingStyle") private var ringStyle: String = "orbit"
+
+    @ViewBuilder
     private var ringView: some View {
+        if ringStyle == "tide" {
+            tideRingView
+        } else {
+            orbitRingView
+        }
+    }
+
+    private var phaseTint: Color {
+        switch service.phase {
+        case .idle, .focus: return Color(red: 1.00, green: 0.24, blue: 0.67)
+        case .shortBreak:   return Color(red: 0.18, green: 0.90, blue: 0.63)
+        case .longBreak:    return Color(red: 0.28, green: 0.63, blue: 1.00)
+        }
+    }
+
+    private var tideRingView: some View {
+        PomodoroTideRing(progress: 1.0 - service.progress,
+                          tint: phaseTint,
+                          label: service.formattedTime)
+    }
+
+    private var orbitRingView: some View {
         // Two-layer technique:
         //   1. A full-circle stroke filled with the AngularGradient,
         //      ROTATED slowly (so the colors orbit smoothly).

@@ -22,17 +22,18 @@ struct WelcomeCard: View {
     ]
 
     /// Tagline cycle — 1.5s each, total 4.5s. Mirrors the welcome peek
-    /// duration in NotchViewModel.runWelcomePeek.
+    /// duration in NotchViewModel.runWelcomePeek. Each scene now stars
+    /// Notchy in a different mood instead of a generic emoji.
     private let scenes: [WelcomeScene] = [
-        .init(emoji: "✨",
-              headline: "Your workflow,",
-              accent:   "faster.",
+        .init(notchyState: .wink,
+              headline: "Hi, I'm Notchy.",
+              accent:   "Tap me later.",
               caption:  "Hover the notch to see music, pomodoro, files, and notes."),
-        .init(emoji: "📥",
+        .init(notchyState: .celebrate,
               headline: "Drop files in.",
               accent:   "Drag them out.",
               caption:  "Anywhere on your Mac. The notch is your shelf."),
-        .init(emoji: "🍅",
+        .init(notchyState: .focused,
               headline: "Tabs are yours.",
               accent:   "Customize all of it.",
               caption:  "Settings → Tabs to reorder. Click the menu-bar icon."),
@@ -60,9 +61,8 @@ struct WelcomeCard: View {
                 // hero on top.
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        Image(systemName: "rectangle.bottomthird.inset.filled")
-                            .font(.system(size: 11, weight: .heavy))
-                            .foregroundColor(.white.opacity(0.85))
+                        NotchyMascot(state: .idle, showHalo: false)
+                            .frame(width: 22, height: 14)
                         Text("NOTCHPOP")
                             .font(.system(size: 11, weight: .black, design: .rounded))
                             .tracking(2.4)
@@ -95,13 +95,13 @@ struct WelcomeCard: View {
         let scene = scenes[min(sceneIndex, scenes.count - 1)]
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Text(scene.emoji)
-                    .font(.system(size: 26))
+                NotchyMascot(state: scene.notchyState, showHalo: false)
+                    .frame(width: 56, height: 36)
                     .transition(.scale.combined(with: .opacity))
                 Text(scene.headline)
                     .font(.system(size: 17, weight: .heavy))
                     .foregroundColor(.white)
-                    .transition(.opacity)
+                    .transition(.elasticSquish)
             }
             // Big accent line — gradient-stroked text so it looks
             // like the gradient halo around the notch leaks into
@@ -117,7 +117,7 @@ struct WelcomeCard: View {
                         Color(red: 0.40, green: 0.65, blue: 0.97),
                     ],
                     startPoint: .leading, endPoint: .trailing))
-                .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
+                .transition(.elasticSquish)
                 .shadow(color: Color.white.opacity(0.18), radius: 6)
             Text(scene.caption)
                 .font(.system(size: 13, weight: .semibold))
@@ -143,7 +143,7 @@ struct WelcomeCard: View {
 }
 
 private struct WelcomeScene {
-    let emoji: String
+    let notchyState: NotchyState
     let headline: String
     let accent: String
     let caption: String

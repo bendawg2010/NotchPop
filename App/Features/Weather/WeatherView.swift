@@ -60,11 +60,16 @@ struct WeatherView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text("\(Int(snap.temperature.rounded()))")
+                    // Derive displayed temperature from service.fahrenheit
+                    // (live) by converting from snap.temperature (which
+                    // is in snap.fahrenheit's unit). Means clicking the
+                    // toggle FLIPS the number instantly without waiting
+                    // for the network refresh to land.
+                    Text("\(displayTemp(snap: snap, wantFahrenheit: service.fahrenheit))")
                         .font(.system(size: 28, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
                         .monospacedDigit()
-                    Text("°\(snap.fahrenheit ? "F" : "C")")
+                    Text("°\(service.fahrenheit ? "F" : "C")")
                         .font(.system(size: 14, weight: .heavy, design: .rounded))
                         .foregroundColor(.white.opacity(0.62))
                 }
@@ -85,11 +90,15 @@ struct WeatherView: View {
             Spacer(minLength: 4)
 
             VStack(spacing: 4) {
-                // Unit toggle
+                // Unit toggle. Reads service.fahrenheit (live) instead
+                // of snap.fahrenheit (snapshot of last fetch) — the
+                // snapshot lags by one network roundtrip and made the
+                // button feel "broken" when tapped before a refresh
+                // completed. Now the label flips instantly on tap.
                 Button {
                     service.fahrenheit.toggle()
                 } label: {
-                    Text(snap.fahrenheit ? "°C" : "°F")
+                    Text(service.fahrenheit ? "°C" : "°F")
                         .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
                         .frame(width: 28, height: 22)
@@ -99,7 +108,9 @@ struct WeatherView: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .help("Switch unit")
+                .help(service.fahrenheit
+                       ? "Switch to Celsius"
+                       : "Switch to Fahrenheit")
 
                 // Refresh
                 Button {
@@ -191,6 +202,25 @@ struct WeatherView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// Convert snap.temperature into the unit the user currently
+    /// wants. snap.temperature is in snap.fahrenheit's unit; if the
+    /// user just clicked the toggle, the snap hasn't refreshed yet
+    /// — we convert locally so the displayed number flips instantly.
+    private func displayTemp(snap: WeatherSnapshot, wantFahrenheit: Bool) -> Int {
+        let t = snap.temperature
+        let converted: Double
+        if snap.fahrenheit == wantFahrenheit {
+            converted = t
+        } else if wantFahrenheit {
+            // snap is °C, want °F
+            converted = t * 9 / 5 + 32
+        } else {
+            // snap is °F, want °C
+            converted = (t - 32) * 5 / 9
+        }
+        return Int(converted.rounded())
     }
 
     /// Color tint for the icon background — warm sun, cool clouds,

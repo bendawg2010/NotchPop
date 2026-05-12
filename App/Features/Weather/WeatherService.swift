@@ -93,8 +93,13 @@ final class WeatherService: NSObject, ObservableObject, CLLocationManagerDelegat
 
     override init() {
         let d = UserDefaults.standard
+        // Default to Fahrenheit unconditionally — most users want °F
+        // and the previous locale-based default was confusing in
+        // mixed/foreign locales. User can flip to °C with the toggle
+        // in the Weather tab; choice is persisted under
+        // np.weatherFahrenheit.
         self.fahrenheit = d.object(forKey: "np.weatherFahrenheit") as? Bool
-            ?? Locale.current.usesMetricSystem == false
+            ?? true
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer

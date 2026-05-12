@@ -7,6 +7,244 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.45</title>
+      <pubDate>Tue, 12 May 2026 21:43:31 +0000</pubDate>
+      <sparkle:version>1.5.45</sparkle:version>
+      <sparkle:shortVersionString>1.5.45</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Claude tab now keeps your draft, output, and recent prompts when the notch closes. Drop-in Big Notch mode bugfixes.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.45/NotchPop.dmg"
+        sparkle:version="1.5.45"
+        sparkle:shortVersionString="1.5.45"
+        length="3010549"
+        type="application/octet-stream"
+        sparkle:edSignature="zzV/CbSTcYH1DckHXUY6LQdTtl4wJXDcpTrj8cfsIpiuid7uyHU/FyEjQykUoqXITuR/n9tye1ZDqjRlx++oAg==" />
+    </item>
+    <item>
+      <title>v1.5.44</title>
+      <pubDate>Tue, 12 May 2026 21:35:47 +0000</pubDate>
+      <sparkle:version>1.5.44</sparkle:version>
+      <sparkle:shortVersionString>1.5.44</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Big Notch mode actually sticks now. v1.5.43 had two bugs: (1) targetSize only respected bigNotchMode while expanded=true, so the panel collapsed the second you moved the mouse off — fixed by treating bigMode as 'force expanded' in targetSize. (2) toggling bigMode didn't set expanded=true, so the tab content didn't render at all — fixed in didSet. Plus: hover-out collapse is skipped entirely while bigMode is on. Now ⛶ → giant panel that stays open until you hit ⛶ again or ⎋.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.44/NotchPop.dmg"
+        sparkle:version="1.5.44"
+        sparkle:shortVersionString="1.5.44"
+        length="3013548"
+        type="application/octet-stream"
+        sparkle:edSignature="feKyIGWdDZjYiuyfYNGhSzv+dXX6bBlRp+vKHa62Ml9N4V625RGWk6VG3H4izWxoSFHv3BmnrtDNnC2tbm3cAw==" />
+    </item>
+    <item>
+      <title>v1.5.43</title>
+      <pubDate>Tue, 12 May 2026 21:31:57 +0000</pubDate>
+      <sparkle:version>1.5.43</sparkle:version>
+      <sparkle:shortVersionString>1.5.43</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Claude tab gets a ⛶ Big toggle — the entire notch grows to 1400×820 (or screen-size minus a margin on smaller displays), letting Claude's reply pane breathe properly. ⌘↩ to send · ⎋ to collapse. macOS doesn't let third-party apps reparent another app's window so 'drag Terminal.app into the notch' isn't physically possible — but you can pop a separate Terminal with the same prompt via 'Open in Terminal'.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.43/NotchPop.dmg"
+        sparkle:version="1.5.43"
+        sparkle:shortVersionString="1.5.43"
+        length="3013609"
+        type="application/octet-stream"
+        sparkle:edSignature="Osa/rgjLticm/NFIdrOwReJvywaPu7hq07iDlqs8seQh3Zqw57NjkNpCm+iKKnZfWD+VQrNqmqGrLNCKVNhtCw==" />
+    </item>
+    <item>
+      <title>v1.5.42</title>
+      <pubDate>Tue, 12 May 2026 21:26:22 +0000</pubDate>
+      <sparkle:version>1.5.42</sparkle:version>
+      <sparkle:shortVersionString>1.5.42</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        ✨ Claude tab — prompt Claude Code directly from the notch. Spawns 'claude -p' under the hood, streams the reply back live. ⌘↩ to send. Recent prompts dropdown for quick recall. 'Open in Terminal' button pops you into a full interactive session with the same prompt loaded. Auto-detects claude at ~/.local/bin, ~/.claude/local, /opt/homebrew/bin, or /usr/local/bin.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.42/NotchPop.dmg"
+        sparkle:version="1.5.42"
+        sparkle:shortVersionString="1.5.42"
+        length="3002504"
+        type="application/octet-stream"
+        sparkle:edSignature="UipILA+9xi18lMB5ZzO0wPd2CXW9WnfMTLBsYl9h5YSRFizNwxUskbOKjHspihQbCa6PcJudbcbYZNcOjg63Bg==" />
+    </item>
+    <item>
+      <title>v1.5.41</title>
+      <pubDate>Mon, 11 May 2026 12:13:55 +0000</pubDate>
+      <sparkle:version>1.5.41</sparkle:version>
+      <sparkle:shortVersionString>1.5.41</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        4 more dev tools modeled after Base64. Color Converter (hex/rgb/hsl bidirectional with live swatch), HTML Entity Encode/Decode, Slugify (text → URL slug with diacritic stripping + separator choice), Diff Checker (LCS-based line-by-line diff with add/remove highlighting). Total widgets now 41.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.41/NotchPop.dmg"
+        sparkle:version="1.5.41"
+        sparkle:shortVersionString="1.5.41"
+        length="2967577"
+        type="application/octet-stream"
+        sparkle:edSignature="ERbG5aPW61juP7W2DCSAU8vUFB+T3pfMHWeBDPHmV6ohCNcgLAFQbsbDquhbfPUyYcH/m0l9mOCSpVDQ7yi5Dg==" />
+    </item>
+    <item>
+      <title>v1.5.40</title>
+      <pubDate>Sun, 10 May 2026 19:17:28 +0000</pubDate>
+      <sparkle:version>1.5.40</sparkle:version>
+      <sparkle:shortVersionString>1.5.40</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        4 new dev tools modeled after Base64. URL Encode/Decode (percent encoding), JWT Decoder (header + payload, no sig verify), Timestamp Converter (Unix s/ms ↔ ISO 8601 ↔ local time, type 'now' for current), Regex Tester (live matches + capture group highlighting). Total widgets now 37.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.40/NotchPop.dmg"
+        sparkle:version="1.5.40"
+        sparkle:shortVersionString="1.5.40"
+        length="2915927"
+        type="application/octet-stream"
+        sparkle:edSignature="30410S4KvRryvJn7wgh8NVumDOrHben0hHWom6fBrWWF+JUarHfx5dbCeLejisWfC3c/90Y8aZoHqM2byFVqBw==" />
+    </item>
+    <item>
+      <title>v1.5.39</title>
+      <pubDate>Sat, 09 May 2026 12:05:31 +0000</pubDate>
+      <sparkle:version>1.5.39</sparkle:version>
+      <sparkle:shortVersionString>1.5.39</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Three big fixes. (1) Modules no longer 'sink into the notch' — tab content now wrapped in a ScrollView and clipped to the NotchShape so tall views (TipCalc, SpeedTest, Stocks, Calculator) scroll cleanly inside the panel instead of bleeding past the rounded bottom onto the desktop. (2) Stocks switched from Yahoo (now requires a crumb cookie) to Stooq's free CSV endpoint — no more 'Couldn't parse Yahoo response.' (3) Close animation visible AND no jump: NSHostingView is now properly pinned to the window via autoresizing (was floating freely), so the SwiftUI shape stays truly centered, AND window shrink is deferred 0.4s so the spring runs inside the still-expanded window before the window snaps shut.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.39/NotchPop.dmg"
+        sparkle:version="1.5.39"
+        sparkle:shortVersionString="1.5.39"
+        length="2861250"
+        type="application/octet-stream"
+        sparkle:edSignature="Y347kKDPX/GDXe+Pjf+grbu0ECcrSdu2bJa/jZb8tBswucEBIu51VpntKL87+0ddjh1jp6cd4utUqyE0gq5BBA==" />
+    </item>
+    <item>
+      <title>v1.5.38</title>
+      <pubDate>Sat, 09 May 2026 11:55:24 +0000</pubDate>
+      <sparkle:version>1.5.38</sparkle:version>
+      <sparkle:shortVersionString>1.5.38</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Close animation, take three. Reverted the deferred-window-shrink hack (was causing the notch to slide right then snap back). Now: window shrink itself is animated via NSAnimationContext over 0.36s in lockstep with the SwiftUI shape spring. Re-apply check is suppressed during the animation window so the in-progress interpolation isn't snapped to a halfway frame. Window grows still apply synchronously so the expanded shape isn't clipped on open.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.38/NotchPop.dmg"
+        sparkle:version="1.5.38"
+        sparkle:shortVersionString="1.5.38"
+        length="2856001"
+        type="application/octet-stream"
+        sparkle:edSignature="qhL5/FMZ0bz2bGBeWTvrZVDxvYbk0E3U6mGLx568/IM7Yh3YsoURiI6lR04e31Sj35Ac40axJP5jPuR/Xo9XBg==" />
+    </item>
+    <item>
+      <title>v1.5.37</title>
+      <pubDate>Sat, 09 May 2026 11:45:31 +0000</pubDate>
+      <sparkle:version>1.5.37</sparkle:version>
+      <sparkle:shortVersionString>1.5.37</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Smooth close + F/C toggle that actually works. Close: window now shrinks AFTER the SwiftUI spring settles (was clipping mid-animation, killing the bounce). F/C: temperature display derives from live service.fahrenheit and converts locally — toggle flips number instantly without waiting for network refresh.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.37/NotchPop.dmg"
+        sparkle:version="1.5.37"
+        sparkle:shortVersionString="1.5.37"
+        length="2854040"
+        type="application/octet-stream"
+        sparkle:edSignature="J8q7+E9vszZnAG/o5cvIVBW6+CgINA2HMW8Z6lS56U4xd7DEX5vxbSz2f9pC0ksvjcWKWqoCZJiDKMbNIDxHAw==" />
+    </item>
+    <item>
+      <title>v1.5.36</title>
+      <pubDate>Sat, 09 May 2026 11:28:53 +0000</pubDate>
+      <sparkle:version>1.5.36</sparkle:version>
+      <sparkle:shortVersionString>1.5.36</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Closing animation. Was 'response 0.42, damping 0.85' (so over-damped it just faded shut). Now bouncy spring (response 0.36, damping 0.68) so the notch snaps shut with a tiny satisfying overshoot — settles like a physical object. Reduce-motion users get the crisp non-bouncy version. Honors the animation speed slider.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.36/NotchPop.dmg"
+        sparkle:version="1.5.36"
+        sparkle:shortVersionString="1.5.36"
+        length="2853013"
+        type="application/octet-stream"
+        sparkle:edSignature="DmIi+6QehM+mSIuKbCetYWjV58P+3pGugIzevuDX8O6uu51XrxNFC9wJmD6kWBH1PWBTCQKqb8PzAr1phQQWDw==" />
+    </item>
+    <item>
+      <title>v1.5.35</title>
+      <pubDate>Sat, 09 May 2026 11:25:28 +0000</pubDate>
+      <sparkle:version>1.5.35</sparkle:version>
+      <sparkle:shortVersionString>1.5.35</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Weather defaults to °F (was locale-based, was confusing). Toggle now reads live service state instead of stale snapshot — flips instantly. Auto-updates: 'Force Update Now' now ALSO runs the side-channel DMG download in parallel with Sparkle and posts a Checking… notification immediately so you see the click registered. 'You're up to date' confirmation notification fires only on user-initiated checks (background 4h polls stay silent).
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.35/NotchPop.dmg"
+        sparkle:version="1.5.35"
+        sparkle:shortVersionString="1.5.35"
+        length="2852722"
+        type="application/octet-stream"
+        sparkle:edSignature="ou9n+/OH8WDav1pJdP33Hga6uHIzUbIiIuaT++t5f8cArFLo2FzwZiZNEWS0b0hOg8J0eEWdHSo/3O4ZHe+dBw==" />
+    </item>
+    <item>
+      <title>v1.5.34</title>
+      <pubDate>Sat, 09 May 2026 01:59:29 +0000</pubDate>
+      <sparkle:version>1.5.34</sparkle:version>
+      <sparkle:shortVersionString>1.5.34</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        10 new modules: ☕ Caffeinate (keep mac awake), 💵 Tip Calc, 🎲 Dice & Coin, 💧 Eyedropper (color picker), 📝 Lorem Ipsum, 🖋 Markdown Preview, { } JSON Format, 🔐 Base64, 🚀 Speed Test, 📈 Stocks (live Yahoo Finance ticker).
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.34/NotchPop.dmg"
+        sparkle:version="1.5.34"
+        sparkle:shortVersionString="1.5.34"
+        length="2852317"
+        type="application/octet-stream"
+        sparkle:edSignature="NsrFzgr/uLxn/ikgghHWtXE6nJbAwZJo9H1dkdmKMc0FdAlPHmxfo6euEaxlo88We7SL8jAHmYLng9r5FvdtAA==" />
+    </item>
+    <item>
+      <title>v1.5.33</title>
+      <pubDate>Sat, 09 May 2026 01:31:27 +0000</pubDate>
+      <sparkle:version>1.5.33</sparkle:version>
+      <sparkle:shortVersionString>1.5.33</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        5 design animations: Notchy music+headphones state, Pomodoro tide ring, ambient idle shimmer, elastic squish welcome transitions, concentric halo + AirDrop pulse components.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.33/NotchPop.dmg"
+        sparkle:version="1.5.33"
+        sparkle:shortVersionString="1.5.33"
+        length="2703486"
+        type="application/octet-stream"
+        sparkle:edSignature="KhkSjYe94rN2NZrkAHNz+rxRqs7O7N0pY7GlPDQO/XRhpQGDB7Oav5bVlgTi4oXe5eGPDbPrOjEfkPGLcS9DDQ==" />
+    </item>
+    <item>
+      <title>v1.5.32</title>
+      <pubDate>Sat, 09 May 2026 01:02:57 +0000</pubDate>
+      <sparkle:version>1.5.32</sparkle:version>
+      <sparkle:shortVersionString>1.5.32</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Notchy is now the face of NotchPop — appears in the welcome scenes, the app's brand mark, and the website hero. Plus a fresh DMG (the previous release artifact was corrupted on download).
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.32/NotchPop.dmg"
+        sparkle:version="1.5.32"
+        sparkle:shortVersionString="1.5.32"
+        length="2686141"
+        type="application/octet-stream"
+        sparkle:edSignature="9V7tJYH8aEmB5MLEMPZJhY22CbxE4z4JQvF7q0qfaxJAMTerrNYKY98hQYmhgpfeSpkKYsi+aRQD4ZQkSR5fBw==" />
+    </item>
+    <item>
       <title>v1.5.31</title>
       <pubDate>Sat, 09 May 2026 00:24:37 +0000</pubDate>
       <sparkle:version>1.5.31</sparkle:version>
