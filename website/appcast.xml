@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.47</title>
+      <pubDate>Tue, 12 May 2026 22:22:35 +0000</pubDate>
+      <sparkle:version>1.5.47</sparkle:version>
+      <sparkle:shortVersionString>1.5.47</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Claude tab text really, truly survives notch close — TextEditor now uses an explicit get/set Binding so SwiftUI re-reads the live value on every remount.
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.47/NotchPop.dmg"
+        sparkle:version="1.5.47"
+        sparkle:shortVersionString="1.5.47"
+        length="3011700"
+        type="application/octet-stream"
+        sparkle:edSignature="YrvTFsgJ43ESmUvOUc9+2TXr1zbGZbg/YQCJVuGiQWYFhCmochCqyEpIAoxvpZZsE8KBHuJvvpSvYXovoK02DA==" />
+    </item>
+    <item>
       <title>v1.5.46</title>
       <pubDate>Tue, 12 May 2026 21:56:27 +0000</pubDate>
       <sparkle:version>1.5.46</sparkle:version>

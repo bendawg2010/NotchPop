@@ -27,7 +27,17 @@ struct ClaudePromptView: View {
         VStack(alignment: .leading, spacing: isBig ? 12 : 6) {
             statusRow
             if showRecent && !svc.recent.isEmpty { recentList }
-            TextEditor(text: $svc.draft)
+            // Manual Binding (vs the $svc.draft shorthand) was the
+            // last missing piece for cross-collapse persistence —
+            // with @ObservedObject + $svc.draft, SwiftUI's TextEditor
+            // would sometimes display empty on re-mount even though
+            // svc.draft held the last-typed text. A get/set Binding
+            // forces a fresh read of the @Published property on every
+            // re-render.
+            TextEditor(text: Binding(
+                get: { svc.draft },
+                set: { svc.draft = $0 }
+            ))
                 .font(.system(size: isBig ? 14 : 11, design: .monospaced))
                 .padding(isBig ? 10 : 4)
                 .frame(height: isBig ? 140 : 50)
