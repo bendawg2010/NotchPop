@@ -14,9 +14,11 @@ struct ClaudePromptView: View {
     // reply every time the mouse left the notch.
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var svc: ClaudePromptService
-    // @AppStorage instead of @State so the draft also survives
-    // app relaunches.
-    @AppStorage("np.claude.draft") private var draft: String = ""
+    // Draft lives on the service (which is owned by the viewModel) so
+    // it survives notch-collapse view teardown AND app relaunches.
+    // Earlier @AppStorage on the view didn't survive teardown because
+    // the TextEditor binding committed asynchronously and could lose
+    // the latest keystroke when the view was destroyed mid-edit.
     @State private var showRecent: Bool = false
 
     private var isBig: Bool { viewModel.bigNotchMode }
@@ -25,7 +27,7 @@ struct ClaudePromptView: View {
         VStack(alignment: .leading, spacing: isBig ? 12 : 6) {
             statusRow
             if showRecent && !svc.recent.isEmpty { recentList }
-            TextEditor(text: $draft)
+            TextEditor(text: $svc.draft)
                 .font(.system(size: isBig ? 14 : 11, design: .monospaced))
                 .padding(isBig ? 10 : 4)
                 .frame(height: isBig ? 140 : 50)
@@ -97,7 +99,7 @@ struct ClaudePromptView: View {
             .disabled(svc.recent.isEmpty)
             Button {
                 if svc.isRunning { svc.cancel() }
-                else { svc.send(draft) }
+                else { svc.send(svc.draft) }
             } label: {
                 Image(systemName: svc.isRunning ? "stop.fill" : "paperplane.fill")
                     .font(.system(size: isBig ? 14 : 10, weight: .heavy))
@@ -113,7 +115,7 @@ struct ClaudePromptView: View {
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(Array(svc.recent.enumerated()), id: \.offset) { _, p in
                     Button {
-                        draft = p
+                        svc.draft = p
                         showRecent = false
                     } label: {
                         Text(p)
@@ -146,7 +148,7 @@ struct ClaudePromptView: View {
             .disabled(svc.output.isEmpty)
 
             Button {
-                openInTerminal(draft)
+                openInTerminal(svc.draft)
             } label: {
                 Label("Open in Terminal", systemImage: "arrow.up.right.square")
                     .font(.system(size: isBig ? 12 : 10, weight: .heavy))

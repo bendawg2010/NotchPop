@@ -21,6 +21,12 @@ final class ClaudePromptService: ObservableObject {
     // Persist these on every change so they survive notch-close
     // (when ClaudePromptView leaves the SwiftUI hierarchy) AND
     // app relaunches.
+    // Draft lives on the service (not @AppStorage on the view) so it
+    // survives view teardown even if the TextEditor binding hasn't
+    // committed the latest keystroke before the notch collapses.
+    @Published var draft: String = UserDefaults.standard.string(forKey: "np.claude.draft") ?? "" {
+        didSet { UserDefaults.standard.set(draft, forKey: "np.claude.draft") }
+    }
     @Published var output: String = UserDefaults.standard.string(forKey: "np.claude.output") ?? "" {
         didSet { UserDefaults.standard.set(output, forKey: "np.claude.output") }
     }

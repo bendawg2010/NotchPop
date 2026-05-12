@@ -7,6 +7,23 @@
     <link>https://notchpop.pages.dev/appcast.xml</link>
     <description>Updates for NotchPop — your MacBook notch, but useful.</description>
     <item>
+      <title>v1.5.46</title>
+      <pubDate>Tue, 12 May 2026 21:56:27 +0000</pubDate>
+      <sparkle:version>1.5.46</sparkle:version>
+      <sparkle:shortVersionString>1.5.46</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        Claude tab draft really persists now (moved off @AppStorage onto the viewModel-owned service).
+      ]]></description>
+      <enclosure
+        url="https://github.com/bendawg2010/NotchPop/releases/download/v1.5.46/NotchPop.dmg"
+        sparkle:version="1.5.46"
+        sparkle:shortVersionString="1.5.46"
+        length="3010897"
+        type="application/octet-stream"
+        sparkle:edSignature="3Cgo7of8c82Eecpw/CmK0mLAIhQmZupgbcSYTpBx4cjZZi5C2QhzwbJg5/Dj1Utoe5KRYx7ZfkLE847lr+fTAw==" />
+    </item>
+    <item>
       <title>v1.5.45</title>
       <pubDate>Tue, 12 May 2026 21:43:31 +0000</pubDate>
       <sparkle:version>1.5.45</sparkle:version>
