@@ -9,8 +9,31 @@ import Combine
 @MainActor
 final class FocusDexBridge: ObservableObject {
     static let focusDexBundleID = "com.dryeetsolutions.FocusDex"
-    static let focusDexAppPath = "/Applications/FocusDex.app"
     static let websiteURL = URL(string: "https://focusdex.pages.dev")!
+
+    /// Resolves wherever FocusDex.app is installed — by bundle ID first (Launch
+    /// Services), then common fallback paths. Returns nil only if the app truly
+    /// isn't on disk anywhere.
+    private static func resolveFocusDexURL() -> URL? {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: focusDexBundleID) {
+            return url
+        }
+        let home = NSHomeDirectory()
+        let candidates = [
+            "/Applications/FocusDex.app",
+            "\(home)/Applications/FocusDex.app",
+            "\(home)/Downloads/FocusDex.app",
+            "\(home)/Desktop/FocusDex.app",
+        ]
+        for path in candidates {
+            if FileManager.default.fileExists(atPath: path) {
+                return URL(fileURLWithPath: path)
+            }
+        }
+        return nil
+    }
+
+    @Published private(set) var focusDexURL: URL?
 
     @Published private(set) var pokeballs: Int = 0
     @Published private(set) var greatBalls: Int = 0
@@ -39,7 +62,9 @@ final class FocusDexBridge: ObservableObject {
     }
 
     func refresh() {
-        focusDexInstalled = FileManager.default.fileExists(atPath: Self.focusDexAppPath)
+        let url = Self.resolveFocusDexURL()
+        focusDexURL = url
+        focusDexInstalled = (url != nil)
         guard let fd = UserDefaults(suiteName: Self.focusDexBundleID) else { return }
 
         pokeballs       = fd.integer(forKey: "fd.pokeballs")
@@ -94,8 +119,7 @@ final class FocusDexBridge: ObservableObject {
     // MARK: - Actions
 
     func openFocusDex() {
-        if focusDexInstalled {
-            let url = URL(fileURLWithPath: Self.focusDexAppPath)
+        if let url = focusDexURL ?? Self.resolveFocusDexURL() {
             NSWorkspace.shared.openApplication(at: url, configuration: .init())
         } else {
             NSWorkspace.shared.open(Self.websiteURL)
