@@ -159,6 +159,8 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
     case diffCheck     = "Diff"
     // ---- v1.5.42 — talk to Claude Code from the notch ----
     case claudePrompt  = "Claude"
+    // ---- v1.5.48 — FocusDex companion (Notchyverse crossover) ----
+    case focusDex      = "FocusDex"
 
     var id: String { rawValue }
     var icon: String {
@@ -206,6 +208,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .slugify:       return "link.circle"
         case .diffCheck:     return "doc.on.doc.fill"
         case .claudePrompt:  return "sparkle"
+        case .focusDex:      return "pawprint.fill"
         }
     }
     /// Friendly description shown in Settings checkbox rows.
@@ -254,6 +257,7 @@ enum NotchTab: String, CaseIterable, Identifiable, Codable {
         case .slugify:       return "Text → URL slug. Strips diacritics, replaces non-alphanumerics with your chosen separator."
         case .diffCheck:     return "Line-by-line diff of two texts with LCS-based add/remove highlighting + summary count."
         case .claudePrompt:  return "Prompt Claude Code straight from the notch — runs `claude -p` under the hood, streams the reply back. ⌘↩ to send. 'Open in Terminal' button pops you into a full interactive session with the same prompt."
+        case .focusDex:      return "Catch your year of work. Companion view for FocusDex.app — see your dex progress, streak, balls, and recent stats. Click to open FocusDex."
         }
     }
 }

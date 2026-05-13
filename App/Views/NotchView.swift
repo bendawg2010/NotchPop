@@ -807,6 +807,7 @@ struct NotchView: View {
         case .diffCheck:     DiffCheckView()
         case .claudePrompt:  ClaudePromptView(viewModel: viewModel,
                                                 svc: viewModel.claudePrompt)
+        case .focusDex:      FocusDexView()
         }
     }
 }
